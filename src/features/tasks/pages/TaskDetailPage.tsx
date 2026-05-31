@@ -9,6 +9,7 @@ import {
   UserMinus,
   Paperclip,
   GitBranch,
+  FileText,
 } from 'lucide-react';
 
 import Card from '@/shared/ui/Card';
@@ -17,6 +18,8 @@ import Badge from '@/shared/ui/Badge';
 import CopyId from '@/shared/ui/CopyId';
 import EmptyState from '@/shared/ui/EmptyState';
 import Skeleton from '@/shared/ui/Skeleton';
+import Tabs from '@/shared/ui/Tabs';
+import Tooltip from '@/shared/ui/Tooltip';
 import BpmnViewer, { type ActivityState } from '@/shared/bpmn/BpmnViewer';
 
 import {
@@ -42,6 +45,14 @@ function priorityBadgeVariant(
   return 'muted';
 }
 
+type TabId = 'form' | 'attachments' | 'diagram';
+
+const DETAIL_TABS = [
+  { id: 'form', label: 'Form', icon: FileText },
+  { id: 'attachments', label: 'Attachments', icon: Paperclip },
+  { id: 'diagram', label: 'Diagram', icon: GitBranch },
+] as const;
+
 /* ── Page ─────────────────────────────────────────────────────── */
 
 export default function TaskDetailPage() {
@@ -50,7 +61,9 @@ export default function TaskDetailPage() {
   const queryClient = useQueryClient();
   const username = useAuthStore((s) => s.username);
 
-  /* ── Task ────────────────────────────────────────────────── */
+  const [activeTab, setActiveTab] = useState<TabId>('form');
+
+  /* ── Queries ─────────────────────────────────────────────── */
 
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
@@ -58,7 +71,45 @@ export default function TaskDetailPage() {
     enabled: !!taskId,
   });
 
-  /* ── Claim / unclaim ─────────────────────────────────────── */
+  const { data: formVars, isLoading: formLoading } = useQuery({
+    queryKey: ['taskFormVariables', taskId],
+    queryFn: () => getTaskFormVariables(taskId!),
+    enabled: !!taskId,
+  });
+
+  /* ── Form state (lifted so the header Complete button can submit) */
+
+  const fields = useMemo(
+    () =>
+      Object.entries(formVars ?? {}).map(([name, v]) => ({
+        name,
+        type: v.type,
+        initial: v.value,
+      })),
+    [formVars],
+  );
+
+  const seed = useMemo(() => {
+    const out: Record<string, string> = {};
+    for (const f of fields) {
+      out[f.name] =
+        f.initial === null || f.initial === undefined
+          ? ''
+          : typeof f.initial === 'object'
+            ? JSON.stringify(f.initial, null, 2)
+            : String(f.initial);
+    }
+    return out;
+  }, [fields]);
+
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const values = useMemo(() => ({ ...seed, ...edits }), [seed, edits]);
+
+  function setField(name: string, value: string) {
+    setEdits((prev) => ({ ...prev, [name]: value }));
+  }
+
+  /* ── Mutations ───────────────────────────────────────────── */
 
   const claimMutation = useMutation({
     mutationFn: () => claimTask(taskId!, username!),
@@ -80,10 +131,37 @@ export default function TaskDetailPage() {
     onError: () => toast.error('Failed to unclaim task'),
   });
 
-  /* ── Render ──────────────────────────────────────────────── */
+  const completeMutation = useMutation({
+    mutationFn: () => {
+      const payload: Record<string, { value: unknown; type: string }> = {};
+      for (const f of fields) {
+        payload[f.name] = { value: coerce(values[f.name] ?? '', f.type), type: f.type };
+      }
+      return completeTask(taskId!, payload);
+    },
+    onSuccess: () => {
+      toast.success('Task completed');
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      navigate('/tasks');
+    },
+    onError: () => toast.error('Failed to complete task'),
+  });
+
+  function handleComplete() {
+    if (fields.length === 0 && !window.confirm('Complete this task without any form data?')) {
+      return;
+    }
+    completeMutation.mutate();
+  }
+
+  /* ── Derived ─────────────────────────────────────────────── */
 
   const isMine = !!task?.assignee && task.assignee === username;
   const isOverdue = !!task?.due && new Date(task.due) < new Date();
+  // A task must be claimed by the current user before it can be completed.
+  const canComplete = isMine && !completeMutation.isPending;
+
+  /* ── Render ──────────────────────────────────────────────── */
 
   return (
     <div>
@@ -130,6 +208,34 @@ export default function TaskDetailPage() {
               >
                 Claim
               </Button>
+            )}
+
+            {/* Complete sits next to Claim and is disabled until the task is
+                claimed by the current user. */}
+            {canComplete ? (
+              <Button
+                variant="primary"
+                size="sm"
+                startIcon={<CheckCircle2 size={14} />}
+                onClick={handleComplete}
+                disabled={completeMutation.isPending}
+              >
+                {completeMutation.isPending ? 'Completing…' : 'Complete'}
+              </Button>
+            ) : (
+              <Tooltip
+                content={isMine ? 'Completing…' : 'Claim the task before completing it'}
+                side="bottom"
+              >
+                <Button
+                  variant="primary"
+                  size="sm"
+                  startIcon={<CheckCircle2 size={14} />}
+                  disabled
+                >
+                  Complete
+                </Button>
+              </Tooltip>
             )}
           </div>
         )}
@@ -206,35 +312,40 @@ export default function TaskDetailPage() {
             </div>
           </Card>
 
-          {/* ── Two-column: Form + Attachments | Diagram ────── */}
-          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_minmax(0,1.1fr)] lg:items-start">
-            {/* Left column */}
-            <div className="space-y-5">
-              <FormSection
-                taskId={task.id}
-                onCompleted={() => {
-                  queryClient.invalidateQueries({ queryKey: ['tasks'] });
-                  navigate('/tasks');
-                }}
-              />
+          {/* ── Tabbed sections: Form / Attachments / Diagram ── */}
+          <Card divided={false} className="overflow-hidden">
+            <Tabs
+              tabs={[...DETAIL_TABS]}
+              activeTab={activeTab}
+              onChange={(id) => setActiveTab(id as TabId)}
+            >
+              <div className="pt-5">
+                {activeTab === 'form' && (
+                  <FormTab
+                    fields={fields}
+                    values={values}
+                    isLoading={formLoading}
+                    onChange={setField}
+                  />
+                )}
 
-              <Card title="Attachments">
-                <EmptyState
-                  icon={<Paperclip size={28} />}
-                  title="No attachments"
-                  description="This task has no attachments. Uploading and managing attachments is coming soon."
-                />
-              </Card>
-            </div>
+                {activeTab === 'attachments' && (
+                  <EmptyState
+                    icon={<Paperclip size={28} />}
+                    title="No attachments"
+                    description="This task has no attachments. Uploading and managing attachments is coming soon."
+                  />
+                )}
 
-            {/* Right column — diagram (sticky on large screens) */}
-            <div className="lg:sticky lg:top-4">
-              <DiagramSection
-                processDefinitionId={task.processDefinitionId}
-                taskDefinitionKey={task.taskDefinitionKey}
-              />
-            </div>
-          </div>
+                {activeTab === 'diagram' && (
+                  <DiagramSection
+                    processDefinitionId={task.processDefinitionId}
+                    taskDefinitionKey={task.taskDefinitionKey}
+                  />
+                )}
+              </div>
+            </Tabs>
+          </Card>
         </div>
       )}
     </div>
@@ -252,118 +363,58 @@ function Meta({ label, children }: { label: string; children: React.ReactNode })
   );
 }
 
-/* ── Form section — renders task form-variables as typed inputs ── */
+/* ── Form tab — typed inputs derived from the task's form-variables ── */
+
+interface FormFieldSpec {
+  name: string;
+  type: string;
+  initial: unknown;
+}
 
 const inputClass =
   'w-full h-9 px-3 text-theme-sm rounded-lg outline-none bg-white text-gray-800 ring-1 ring-inset ring-gray-300 focus:ring-brand-500 dark:bg-gray-800 dark:text-white/90 dark:ring-gray-700';
 
-function FormSection({
-  taskId,
-  onCompleted,
+function FormTab({
+  fields,
+  values,
+  isLoading,
+  onChange,
 }: {
-  taskId: string;
-  onCompleted: () => void;
+  fields: FormFieldSpec[];
+  values: Record<string, string>;
+  isLoading: boolean;
+  onChange: (name: string, value: string) => void;
 }) {
-  const { data: formVars, isLoading } = useQuery({
-    queryKey: ['taskFormVariables', taskId],
-    queryFn: () => getTaskFormVariables(taskId),
-  });
-
-  // Field order + types, derived from the engine's form-variables.
-  const fields = useMemo(
-    () =>
-      Object.entries(formVars ?? {}).map(([name, v]) => ({
-        name,
-        type: v.type,
-        initial: v.value,
-      })),
-    [formVars],
-  );
-
-  // Local edit state keyed by variable name. Initialised once fields arrive.
-  const [values, setValues] = useState<Record<string, string>>({});
-  const initialised = useMemo(() => {
-    const seed: Record<string, string> = {};
-    for (const f of fields) {
-      seed[f.name] =
-        f.initial === null || f.initial === undefined
-          ? ''
-          : typeof f.initial === 'object'
-            ? JSON.stringify(f.initial, null, 2)
-            : String(f.initial);
-    }
-    return seed;
-  }, [fields]);
-
-  // Merge seed with any user edits (user edits win).
-  const merged = useMemo(() => ({ ...initialised, ...values }), [initialised, values]);
-
-  function set(name: string, value: string) {
-    setValues((prev) => ({ ...prev, [name]: value }));
+  if (isLoading) {
+    return (
+      <div className="space-y-3">
+        <Skeleton height="2.25rem" />
+        <Skeleton height="2.25rem" />
+      </div>
+    );
   }
 
-  const completeMutation = useMutation({
-    mutationFn: () => {
-      const payload: Record<string, { value: unknown; type: string }> = {};
-      for (const f of fields) {
-        const raw = merged[f.name];
-        payload[f.name] = { value: coerce(raw, f.type), type: f.type };
-      }
-      return completeTask(taskId, payload);
-    },
-    onSuccess: () => {
-      toast.success('Task completed');
-      onCompleted();
-    },
-    onError: () => toast.error('Failed to complete task'),
-  });
-
-  function handleComplete() {
-    if (fields.length === 0) {
-      const ok = window.confirm('Complete this task without any form data?');
-      if (!ok) return;
-    }
-    completeMutation.mutate();
+  if (fields.length === 0) {
+    return (
+      <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+        This task has no form fields. Claim it and use{' '}
+        <span className="font-medium">Complete</span> to finish it without setting variables.
+      </p>
+    );
   }
 
   return (
-    <Card
-      title="Form"
-      action={
-        <Button
-          variant="primary"
-          size="sm"
-          startIcon={<CheckCircle2 size={14} />}
-          onClick={handleComplete}
-          disabled={completeMutation.isPending}
-        >
-          {completeMutation.isPending ? 'Completing…' : 'Complete'}
-        </Button>
-      }
-    >
-      {isLoading ? (
-        <div className="space-y-3">
-          <Skeleton height="2.25rem" />
-          <Skeleton height="2.25rem" />
-        </div>
-      ) : fields.length === 0 ? (
-        <p className="text-theme-sm text-gray-500 dark:text-gray-400">
-          This task has no form fields. Completing it will not set any variables.
-        </p>
-      ) : (
-        <div className="space-y-4">
-          {fields.map((f) => (
-            <FormField
-              key={f.name}
-              name={f.name}
-              type={f.type}
-              value={merged[f.name] ?? ''}
-              onChange={(val) => set(f.name, val)}
-            />
-          ))}
-        </div>
-      )}
-    </Card>
+    <div className="space-y-4 max-w-2xl">
+      {fields.map((f) => (
+        <FormField
+          key={f.name}
+          name={f.name}
+          type={f.type}
+          value={values[f.name] ?? ''}
+          onChange={(val) => onChange(f.name, val)}
+        />
+      ))}
+    </div>
   );
 }
 
@@ -428,7 +479,7 @@ function FormField({
   );
 }
 
-/* ── Diagram section — BPMN with the current task highlighted ──── */
+/* ── Diagram tab — BPMN with the current task highlighted ──────── */
 
 function DiagramSection({
   processDefinitionId,
@@ -449,27 +500,25 @@ function DiagramSection({
   );
 
   return (
-    <Card title="Diagram" desc="Current task highlighted" className="overflow-hidden">
-      <div className="h-[480px] rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
-        {isLoading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand-500" />
-          </div>
-        ) : xmlData?.bpmn20Xml ? (
-          <BpmnViewer
-            xml={xmlData.bpmn20Xml}
-            height="100%"
-            activityStates={activityStates}
-          />
-        ) : (
-          <EmptyState
-            icon={<GitBranch size={28} />}
-            title="No diagram"
-            description="Could not load the BPMN diagram for this process definition."
-          />
-        )}
-      </div>
-    </Card>
+    <div className="h-[480px] rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+      {isLoading ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand-500" />
+        </div>
+      ) : xmlData?.bpmn20Xml ? (
+        <BpmnViewer
+          xml={xmlData.bpmn20Xml}
+          height="100%"
+          activityStates={activityStates}
+        />
+      ) : (
+        <EmptyState
+          icon={<GitBranch size={28} />}
+          title="No diagram"
+          description="Could not load the BPMN diagram for this process definition."
+        />
+      )}
+    </div>
   );
 }
 
