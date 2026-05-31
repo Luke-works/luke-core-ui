@@ -1,437 +1,497 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import {
-  X,
+  ArrowLeft,
   CheckCircle2,
-  Trash2,
-  Plus,
-  AlertTriangle,
+  UserPlus,
+  UserMinus,
+  Paperclip,
+  GitBranch,
 } from 'lucide-react';
+
+import Card from '@/shared/ui/Card';
 import Button from '@/shared/ui/Button';
+import Badge from '@/shared/ui/Badge';
+import CopyId from '@/shared/ui/CopyId';
+import EmptyState from '@/shared/ui/EmptyState';
+import Skeleton from '@/shared/ui/Skeleton';
+import BpmnViewer, { type ActivityState } from '@/shared/bpmn/BpmnViewer';
+
 import {
   getTaskById,
-  getTaskVariables,
+  getTaskFormVariables,
   completeTask,
+  claimTask,
+  unclaimTask,
 } from '@/features/tasks/api/endpoints';
-import type { VariablesMap } from '@/shared/api/types';
+import { getProcessDefinitionXml } from '@/features/processes/api/endpoints';
+import { useAuthStore } from '@/features/auth/stores/authStore';
+import { relativeTime, absoluteTime } from '@/shared/utils/date';
+import { priorityLabel } from '@/shared/utils/camunda';
 
-/* ── Variable type for the form ───────────────────────────── */
+/* ── Priority badge variant (mirrors TaskListPage) ───────────── */
 
-interface OutputVariable {
-  name: string;
-  type: string;
-  value: string;
+function priorityBadgeVariant(
+  priority: number,
+): 'danger' | 'warning' | 'info' | 'muted' {
+  if (priority >= 76) return 'danger';
+  if (priority >= 51) return 'warning';
+  if (priority >= 26) return 'info';
+  return 'muted';
 }
 
-const VARIABLE_TYPES = ['String', 'Boolean', 'Integer', 'Long', 'Double', 'Date', 'Json'];
+/* ── Page ─────────────────────────────────────────────────────── */
 
-/* ── Component ─────────────────────────────────────────────── */
-
-interface TaskDetailModalProps {
-  taskId: string | null;
-  open: boolean;
-  onClose: () => void;
-}
-
-export default function TaskDetailModal({ taskId, open, onClose }: TaskDetailModalProps) {
+export default function TaskDetailPage() {
+  const { taskId } = useParams<{ taskId: string }>();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'details' | 'variables' | 'complete'>('details');
+  const username = useAuthStore((s) => s.username);
 
-  // Form state for completing a task
-  const [outputVariables, setOutputVariables] = useState<OutputVariable[]>([]);
-  // Nested "are you sure?" confirm when completing with no output data
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
-  /* ── Queries ─────────────────────────────────────────────── */
+  /* ── Task ────────────────────────────────────────────────── */
 
   const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
     queryFn: () => getTaskById(taskId!),
-    enabled: !!taskId && open,
+    enabled: !!taskId,
   });
 
-  const { data: variables } = useQuery({
-    queryKey: ['taskVariables', taskId],
-    queryFn: () => getTaskVariables(taskId!),
-    enabled: !!taskId && open && activeTab === 'variables',
-  });
-  const variablesMap: VariablesMap = variables ?? {};
+  /* ── Claim / unclaim ─────────────────────────────────────── */
 
-  /* ── Mutation ────────────────────────────────────────────── */
+  const claimMutation = useMutation({
+    mutationFn: () => claimTask(taskId!, username!),
+    onSuccess: () => {
+      toast.success('Task claimed');
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => toast.error('Failed to claim task'),
+  });
+
+  const unclaimMutation = useMutation({
+    mutationFn: () => unclaimTask(taskId!),
+    onSuccess: () => {
+      toast.success('Task unclaimed');
+      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    },
+    onError: () => toast.error('Failed to unclaim task'),
+  });
+
+  /* ── Render ──────────────────────────────────────────────── */
+
+  const isMine = !!task?.assignee && task.assignee === username;
+  const isOverdue = !!task?.due && new Date(task.due) < new Date();
+
+  return (
+    <div>
+      {/* Header bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+        <div className="flex items-center gap-3 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate('/tasks')}
+            className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
+            title="Back to tasks"
+          >
+            <ArrowLeft size={18} />
+          </button>
+          <div className="min-w-0">
+            <h1 className="font-heading text-title-sm font-semibold truncate text-gray-800 dark:text-white/90">
+              {task?.name ?? (taskLoading ? 'Loading…' : 'Task')}
+            </h1>
+            <p className="text-theme-xs mt-0.5 text-gray-500 dark:text-gray-400">
+              Task details
+            </p>
+          </div>
+        </div>
+
+        {task && (
+          <div className="flex items-center gap-2">
+            {isMine ? (
+              <Button
+                variant="secondary"
+                size="sm"
+                startIcon={<UserMinus size={14} />}
+                onClick={() => unclaimMutation.mutate()}
+                disabled={unclaimMutation.isPending}
+              >
+                Unclaim
+              </Button>
+            ) : (
+              <Button
+                variant="secondary"
+                size="sm"
+                startIcon={<UserPlus size={14} />}
+                onClick={() => claimMutation.mutate()}
+                disabled={claimMutation.isPending || !username}
+              >
+                Claim
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {taskLoading ? (
+        <div className="space-y-4">
+          <Skeleton height="5rem" />
+          <Skeleton height="20rem" />
+        </div>
+      ) : !task ? (
+        <Card>
+          <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+            Task not found. It may have been completed or reassigned.
+          </div>
+        </Card>
+      ) : (
+        <div className="space-y-5">
+          {/* ── Metadata strip ──────────────────────────────── */}
+          <Card>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-3 lg:grid-cols-4">
+              <Meta label="Assignee">
+                {task.assignee ? (
+                  <span className="text-gray-800 dark:text-white/90">{task.assignee}</span>
+                ) : (
+                  <span className="italic text-gray-400">Unassigned</span>
+                )}
+              </Meta>
+              <Meta label="Priority">
+                <Badge variant={priorityBadgeVariant(task.priority)}>
+                  {priorityLabel(task.priority)}
+                </Badge>
+              </Meta>
+              <Meta label="Created">
+                <span className="text-gray-700 dark:text-gray-300" title={absoluteTime(task.created)}>
+                  {relativeTime(task.created)}
+                </span>
+              </Meta>
+              <Meta label="Due">
+                {task.due ? (
+                  <span
+                    title={absoluteTime(task.due)}
+                    style={{ color: isOverdue ? 'var(--accent-red)' : undefined }}
+                    className={isOverdue ? '' : 'text-gray-700 dark:text-gray-300'}
+                  >
+                    {relativeTime(task.due)}
+                  </span>
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </Meta>
+              <Meta label="Task Definition Key">
+                <span className="font-mono-id text-theme-xs text-gray-700 dark:text-gray-300">
+                  {task.taskDefinitionKey ?? '—'}
+                </span>
+              </Meta>
+              <Meta label="Process Instance">
+                {task.processInstanceId ? (
+                  <CopyId id={task.processInstanceId} />
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </Meta>
+              <Meta label="Process Definition">
+                {task.processDefinitionId ? (
+                  <CopyId id={task.processDefinitionId} />
+                ) : (
+                  <span className="text-gray-400">—</span>
+                )}
+              </Meta>
+              <Meta label="Task ID">
+                <CopyId id={task.id} />
+              </Meta>
+            </div>
+          </Card>
+
+          {/* ── Two-column: Form + Attachments | Diagram ────── */}
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1fr_minmax(0,1.1fr)] lg:items-start">
+            {/* Left column */}
+            <div className="space-y-5">
+              <FormSection
+                taskId={task.id}
+                onCompleted={() => {
+                  queryClient.invalidateQueries({ queryKey: ['tasks'] });
+                  navigate('/tasks');
+                }}
+              />
+
+              <Card title="Attachments">
+                <EmptyState
+                  icon={<Paperclip size={28} />}
+                  title="No attachments"
+                  description="This task has no attachments. Uploading and managing attachments is coming soon."
+                />
+              </Card>
+            </div>
+
+            {/* Right column — diagram (sticky on large screens) */}
+            <div className="lg:sticky lg:top-4">
+              <DiagramSection
+                processDefinitionId={task.processDefinitionId}
+                taskDefinitionKey={task.taskDefinitionKey}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Metadata field ───────────────────────────────────────────── */
+
+function Meta({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col gap-1 min-w-0">
+      <span className="text-theme-xs text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="text-theme-sm truncate">{children}</span>
+    </div>
+  );
+}
+
+/* ── Form section — renders task form-variables as typed inputs ── */
+
+const inputClass =
+  'w-full h-9 px-3 text-theme-sm rounded-lg outline-none bg-white text-gray-800 ring-1 ring-inset ring-gray-300 focus:ring-brand-500 dark:bg-gray-800 dark:text-white/90 dark:ring-gray-700';
+
+function FormSection({
+  taskId,
+  onCompleted,
+}: {
+  taskId: string;
+  onCompleted: () => void;
+}) {
+  const { data: formVars, isLoading } = useQuery({
+    queryKey: ['taskFormVariables', taskId],
+    queryFn: () => getTaskFormVariables(taskId),
+  });
+
+  // Field order + types, derived from the engine's form-variables.
+  const fields = useMemo(
+    () =>
+      Object.entries(formVars ?? {}).map(([name, v]) => ({
+        name,
+        type: v.type,
+        initial: v.value,
+      })),
+    [formVars],
+  );
+
+  // Local edit state keyed by variable name. Initialised once fields arrive.
+  const [values, setValues] = useState<Record<string, string>>({});
+  const initialised = useMemo(() => {
+    const seed: Record<string, string> = {};
+    for (const f of fields) {
+      seed[f.name] =
+        f.initial === null || f.initial === undefined
+          ? ''
+          : typeof f.initial === 'object'
+            ? JSON.stringify(f.initial, null, 2)
+            : String(f.initial);
+    }
+    return seed;
+  }, [fields]);
+
+  // Merge seed with any user edits (user edits win).
+  const merged = useMemo(() => ({ ...initialised, ...values }), [initialised, values]);
+
+  function set(name: string, value: string) {
+    setValues((prev) => ({ ...prev, [name]: value }));
+  }
 
   const completeMutation = useMutation({
     mutationFn: () => {
-      const varsPayload: Record<string, { value: any; type: string }> = {};
-      for (const v of outputVariables) {
-        if (!v.name) continue;
-        let parsedValue: any = v.value;
-        if (v.type === 'Boolean') parsedValue = v.value === 'true';
-        else if (v.type === 'Integer' || v.type === 'Long') parsedValue = parseInt(v.value, 10);
-        else if (v.type === 'Double') parsedValue = parseFloat(v.value);
-        else if (v.type === 'Json') {
-          try { parsedValue = JSON.parse(v.value); } catch { /* keep as string */ }
-        }
-        varsPayload[v.name] = { value: parsedValue, type: v.type };
+      const payload: Record<string, { value: unknown; type: string }> = {};
+      for (const f of fields) {
+        const raw = merged[f.name];
+        payload[f.name] = { value: coerce(raw, f.type), type: f.type };
       }
-      return completeTask(taskId!, varsPayload);
+      return completeTask(taskId, payload);
     },
     onSuccess: () => {
       toast.success('Task completed');
-      setConfirmOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      onClose();
+      onCompleted();
     },
-    onError: () => {
-      toast.error('Failed to complete task');
-      setConfirmOpen(false);
-    },
+    onError: () => toast.error('Failed to complete task'),
   });
 
-  /* ── Reset form when task changes ────────────────────────── */
-
-  useEffect(() => {
-    setOutputVariables([]);
-    setActiveTab('details');
-    setConfirmOpen(false);
-  }, [taskId]);
-
-  /* ── Variable form helpers ───────────────────────────────── */
-
-  function addVariable() {
-    setOutputVariables((prev) => [...prev, { name: '', type: 'String', value: '' }]);
-  }
-
-  function updateVariable(index: number, field: keyof OutputVariable, value: string) {
-    setOutputVariables((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
-    );
-  }
-
-  function removeVariable(index: number) {
-    setOutputVariables((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  /* ── Complete handler — confirm if no output data ────────── */
-
   function handleComplete() {
-    const hasData = outputVariables.some((v) => v.name.trim() !== '');
-    if (!hasData) {
-      setConfirmOpen(true);
-      return;
+    if (fields.length === 0) {
+      const ok = window.confirm('Complete this task without any form data?');
+      if (!ok) return;
     }
     completeMutation.mutate();
   }
 
-  /* ── Render ──────────────────────────────────────────────── */
+  return (
+    <Card
+      title="Form"
+      action={
+        <Button
+          variant="primary"
+          size="sm"
+          startIcon={<CheckCircle2 size={14} />}
+          onClick={handleComplete}
+          disabled={completeMutation.isPending}
+        >
+          {completeMutation.isPending ? 'Completing…' : 'Complete'}
+        </Button>
+      }
+    >
+      {isLoading ? (
+        <div className="space-y-3">
+          <Skeleton height="2.25rem" />
+          <Skeleton height="2.25rem" />
+        </div>
+      ) : fields.length === 0 ? (
+        <p className="text-theme-sm text-gray-500 dark:text-gray-400">
+          This task has no form fields. Completing it will not set any variables.
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {fields.map((f) => (
+            <FormField
+              key={f.name}
+              name={f.name}
+              type={f.type}
+              value={merged[f.name] ?? ''}
+              onChange={(val) => set(f.name, val)}
+            />
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
 
-  if (!open) return null;
+/* ── A single typed form field ────────────────────────────────── */
+
+function FormField({
+  name,
+  type,
+  value,
+  onChange,
+}: {
+  name: string;
+  type: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
+  const t = type.toLowerCase();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]"
-        onClick={() => { if (!completeMutation.isPending) onClose(); }}
-      />
+    <div className="flex flex-col gap-1.5">
+      <label className="text-theme-xs font-medium text-gray-600 dark:text-gray-300">
+        {name}
+        <span className="ml-2 font-normal text-gray-400">{type}</span>
+      </label>
 
-      {/* Modal */}
-      <div
-        className="relative z-10 w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl border bg-white shadow-theme-xl dark:bg-gray-900"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-6 py-4 shrink-0 border-b"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <div className="min-w-0">
-            <h2 className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
-              Task Details
-            </h2>
-            {task && (
-              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }} title={task.name}>
-                {task.name}
-              </p>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex items-center justify-center w-9 h-9 rounded-lg"
-            style={{ color: 'var(--text-muted)' }}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          {taskLoading ? (
-            <div className="space-y-4">
-              <div className="h-8 rounded animate-pulse" style={{ backgroundColor: 'var(--bg-elevated)' }} />
-              <div className="h-32 rounded animate-pulse" style={{ backgroundColor: 'var(--bg-elevated)' }} />
-            </div>
-          ) : !task ? (
-            <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
-              Task not found
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {/* Tab navigation */}
-              <div className="flex gap-1 border-b" style={{ borderColor: 'var(--border)' }}>
-                {(['details', 'variables', 'complete'] as const).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className="px-3 py-2 text-sm font-medium capitalize transition-colors"
-                    style={{
-                      color: activeTab === tab ? 'var(--accent-blue)' : 'var(--text-secondary)',
-                      borderBottom: activeTab === tab ? '2px solid var(--accent-blue)' : '2px solid transparent',
-                    }}
-                  >
-                    {tab}
-                  </button>
-                ))}
-              </div>
-
-              {/* Tab content */}
-              {activeTab === 'details' && <DetailsTab task={task} />}
-              {activeTab === 'variables' && <VariablesTab variables={variablesMap} />}
-              {activeTab === 'complete' && (
-                <CompleteTab
-                  outputVariables={outputVariables}
-                  onAdd={addVariable}
-                  onUpdate={updateVariable}
-                  onRemove={removeVariable}
-                  onComplete={handleComplete}
-                  isCompleting={completeMutation.isPending}
-                />
-              )}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Nested confirm modal — complete without output data */}
-      {confirmOpen && (
-        <ConfirmComplete
-          isCompleting={completeMutation.isPending}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={() => completeMutation.mutate()}
+      {t === 'boolean' ? (
+        <select className={inputClass} value={value} onChange={(e) => onChange(e.target.value)}>
+          <option value="">—</option>
+          <option value="true">true</option>
+          <option value="false">false</option>
+        </select>
+      ) : t === 'date' ? (
+        <input
+          type="datetime-local"
+          className={inputClass}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : t === 'integer' || t === 'long' || t === 'short' || t === 'double' || t === 'float' ? (
+        <input
+          type="number"
+          className={inputClass}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : t === 'json' || t === 'object' ? (
+        <textarea
+          rows={4}
+          className={`${inputClass} h-auto py-2 font-mono-id`}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <input
+          type="text"
+          className={inputClass}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
         />
       )}
     </div>
   );
 }
 
-/* ── Confirm Complete (nested modal) ─────────────────────── */
+/* ── Diagram section — BPMN with the current task highlighted ──── */
 
-function ConfirmComplete({
-  isCompleting,
-  onCancel,
-  onConfirm,
+function DiagramSection({
+  processDefinitionId,
+  taskDefinitionKey,
 }: {
-  isCompleting: boolean;
-  onCancel: () => void;
-  onConfirm: () => void;
+  processDefinitionId: string;
+  taskDefinitionKey: string;
 }) {
+  const { data: xmlData, isLoading } = useQuery({
+    queryKey: ['processDefinitionXml', processDefinitionId],
+    queryFn: () => getProcessDefinitionXml(processDefinitionId),
+    enabled: !!processDefinitionId,
+  });
+
+  const activityStates = useMemo<Record<string, ActivityState>>(
+    () => (taskDefinitionKey ? { [taskDefinitionKey]: 'in-progress' } : {}),
+    [taskDefinitionKey],
+  );
+
   return (
-    <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gray-900/60" onClick={() => { if (!isCompleting) onCancel(); }} />
-      <div
-        className="relative z-10 w-full max-w-sm rounded-2xl border bg-white shadow-theme-xl dark:bg-gray-900"
-        style={{ borderColor: 'var(--border)' }}
-      >
-        <div className="px-6 py-5">
-          <div className="flex items-center gap-2 mb-2">
-            <AlertTriangle size={18} style={{ color: 'var(--accent-amber, #f59e0b)' }} />
-            <h3 className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
-              Complete task?
-            </h3>
+    <Card title="Diagram" desc="Current task highlighted" className="overflow-hidden">
+      <div className="h-[480px] rounded-lg overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-brand-500" />
           </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Are you sure you want to complete this task without adding any output data?
-          </p>
-        </div>
-        <div
-          className="flex items-center justify-end gap-2 px-6 py-4 border-t"
-          style={{ borderColor: 'var(--border)' }}
-        >
-          <Button variant="ghost" size="sm" onClick={onCancel} disabled={isCompleting}>
-            No
-          </Button>
-          <Button variant="primary" size="sm" onClick={onConfirm} disabled={isCompleting}>
-            <span className="inline-flex items-center gap-1.5">
-              <CheckCircle2 size={14} />
-              {isCompleting ? 'Completing...' : 'Yes, complete'}
-            </span>
-          </Button>
-        </div>
+        ) : xmlData?.bpmn20Xml ? (
+          <BpmnViewer
+            xml={xmlData.bpmn20Xml}
+            height="100%"
+            activityStates={activityStates}
+          />
+        ) : (
+          <EmptyState
+            icon={<GitBranch size={28} />}
+            title="No diagram"
+            description="Could not load the BPMN diagram for this process definition."
+          />
+        )}
       </div>
-    </div>
+    </Card>
   );
 }
 
-/* ── Details Tab ─────────────────────────────────────────── */
+/* ── Variable value coercion (matches Camunda variable types) ──── */
 
-function DetailsTab({ task }: { task: any }) {
-  const details = [
-    { label: 'Task ID', value: task.id },
-    { label: 'Name', value: task.name },
-    { label: 'Assignee', value: task.assignee ?? 'Unassigned' },
-    { label: 'Created', value: task.created ? new Date(task.created).toLocaleString() : '-' },
-    { label: 'Due', value: task.due ? new Date(task.due).toLocaleString() : '-' },
-    { label: 'Priority', value: String(task.priority ?? 0) },
-    { label: 'Process Instance', value: task.processInstanceId ?? '-' },
-    { label: 'Task Definition Key', value: task.taskDefinitionKey ?? '-' },
-  ];
-
-  return (
-    <div className="space-y-3">
-      {details.map((d) => (
-        <div key={d.label} className="flex flex-col gap-0.5">
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-            {d.label}
-          </span>
-          <span className="text-sm font-mono-id" style={{ color: 'var(--text-primary)' }}>
-            {d.value}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Variables Tab ───────────────────────────────────────── */
-
-function VariablesTab({ variables }: { variables: VariablesMap }) {
-  const entries = Object.entries(variables);
-  if (entries.length === 0) {
-    return (
-      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-        No variables for this task.
-      </p>
-    );
+function coerce(raw: string, type: string): unknown {
+  const t = type.toLowerCase();
+  if (t === 'boolean') return raw === 'true';
+  if (t === 'integer' || t === 'long' || t === 'short') {
+    const n = parseInt(raw, 10);
+    return isNaN(n) ? null : n;
   }
-
-  return (
-    <div className="space-y-2">
-      {entries.map(([name, v]) => (
-        <div
-          key={name}
-          className="flex items-center justify-between p-2 rounded"
-          style={{ backgroundColor: 'var(--bg-elevated)' }}
-        >
-          <div className="flex flex-col">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-              {name}
-            </span>
-            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
-              {v.type}
-            </span>
-          </div>
-          <span className="text-sm font-mono-id" style={{ color: 'var(--text-secondary)' }}>
-            {typeof v.value === 'object' ? JSON.stringify(v.value) : String(v.value)}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-/* ── Complete Tab ────────────────────────────────────────── */
-
-function CompleteTab({
-  outputVariables,
-  onAdd,
-  onUpdate,
-  onRemove,
-  onComplete,
-  isCompleting,
-}: {
-  outputVariables: OutputVariable[];
-  onAdd: () => void;
-  onUpdate: (index: number, field: keyof OutputVariable, value: string) => void;
-  onRemove: (index: number) => void;
-  onComplete: () => void;
-  isCompleting: boolean;
-}) {
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-          Output Variables
-        </span>
-        <Button variant="ghost" size="sm" onClick={onAdd}>
-          <Plus size={14} className="mr-1" />
-          Add
-        </Button>
-      </div>
-
-      {outputVariables.length === 0 ? (
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
-          No output variables. The task will be completed without setting variables.
-        </p>
-      ) : (
-        <div className="space-y-3">
-          {outputVariables.map((variable, index) => (
-            <div
-              key={index}
-              className="flex gap-2 items-start p-2 rounded"
-              style={{ backgroundColor: 'var(--bg-elevated)' }}
-            >
-              <div className="flex-1 space-y-2">
-                <input
-                  type="text"
-                  placeholder="Variable name"
-                  value={variable.name}
-                  onChange={(e) => onUpdate(index, 'name', e.target.value)}
-                  className="w-full px-2 py-1 text-sm rounded"
-                  style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                />
-                <div className="flex gap-2">
-                  <select
-                    value={variable.type}
-                    onChange={(e) => onUpdate(index, 'type', e.target.value)}
-                    className="px-2 py-1 text-sm rounded"
-                    style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                  >
-                    {VARIABLE_TYPES.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="text"
-                    placeholder="Value"
-                    value={variable.value}
-                    onChange={(e) => onUpdate(index, 'value', e.target.value)}
-                    className="flex-1 px-2 py-1 text-sm rounded"
-                    style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                  />
-                </div>
-              </div>
-              <button
-                onClick={() => onRemove(index)}
-                className="p-1"
-                style={{ color: 'var(--accent-red)' }}
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <Button
-        variant="primary"
-        onClick={onComplete}
-        disabled={isCompleting}
-        className="w-full"
-      >
-        <CheckCircle2 size={16} className="mr-2" />
-        {isCompleting ? 'Completing...' : 'Complete Task'}
-      </Button>
-    </div>
-  );
+  if (t === 'double' || t === 'float') {
+    const n = parseFloat(raw);
+    return isNaN(n) ? null : n;
+  }
+  if (t === 'json' || t === 'object') {
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return raw;
 }

@@ -171,7 +171,7 @@ export default function ProcessListPage() {
       {
         accessorKey: 'version',
         header: () => (
-          <Tooltip content="Latest Version Deployed to Engine">
+          <Tooltip content="Latest Version Deployed to Engine" side="bottom">
             <span className="cursor-default">Latest Version</span>
           </Tooltip>
         ),
@@ -180,7 +180,7 @@ export default function ProcessListPage() {
       {
         accessorKey: 'instanceCount',
         header: () => (
-          <Tooltip content="Total ProcessInstances across Versions">
+          <Tooltip content="Total ProcessInstances across Versions" side="bottom">
             <span className="cursor-default">Total Instances</span>
           </Tooltip>
         ),

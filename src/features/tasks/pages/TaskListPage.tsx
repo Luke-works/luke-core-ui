@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { CheckSquare, Filter } from 'lucide-react';
 
@@ -17,8 +17,6 @@ import { relativeTime, absoluteTime, toCamundaDate } from '@/shared/utils/date';
 import { priorityLabel } from '@/shared/utils/camunda';
 
 import type { Task } from '@/features/tasks/api/types';
-
-import TaskDetailModal from './TaskDetailPage';
 
 /* ── Constants ────────────────────────────────────────────── */
 
@@ -61,6 +59,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function TaskListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const username = useAuthStore((s) => s.username);
 
   /* ── URL-driven state ─────────────────────────────────── */
@@ -82,12 +81,6 @@ export default function TaskListPage() {
   );
   const [dueAfter, setDueAfter] = useState(
     searchParams.get('dueAfter') ?? '',
-  );
-
-  /* ── Selected task for drawer ─────────────────────────── */
-
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(
-    searchParams.get('taskId'),
   );
 
   /* ── Build query params ───────────────────────────────── */
@@ -338,7 +331,7 @@ export default function TaskListPage() {
             size="sm"
             onClick={(e) => {
               e.stopPropagation();
-              setSelectedTaskId(row.original.id);
+              navigate(`/tasks/${row.original.id}`);
             }}
           >
             View
@@ -346,7 +339,7 @@ export default function TaskListPage() {
         ),
       },
     ],
-    [],
+    [navigate],
   );
 
   /* ── Render ──────────────────────────────────────────── */
@@ -520,7 +513,7 @@ export default function TaskListPage() {
               data={tasksQuery.data ?? []}
               columns={columns}
               isLoading={tasksQuery.isLoading}
-              onRowClick={(row) => setSelectedTaskId(row.id)}
+              onRowClick={(row) => navigate(`/tasks/${row.id}`)}
               pageSize={PAGE_SIZE}
               pageIndex={page}
               total={countQuery.data?.count}
@@ -530,13 +523,6 @@ export default function TaskListPage() {
           )}
         </div>
       </div>
-
-      {/* ── Task detail modal ────────────────────────────── */}
-      <TaskDetailModal
-        taskId={selectedTaskId}
-        open={selectedTaskId !== null}
-        onClose={() => setSelectedTaskId(null)}
-      />
     </div>
   );
 }

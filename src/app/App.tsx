@@ -9,6 +9,7 @@ const ProcessListPage = lazy(() => import('@/features/processes/pages/ProcessLis
 const ProcessDetailPage = lazy(() => import('@/features/processes/pages/ProcessDetailPage'));
 const InstanceDetailPage = lazy(() => import('@/features/processes/pages/InstanceDetailPage'));
 const TaskListPage = lazy(() => import('@/features/tasks/pages/TaskListPage'));
+const TaskDetailPage = lazy(() => import('@/features/tasks/pages/TaskDetailPage'));
 const IncidentListPage = lazy(() => import('@/features/incidents/pages/IncidentListPage'));
 const JobListPage = lazy(() => import('@/features/jobs/pages/JobListPage'));
 const HistoryPage = lazy(() => import('@/features/history/pages/HistoryPage'));
@@ -57,6 +58,7 @@ export default function App() {
           <Route path="/processes/:id" element={<SuspenseWrapper><ProcessDetailPage /></SuspenseWrapper>} />
           <Route path="/processes/instance/:id" element={<SuspenseWrapper><InstanceDetailPage /></SuspenseWrapper>} />
           <Route path="/tasks" element={<SuspenseWrapper><TaskListPage /></SuspenseWrapper>} />
+          <Route path="/tasks/:taskId" element={<SuspenseWrapper><TaskDetailPage /></SuspenseWrapper>} />
           <Route path="/incidents" element={<SuspenseWrapper><IncidentListPage /></SuspenseWrapper>} />
           <Route path="/jobs" element={<SuspenseWrapper><JobListPage /></SuspenseWrapper>} />
           <Route path="/history" element={<SuspenseWrapper><HistoryPage /></SuspenseWrapper>} />
