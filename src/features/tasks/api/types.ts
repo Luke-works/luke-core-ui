@@ -1,0 +1,23 @@
+export type Task = {
+  id: string;
+  name: string;
+  assignee: string | null;
+  created: string;
+  due: string | null;
+  followUp: string | null;
+  delegationState: string | null;
+  description: string | null;
+  executionId: string;
+  parentTaskId: string | null;
+  priority: number;
+  processDefinitionId: string;
+  processInstanceId: string;
+  taskDefinitionKey: string;
+  caseExecutionId: string | null;
+  caseInstanceId: string | null;
+  caseDefinitionId: string | null;
+  suspended: boolean;
+  tenantId: string | null;
+  formKey: string | null;
+  camundaFormRef: object | null;
+};
