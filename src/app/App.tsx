@@ -18,6 +18,7 @@ const DecisionListPage = lazy(() => import('@/features/decisions/pages/DecisionL
 const DecisionDetailPage = lazy(() => import('@/features/decisions/pages/DecisionDetailPage'));
 const UsersPage = lazy(() => import('@/features/admin/pages/UsersPage'));
 const GroupsPage = lazy(() => import('@/features/admin/pages/GroupsPage'));
+const TenancyDashboardPage = lazy(() => import('@/features/tenancy/pages/TenancyDashboardPage'));
 const SettingsPage = lazy(() => import('@/features/settings/pages/SettingsPage'));
 const ExternalTaskPage = lazy(() => import('@/features/external-tasks/pages/ExternalTaskPage'));
 const TopicRegistryPage = lazy(() => import('@/features/external-tasks/pages/TopicRegistryPage'));
@@ -65,6 +66,7 @@ export default function App() {
           <Route path="/decisions/:id" element={<SuspenseWrapper><DecisionDetailPage /></SuspenseWrapper>} />
           <Route path="/admin/users" element={<SuspenseWrapper><UsersPage /></SuspenseWrapper>} />
           <Route path="/admin/groups" element={<SuspenseWrapper><GroupsPage /></SuspenseWrapper>} />
+          <Route path="/admin/tenancy" element={<SuspenseWrapper><TenancyDashboardPage /></SuspenseWrapper>} />
           <Route path="/settings" element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>} />
           <Route path="/calendars" element={<SuspenseWrapper><CalendarDashboardPage /></SuspenseWrapper>} />
           <Route path="/calendars/:calendarCode" element={<SuspenseWrapper><CalendarDetailPage /></SuspenseWrapper>} />

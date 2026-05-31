@@ -18,6 +18,7 @@ import {
   BookCheck,
   GitBranch,
   CalendarDays,
+  Building2,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -111,6 +112,7 @@ const trailingSections: NavSection[] = [
     title: 'Admin',
     items: [
       { label: 'Users', to: '/admin/users', icon: ShieldCheck },
+      { label: 'Tenancy', to: '/admin/tenancy', icon: Building2 },
       { label: 'Settings', to: '/settings', icon: SlidersHorizontal },
     ],
   },
