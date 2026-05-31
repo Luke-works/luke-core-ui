@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Users, UserPlus, Trash2, Shield, Plus, UsersRound, X } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, Plus, UsersRound, X, Building2 } from 'lucide-react';
 import PageHeader from '@/shared/layout/PageHeader';
 import Card from '@/shared/ui/Card';
 import Button from '@/shared/ui/Button';
@@ -25,6 +25,14 @@ import {
   type User,
   type Group,
 } from '@/features/admin/api/users';
+import {
+  getTenants,
+  createTenant,
+  deleteTenant,
+  addTenantMember,
+  removeTenantMember,
+  type Tenant,
+} from '@/features/admin/api/tenant';
 
 /* ── Shared input style ──────────────────────────────────── */
 
@@ -72,6 +80,13 @@ const createGroupSchema = z.object({
 
 type CreateGroupForm = z.infer<typeof createGroupSchema>;
 
+const createTenantSchema = z.object({
+  id: z.string().min(1, 'Tenant ID is required'),
+  name: z.string().min(1, 'Tenant name is required'),
+});
+
+type CreateTenantForm = z.infer<typeof createTenantSchema>;
+
 /* ── Users Page ──────────────────────────────────────────── */
 
 export default function UsersPage() {
@@ -79,6 +94,8 @@ export default function UsersPage() {
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [managingGroup, setManagingGroup] = useState<Group | null>(null);
+  const [tenantDrawerOpen, setTenantDrawerOpen] = useState(false);
+  const [managingTenant, setManagingTenant] = useState<Tenant | null>(null);
 
   /* ── Queries ─────────────────────────────────────────── */
 
@@ -96,6 +113,14 @@ export default function UsersPage() {
   } = useQuery({
     queryKey: ['groups'],
     queryFn: () => getGroups({ maxResults: 50 }),
+  });
+
+  const {
+    data: tenants = [],
+    isLoading: tenantsLoading,
+  } = useQuery({
+    queryKey: ['tenants'],
+    queryFn: () => getTenants({ maxResults: 50 }),
   });
 
   /* ── Mutations ───────────────────────────────────────── */
@@ -143,6 +168,29 @@ export default function UsersPage() {
     },
     onError: () => {
       toast.error('Failed to create group');
+    },
+  });
+
+  const deleteTenantMutation = useMutation({
+    mutationFn: deleteTenant,
+    onSuccess: () => {
+      toast.success('Tenant deleted');
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+    onError: () => {
+      toast.error('Failed to delete tenant');
+    },
+  });
+
+  const createTenantMutation = useMutation({
+    mutationFn: createTenant,
+    onSuccess: () => {
+      toast.success('Tenant created');
+      setTenantDrawerOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['tenants'] });
+    },
+    onError: () => {
+      toast.error('Failed to create tenant');
     },
   });
 
@@ -250,6 +298,56 @@ export default function UsersPage() {
     [deleteGroupMutation],
   );
 
+  /* ── Tenant Columns ──────────────────────────────────── */
+
+  const tenantColumns = useMemo<ColumnDef<Tenant, any>[]>(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'ID',
+        cell: ({ row }) => <CopyId id={row.original.id} />,
+      },
+      {
+        accessorKey: 'name',
+        header: 'Name',
+      },
+      {
+        id: 'actions',
+        header: 'Actions',
+        enableSorting: false,
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setManagingTenant(row.original);
+              }}
+              title="Manage members"
+            >
+              <UsersRound size={14} style={{ color: 'var(--accent-blue)' }} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Delete tenant "${row.original.id}"? This cannot be undone.`)) {
+                  deleteTenantMutation.mutate(row.original.id);
+                }
+              }}
+              title="Delete tenant"
+            >
+              <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [deleteTenantMutation],
+  );
+
   /* ── Render ──────────────────────────────────────────── */
 
   return (
@@ -331,6 +429,42 @@ export default function UsersPage() {
             />
           )}
         </Card>
+
+        {/* ── Tenants Section ──────────────────────────────── */}
+        <Card
+          title="Tenants"
+          action={
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setTenantDrawerOpen(true)}
+            >
+              <span className="inline-flex items-center gap-1.5">
+                <Plus size={14} />
+                Create Tenant
+              </span>
+            </Button>
+          }
+        >
+          {!tenantsLoading && tenants.length === 0 ? (
+            <EmptyState
+              icon={<Building2 size={40} />}
+              title="No Tenants"
+              description="Create a tenant, then assign users to it so they can sign in and see data."
+              action={{
+                label: 'Create Tenant',
+                onClick: () => setTenantDrawerOpen(true),
+              }}
+            />
+          ) : (
+            <DataTable
+              data={tenants}
+              columns={tenantColumns}
+              isLoading={tenantsLoading}
+              emptyMessage="No tenants found."
+            />
+          )}
+        </Card>
       </div>
 
       {/* ── Create User Drawer ─────────────────────────────── */}
@@ -379,7 +513,7 @@ export default function UsersPage() {
         />
       </Drawer>
 
-      {/* ── Manage Members Drawer ──────────────────────────── */}
+      {/* ── Manage Group Members Drawer ────────────────────── */}
       <Drawer
         open={managingGroup !== null}
         onClose={() => setManagingGroup(null)}
@@ -388,6 +522,34 @@ export default function UsersPage() {
       >
         {managingGroup && (
           <ManageMembersPanel group={managingGroup} allUsers={users} />
+        )}
+      </Drawer>
+
+      {/* ── Create Tenant Drawer ───────────────────────────── */}
+      <Drawer
+        open={tenantDrawerOpen}
+        onClose={() => setTenantDrawerOpen(false)}
+        title="Create Tenant"
+        width={400}
+      >
+        <CreateTenantFormPanel
+          isSubmitting={createTenantMutation.isPending}
+          onSubmit={(data) => {
+            createTenantMutation.mutate({ id: data.id, name: data.name });
+          }}
+          onCancel={() => setTenantDrawerOpen(false)}
+        />
+      </Drawer>
+
+      {/* ── Manage Tenant Members Drawer ───────────────────── */}
+      <Drawer
+        open={managingTenant !== null}
+        onClose={() => setManagingTenant(null)}
+        title={managingTenant ? `Manage Members — ${managingTenant.name || managingTenant.id}` : 'Manage Members'}
+        width={420}
+      >
+        {managingTenant && (
+          <ManageTenantMembersPanel tenant={managingTenant} allUsers={users} />
         )}
       </Drawer>
     </div>
@@ -727,6 +889,226 @@ function ManageMembersPanel({
                   disabled={removeMutation.isPending}
                   onClick={() => {
                     if (window.confirm(`Remove "${m.id}" from "${group.name}"?`)) {
+                      removeMutation.mutate(m.id);
+                    }
+                  }}
+                  title="Remove member"
+                >
+                  <X size={14} style={{ color: 'var(--accent-red)' }} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Add member */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Add member
+        </label>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+            style={selectStyle}
+            disabled={candidates.length === 0}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            <option value="">
+              {candidates.length === 0 ? 'All users are members' : 'Select user…'}
+            </option>
+            {candidates.map((u) => (
+              <option key={u.id} value={u.id}>
+                {userLabel(u)}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!selectedUserId || addMutation.isPending}
+            onClick={() => addMutation.mutate(selectedUserId)}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <UserPlus size={14} />
+              Add
+            </span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Create Tenant Form ──────────────────────────────────── */
+
+function CreateTenantFormPanel({
+  isSubmitting,
+  onSubmit,
+  onCancel,
+}: {
+  isSubmitting: boolean;
+  onSubmit: (data: CreateTenantForm) => void;
+  onCancel: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CreateTenantForm>({
+    resolver: zodResolver(createTenantSchema),
+    defaultValues: {
+      id: '',
+      name: '',
+    },
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      {/* Tenant ID */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Tenant ID
+        </label>
+        <input
+          type="text"
+          placeholder="acme-corp"
+          {...register('id')}
+          style={inputStyle}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        />
+        {errors.id && (
+          <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+            {errors.id.message}
+          </p>
+        )}
+      </div>
+
+      {/* Name */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Name
+        </label>
+        <input
+          type="text"
+          placeholder="Acme Corp"
+          {...register('name')}
+          style={inputStyle}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        />
+        {errors.name && (
+          <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+            {errors.name.message}
+          </p>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-2 pt-2">
+        <Button type="submit" variant="primary" size="sm" disabled={isSubmitting}>
+          <span className="inline-flex items-center gap-1.5">
+            <Plus size={14} />
+            {isSubmitting ? 'Creating...' : 'Create Tenant'}
+          </span>
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Manage Tenant Members Panel ─────────────────────────── */
+
+function ManageTenantMembersPanel({
+  tenant,
+  allUsers,
+}: {
+  tenant: Tenant;
+  allUsers: User[];
+}) {
+  const queryClient = useQueryClient();
+  const [selectedUserId, setSelectedUserId] = useState('');
+
+  const membersQueryKey = ['tenant-members', tenant.id];
+
+  const { data: members = [], isLoading: membersLoading } = useQuery({
+    queryKey: membersQueryKey,
+    queryFn: () => getUsers({ memberOfTenant: tenant.id, maxResults: 200 }),
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (userId: string) => addTenantMember(tenant.id, userId),
+    onSuccess: () => {
+      toast.success('Member added');
+      setSelectedUserId('');
+      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+    },
+    onError: () => toast.error('Failed to add member'),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (userId: string) => removeTenantMember(tenant.id, userId),
+    onSuccess: () => {
+      toast.success('Member removed');
+      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+    },
+    onError: () => toast.error('Failed to remove member'),
+  });
+
+  // Users not already in the tenant — candidates for the add picker.
+  const memberIds = useMemo(() => new Set(members.map((m) => m.id)), [members]);
+  const candidates = useMemo(
+    () => allUsers.filter((u) => !memberIds.has(u.id)),
+    [allUsers, memberIds],
+  );
+
+  const userLabel = (u: User) => {
+    const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+    return name ? `${name} (${u.id})` : u.id;
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Current members */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Members
+          </span>
+          <Badge variant="default">{members.length}</Badge>
+        </div>
+
+        {membersLoading ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Loading…
+          </p>
+        ) : members.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            No members yet. Add one below.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {members.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-center justify-between rounded-md px-3 py-2"
+                style={{ backgroundColor: 'var(--bg-elevated)' }}
+              >
+                <span className="text-sm min-w-0 truncate" style={{ color: 'var(--text-primary)' }}>
+                  {userLabel(m)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={removeMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Remove "${m.id}" from "${tenant.name || tenant.id}"?`)) {
                       removeMutation.mutate(m.id);
                     }
                   }}
