@@ -10,6 +10,7 @@ import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
 import StatusBadge from '@/shared/ui/StatusBadge';
+import Tooltip from '@/shared/ui/Tooltip';
 import EmptyState from '@/shared/ui/EmptyState';
 import StartInstanceModal from '@/features/processes/components/StartInstanceModal';
 import {
@@ -99,6 +100,17 @@ export default function ProcessListPage() {
     return map;
   }, [statistics]);
 
+  // Total running instances per process KEY (summed across every version), so
+  // the latest-version row reflects instances on older versions too.
+  const instancesByKey = useMemo(() => {
+    const map = new Map<string, number>();
+    statistics?.forEach((s) => {
+      const key = s.definition.key;
+      map.set(key, (map.get(key) ?? 0) + s.instances);
+    });
+    return map;
+  }, [statistics]);
+
   /* ── Merge definitions with stats + filter ─────────────────── */
 
   const rows: ProcessRow[] = useMemo(() => {
@@ -111,7 +123,7 @@ export default function ProcessListPage() {
           stat?.incidents?.reduce((sum, i) => sum + i.incidentCount, 0) ?? 0;
         return {
           ...def,
-          instanceCount: stat?.instances ?? 0,
+          instanceCount: instancesByKey.get(def.key) ?? stat?.instances ?? 0,
           incidentCount,
         };
       })
@@ -122,7 +134,7 @@ export default function ProcessListPage() {
           row.key.toLowerCase().includes(lowerSearch)
         );
       });
-  }, [definitions, statsMap, search]);
+  }, [definitions, statsMap, instancesByKey, search]);
 
   /* ── Columns ───────────────────────────────────────────────── */
 
@@ -158,12 +170,20 @@ export default function ProcessListPage() {
       },
       {
         accessorKey: 'version',
-        header: 'Version',
+        header: () => (
+          <Tooltip content="Latest Version Deployed to Engine">
+            <span className="cursor-default">Latest Version</span>
+          </Tooltip>
+        ),
         cell: ({ row }) => <Badge>v{row.original.version}</Badge>,
       },
       {
         accessorKey: 'instanceCount',
-        header: 'Instances',
+        header: () => (
+          <Tooltip content="Total ProcessInstances across Versions">
+            <span className="cursor-default">Total Instances</span>
+          </Tooltip>
+        ),
         cell: ({ row }) => (
           <span className="text-sm" style={{ color: 'var(--text-primary)' }}>
             {row.original.instanceCount}
