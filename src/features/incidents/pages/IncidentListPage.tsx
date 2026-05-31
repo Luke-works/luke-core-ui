@@ -9,12 +9,12 @@ import Button from '@/shared/ui/Button';
 import Badge from '@/shared/ui/Badge';
 import CopyId from '@/shared/ui/CopyId';
 import Tooltip from '@/shared/ui/Tooltip';
-import Drawer from '@/shared/ui/Drawer';
+import StackTraceModal from '@/shared/ui/StackTraceModal';
 import EmptyState from '@/shared/ui/EmptyState';
 import PageHeader from '@/shared/layout/PageHeader';
 
 import { getIncidents, getIncidentCount, deleteIncident } from '@/features/incidents/api/endpoints';
-import { retryJob, getJobStacktrace } from '@/features/jobs/api/endpoints';
+import { retryJob } from '@/features/jobs/api/endpoints';
 import { relativeTime } from '@/shared/utils/date';
 
 
@@ -53,7 +53,6 @@ export default function IncidentListPage() {
   const [groupBy, setGroupBy] = useState<GroupBy>('process');
   const [page, setPage] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [stacktraceJobId, setStacktraceJobId] = useState<string | null>(null);
 
   const pageSize = 20;
@@ -76,12 +75,6 @@ export default function IncidentListPage() {
     queryKey: ['incidents', 'count'],
     queryFn: () => getIncidentCount(),
     refetchInterval: 30000,
-  });
-
-  const stacktraceQuery = useQuery({
-    queryKey: ['stacktrace', stacktraceJobId],
-    queryFn: () => getJobStacktrace(stacktraceJobId!),
-    enabled: !!stacktraceJobId && drawerOpen,
   });
 
   // ---- Mutations -----------------------------------------------------------
@@ -144,11 +137,10 @@ export default function IncidentListPage() {
     }
   }, [incidentsQuery.data, selectedIds.size]);
 
-  // ---- Stack trace drawer --------------------------------------------------
+  // ---- Stack trace modal ---------------------------------------------------
 
   const openStacktrace = useCallback((jobId: string) => {
     setStacktraceJobId(jobId);
-    setDrawerOpen(true);
   }, []);
 
   // ---- Columns -------------------------------------------------------------
@@ -356,39 +348,11 @@ export default function IncidentListPage() {
         )}
       </Card>
 
-      {/* Stack Trace Drawer */}
-      <Drawer
-        open={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setStacktraceJobId(null);
-        }}
-        title="Stack Trace"
-        width={640}
-      >
-        {stacktraceQuery.isLoading ? (
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Loading stack trace...
-          </p>
-        ) : stacktraceQuery.isError ? (
-          <p className="text-sm" style={{ color: 'var(--accent-red)' }}>
-            Failed to load stack trace.
-          </p>
-        ) : (
-          <pre
-            className="text-xs font-mono-id overflow-auto p-4 rounded-md"
-            style={{
-              backgroundColor: 'var(--bg-elevated)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            <code>{stacktraceQuery.data || 'No stack trace available.'}</code>
-          </pre>
-        )}
-      </Drawer>
+      {/* Stack Trace Modal */}
+      <StackTraceModal
+        jobId={stacktraceJobId}
+        onClose={() => setStacktraceJobId(null)}
+      />
     </div>
   );
 }

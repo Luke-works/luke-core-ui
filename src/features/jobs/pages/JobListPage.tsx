@@ -11,13 +11,12 @@ import StatusBadge from '@/shared/ui/StatusBadge';
 import CopyId from '@/shared/ui/CopyId';
 import Tooltip from '@/shared/ui/Tooltip';
 import Tabs from '@/shared/ui/Tabs';
-import Drawer from '@/shared/ui/Drawer';
+import StackTraceModal from '@/shared/ui/StackTraceModal';
 import EmptyState from '@/shared/ui/EmptyState';
 import PageHeader from '@/shared/layout/PageHeader';
 
 import {
   getJobs,
-  getJobStacktrace,
   retryJob,
   suspendJob,
   getJobDefinitions,
@@ -441,22 +440,10 @@ function JobDefinitionsTab() {
 
 export default function JobListPage() {
   const [activeTab, setActiveTab] = useState('failed');
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const [stacktraceJobId, setStacktraceJobId] = useState<string | null>(null);
-
-  // ---- Stack trace query ---------------------------------------------------
-
-  const stacktraceQuery = useQuery({
-    queryKey: ['stacktrace', stacktraceJobId],
-    queryFn: () => getJobStacktrace(stacktraceJobId!),
-    enabled: !!stacktraceJobId && drawerOpen,
-  });
-
-  // ---- Stack trace drawer handler ------------------------------------------
 
   const openStacktrace = useCallback((jobId: string) => {
     setStacktraceJobId(jobId);
-    setDrawerOpen(true);
   }, []);
 
   // ---- Render --------------------------------------------------------------
@@ -477,39 +464,11 @@ export default function JobListPage() {
         </Tabs>
       </Card>
 
-      {/* Stack Trace Drawer */}
-      <Drawer
-        open={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setStacktraceJobId(null);
-        }}
-        title="Stack Trace"
-        width={640}
-      >
-        {stacktraceQuery.isLoading ? (
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Loading stack trace...
-          </p>
-        ) : stacktraceQuery.isError ? (
-          <p className="text-sm" style={{ color: 'var(--accent-red)' }}>
-            Failed to load stack trace.
-          </p>
-        ) : (
-          <pre
-            className="text-xs font-mono-id overflow-auto p-4 rounded-md"
-            style={{
-              backgroundColor: 'var(--bg-elevated)',
-              color: 'var(--text-primary)',
-              border: '1px solid var(--border)',
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-            }}
-          >
-            <code>{stacktraceQuery.data || 'No stack trace available.'}</code>
-          </pre>
-        )}
-      </Drawer>
+      {/* Stack Trace Modal */}
+      <StackTraceModal
+        jobId={stacktraceJobId}
+        onClose={() => setStacktraceJobId(null)}
+      />
     </div>
   );
 }

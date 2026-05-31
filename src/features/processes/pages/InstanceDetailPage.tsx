@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Pause, Play, Trash2, RotateCcw, X, RefreshCw, AlertTriangle, Route, Pencil, Workflow, Hash, Key, GitBranch, FileText, Type, Building2, GitMerge, CircleDot, ChevronDown, ChevronRight, Braces, ClipboardList, BoltIcon, Settings2, ScrollText } from 'lucide-react';
+import { Pause, Play, Trash2, RotateCcw, X, RefreshCw, AlertTriangle, Route, Pencil, Workflow, Hash, Key, GitBranch, FileText, Type, Building2, GitMerge, CircleDot, ChevronDown, ChevronRight, Braces, ClipboardList, BoltIcon, Settings2, ScrollText, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { useSidebarLock } from '@/shared/hooks/useSidebarLock';
@@ -9,6 +9,7 @@ import BpmnViewer, { type ActivityState } from '@/shared/bpmn/BpmnViewer';
 import Tabs from '@/shared/ui/Tabs';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
+import StackTraceModal from '@/shared/ui/StackTraceModal';
 
 
 import CopyId from '@/shared/ui/CopyId';
@@ -58,6 +59,7 @@ export default function InstanceDetailPage() {
   const [showRoutes, setShowRoutes] = useState(true);
   const [panelHeight, setPanelHeight] = useState(320);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [stacktraceJobId, setStacktraceJobId] = useState<string | null>(null);
 
   // Search & pagination state for each tab
   const [varSearch, setVarSearch] = useState('');
@@ -640,6 +642,7 @@ export default function InstanceDetailPage() {
                 isLoading={incidentsLoading}
                 onRetry={(inc) => { if (inc.configuration) retryJobMutation.mutate(inc.configuration); }}
                 onResolve={(inc) => resolveIncidentMutation.mutate(inc.id)}
+                onViewStacktrace={(inc) => { if (inc.configuration) setStacktraceJobId(inc.configuration); }}
                 search={incSearch} setSearch={setIncSearch}
                 page={incPage} setPage={setIncPage}
               />
@@ -689,6 +692,11 @@ export default function InstanceDetailPage() {
           onClose={() => setShowAddVarModal(false)}
         />
       )}
+
+      <StackTraceModal
+        jobId={stacktraceJobId}
+        onClose={() => setStacktraceJobId(null)}
+      />
     </div>
   );
 }
@@ -1181,8 +1189,9 @@ function parseValue(raw: string, type: string): any {
 /*  Incidents Panel                                                    */
 /* ================================================================== */
 
-function IncidentsPanel({ incidents, isLoading, onRetry, onResolve, search, setSearch, page, setPage }: {
+function IncidentsPanel({ incidents, isLoading, onRetry, onResolve, onViewStacktrace, search, setSearch, page, setPage }: {
   incidents: Incident[] | undefined; isLoading: boolean; onRetry: (i: Incident) => void; onResolve: (i: Incident) => void;
+  onViewStacktrace: (i: Incident) => void;
   search: string; setSearch: (s: string) => void; page: number; setPage: (fn: number | ((p: number) => number)) => void;
 }) {
   const PAGE_SIZE = 10;
@@ -1224,6 +1233,11 @@ function IncidentsPanel({ incidents, isLoading, onRetry, onResolve, search, setS
                 <p className="text-xs mt-1 font-mono-id" style={{ color: 'var(--text-muted)' }}>Activity: {incident.activityId}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
+                {incident.configuration && (
+                  <Button variant="secondary" size="sm" title="View stack trace" onClick={() => onViewStacktrace(incident)}>
+                    <FileCode size={13} className="mr-1" />View
+                  </Button>
+                )}
                 {incident.configuration && (
                   <Button variant="secondary" size="sm" title="Retry job" onClick={() => onRetry(incident)}>
                     <RotateCcw size={13} className="mr-1" />Retry
