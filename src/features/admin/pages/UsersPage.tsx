@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Users, UserPlus, Trash2, Shield, Plus } from 'lucide-react';
+import { Users, UserPlus, Trash2, Shield, Plus, UsersRound, X } from 'lucide-react';
 import PageHeader from '@/shared/layout/PageHeader';
 import Card from '@/shared/ui/Card';
 import Button from '@/shared/ui/Button';
@@ -20,6 +20,8 @@ import {
   getGroups,
   createGroup,
   deleteGroup,
+  addGroupMember,
+  removeGroupMember,
   type User,
   type Group,
 } from '@/features/admin/api/users';
@@ -76,6 +78,7 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
+  const [managingGroup, setManagingGroup] = useState<Group | null>(null);
 
   /* ── Queries ─────────────────────────────────────────── */
 
@@ -215,19 +218,32 @@ export default function UsersPage() {
         header: 'Actions',
         enableSorting: false,
         cell: ({ row }) => (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              if (window.confirm(`Delete group "${row.original.id}"? This cannot be undone.`)) {
-                deleteGroupMutation.mutate(row.original.id);
-              }
-            }}
-            title="Delete group"
-          >
-            <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setManagingGroup(row.original);
+              }}
+              title="Manage members"
+            >
+              <UsersRound size={14} style={{ color: 'var(--accent-blue)' }} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (window.confirm(`Delete group "${row.original.id}"? This cannot be undone.`)) {
+                  deleteGroupMutation.mutate(row.original.id);
+                }
+              }}
+              title="Delete group"
+            >
+              <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
+            </Button>
+          </div>
         ),
       },
     ],
@@ -361,6 +377,18 @@ export default function UsersPage() {
           }}
           onCancel={() => setGroupDrawerOpen(false)}
         />
+      </Drawer>
+
+      {/* ── Manage Members Drawer ──────────────────────────── */}
+      <Drawer
+        open={managingGroup !== null}
+        onClose={() => setManagingGroup(null)}
+        title={managingGroup ? `Manage Members — ${managingGroup.name}` : 'Manage Members'}
+        width={420}
+      >
+        {managingGroup && (
+          <ManageMembersPanel group={managingGroup} allUsers={users} />
+        )}
       </Drawer>
     </div>
   );
@@ -610,5 +638,144 @@ function CreateGroupFormPanel({
         </Button>
       </div>
     </form>
+  );
+}
+
+/* ── Manage Members Panel ────────────────────────────────── */
+
+function ManageMembersPanel({
+  group,
+  allUsers,
+}: {
+  group: Group;
+  allUsers: User[];
+}) {
+  const queryClient = useQueryClient();
+  const [selectedUserId, setSelectedUserId] = useState('');
+
+  const membersQueryKey = ['group-members', group.id];
+
+  const { data: members = [], isLoading: membersLoading } = useQuery({
+    queryKey: membersQueryKey,
+    queryFn: () => getUsers({ memberOfGroup: group.id, maxResults: 200 }),
+  });
+
+  const addMutation = useMutation({
+    mutationFn: (userId: string) => addGroupMember(group.id, userId),
+    onSuccess: () => {
+      toast.success('Member added');
+      setSelectedUserId('');
+      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+    },
+    onError: () => toast.error('Failed to add member'),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: (userId: string) => removeGroupMember(group.id, userId),
+    onSuccess: () => {
+      toast.success('Member removed');
+      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+    },
+    onError: () => toast.error('Failed to remove member'),
+  });
+
+  // Users not already in the group — candidates for the add picker.
+  const memberIds = useMemo(() => new Set(members.map((m) => m.id)), [members]);
+  const candidates = useMemo(
+    () => allUsers.filter((u) => !memberIds.has(u.id)),
+    [allUsers, memberIds],
+  );
+
+  const userLabel = (u: User) => {
+    const name = [u.firstName, u.lastName].filter(Boolean).join(' ').trim();
+    return name ? `${name} (${u.id})` : u.id;
+  };
+
+  return (
+    <div className="flex flex-col gap-5">
+      {/* Current members */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+            Members
+          </span>
+          <Badge variant="default">{members.length}</Badge>
+        </div>
+
+        {membersLoading ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            Loading…
+          </p>
+        ) : members.length === 0 ? (
+          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+            No members yet. Add one below.
+          </p>
+        ) : (
+          <ul className="flex flex-col gap-1">
+            {members.map((m) => (
+              <li
+                key={m.id}
+                className="flex items-center justify-between rounded-md px-3 py-2"
+                style={{ backgroundColor: 'var(--bg-elevated)' }}
+              >
+                <span className="text-sm min-w-0 truncate" style={{ color: 'var(--text-primary)' }}>
+                  {userLabel(m)}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={removeMutation.isPending}
+                  onClick={() => {
+                    if (window.confirm(`Remove "${m.id}" from "${group.name}"?`)) {
+                      removeMutation.mutate(m.id);
+                    }
+                  }}
+                  title="Remove member"
+                >
+                  <X size={14} style={{ color: 'var(--accent-red)' }} />
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* Add member */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Add member
+        </label>
+        <div className="flex items-center gap-2">
+          <select
+            value={selectedUserId}
+            onChange={(e) => setSelectedUserId(e.target.value)}
+            style={selectStyle}
+            disabled={candidates.length === 0}
+            onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+            onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+          >
+            <option value="">
+              {candidates.length === 0 ? 'All users are members' : 'Select user…'}
+            </option>
+            {candidates.map((u) => (
+              <option key={u.id} value={u.id}>
+                {userLabel(u)}
+              </option>
+            ))}
+          </select>
+          <Button
+            variant="primary"
+            size="sm"
+            disabled={!selectedUserId || addMutation.isPending}
+            onClick={() => addMutation.mutate(selectedUserId)}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <UserPlus size={14} />
+              Add
+            </span>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
