@@ -25,7 +25,7 @@ export async function retryJob(
   id: string,
   retries?: number,
 ): Promise<void> {
-  const { data } = await api.post(`/job/${id}/retries`, {
+  const { data } = await api.put(`/job/${id}/retries`, {
     retries: retries ?? 1,
   });
   return data;
