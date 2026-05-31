@@ -8,7 +8,7 @@ import SearchInput from '@/shared/ui/SearchInput';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Badge from '@/shared/ui/Badge';
 import StatusBadge from '@/shared/ui/StatusBadge';
-import CopyId from '@/shared/ui/CopyId';
+import IdLink from '@/shared/ui/IdLink';
 import Drawer from '@/shared/ui/Drawer';
 import Tabs from '@/shared/ui/Tabs';
 import Tooltip from '@/shared/ui/Tooltip';
@@ -138,9 +138,7 @@ export default function HistoryPage() {
         accessorKey: 'id',
         header: 'Instance ID',
         cell: ({ row }) => (
-          <span onClick={(e) => e.stopPropagation()}>
-            <CopyId id={row.original.id} />
-          </span>
+          <IdLink id={row.original.id} to={`/processes/instance/${row.original.id}`} />
         ),
       },
       {

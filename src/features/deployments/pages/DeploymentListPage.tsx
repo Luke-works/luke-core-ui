@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import PageHeader from '@/shared/layout/PageHeader';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Button from '@/shared/ui/Button';
-import CopyId from '@/shared/ui/CopyId';
+import IdLink from '@/shared/ui/IdLink';
 import Tooltip from '@/shared/ui/Tooltip';
 import EmptyState from '@/shared/ui/EmptyState';
 import {
@@ -86,9 +86,7 @@ export default function DeploymentListPage() {
         accessorKey: 'id',
         header: 'ID',
         cell: ({ row }) => (
-          <span onClick={(e) => e.stopPropagation()}>
-            <CopyId id={row.original.id} />
-          </span>
+          <IdLink id={row.original.id} to={`/deployments/${row.original.id}`} />
         ),
       },
       {
