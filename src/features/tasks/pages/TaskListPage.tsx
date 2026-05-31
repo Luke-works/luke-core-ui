@@ -13,7 +13,7 @@ import PageHeader from '@/shared/layout/PageHeader';
 
 import { getTasks, getTaskCount } from '@/features/tasks/api/endpoints';
 import { useAuthStore } from '@/features/auth/stores/authStore';
-import { relativeTime, absoluteTime } from '@/shared/utils/date';
+import { relativeTime, absoluteTime, toCamundaDate } from '@/shared/utils/date';
 import { priorityLabel } from '@/shared/utils/camunda';
 
 import type { Task } from '@/features/tasks/api/types';
@@ -124,11 +124,11 @@ export default function TaskListPage() {
     // Due dates
     const db = searchParams.get('dueBefore');
     if (db) {
-      params.dueBefore = new Date(db).toISOString();
+      params.dueBefore = toCamundaDate(db);
     }
     const da = searchParams.get('dueAfter');
     if (da) {
-      params.dueAfter = new Date(da).toISOString();
+      params.dueAfter = toCamundaDate(da);
     }
 
     return params;

@@ -37,7 +37,7 @@ import {
 import type { HistoricProcessInstance } from '@/features/history/api/types';
 import type { Incident } from '@/features/incidents/api/types';
 import type { JobDefinition } from '@/features/jobs/api/types';
-import { absoluteTime, formatDuration } from '@/shared/utils/date';
+import { absoluteTime, formatDuration, toCamundaDate } from '@/shared/utils/date';
 
 /* ── Input style ─────────────────────────────────────────────── */
 
@@ -226,10 +226,10 @@ export default function ProcessDetailPage() {
       firstResult: historyPage * HISTORY_PAGE_SIZE,
       maxResults: HISTORY_PAGE_SIZE,
     };
-    if (historyFilters.startedAfter) p.startedAfter = new Date(historyFilters.startedAfter).toISOString();
-    if (historyFilters.startedBefore) p.startedBefore = new Date(historyFilters.startedBefore).toISOString();
-    if (historyFilters.finishedAfter) p.finishedAfter = new Date(historyFilters.finishedAfter).toISOString();
-    if (historyFilters.finishedBefore) p.finishedBefore = new Date(historyFilters.finishedBefore).toISOString();
+    if (historyFilters.startedAfter) p.startedAfter = toCamundaDate(historyFilters.startedAfter);
+    if (historyFilters.startedBefore) p.startedBefore = toCamundaDate(historyFilters.startedBefore);
+    if (historyFilters.finishedAfter) p.finishedAfter = toCamundaDate(historyFilters.finishedAfter);
+    if (historyFilters.finishedBefore) p.finishedBefore = toCamundaDate(historyFilters.finishedBefore);
     if (historyFilters.businessKey) p.processInstanceBusinessKey = historyFilters.businessKey;
     if (historyFilters.state === 'completed') p.finished = true;
     if (historyFilters.state === 'active') p.unfinished = true;

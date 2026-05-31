@@ -5,6 +5,30 @@
 import { formatDistanceToNow, format, parseISO } from 'date-fns';
 
 /**
+ * Formats a date for Camunda 7's REST API.
+ *
+ * Camunda expects `yyyy-MM-dd'T'HH:mm:ss.SSSZ` where the zone is a numeric
+ * offset like `+0000` — NOT the trailing literal `Z` that JS `Date.toISOString()`
+ * emits, which Camunda rejects ("Cannot convert value ... to java type Date").
+ *
+ * Accepts a Date, an ISO/datetime-local string, or null/undefined. Returns
+ * `undefined` for empty/invalid input so callers can omit the query param.
+ */
+export function toCamundaDate(
+  value: Date | string | null | undefined,
+): string | undefined {
+  if (value === null || value === undefined || value === '') {
+    return undefined;
+  }
+  const date = typeof value === 'string' ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  // `xx` token → numeric offset without a colon (e.g. +0000, -0800).
+  return format(date, "yyyy-MM-dd'T'HH:mm:ss.SSSxx");
+}
+
+/**
  * Returns a relative time string like "3 minutes ago".
  * Returns '-' for null or undefined input.
  */

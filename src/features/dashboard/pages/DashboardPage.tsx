@@ -25,7 +25,7 @@ import { getTaskCount } from '@/features/tasks/api/endpoints';
 import { getIncidentCount, getIncidents } from '@/features/incidents/api/endpoints';
 import { getJobCount } from '@/features/jobs/api/endpoints';
 import { getHistoricProcessInstances } from '@/features/history/api/endpoints';
-import { relativeTime } from '@/shared/utils/date';
+import { relativeTime, toCamundaDate } from '@/shared/utils/date';
 
 import type { HistoricProcessInstance } from '@/features/history/api/types';
 import type { ProcessDefinitionStatistics } from '@/features/processes/api/types';
@@ -181,7 +181,7 @@ export default function DashboardPage() {
 
   // ---- Area chart query ---------------------------------------------------
 
-  const startedAfter = useMemo(() => subHours(new Date(), 24).toISOString(), []);
+  const startedAfter = useMemo(() => toCamundaDate(subHours(new Date(), 24)), []);
 
   const historicInstances = useQuery({
     queryKey: ['dashboard', 'historicInstances', startedAfter],

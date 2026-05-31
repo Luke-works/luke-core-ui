@@ -1,7 +1,8 @@
-import { lazy, Suspense, type ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppShell from '@/shared/layout/AppShell';
 import AuthGuard from '@/features/auth/components/AuthGuard';
+import { lazyWithReload as lazy } from '@/shared/utils/lazyWithReload';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
 const ProcessListPage = lazy(() => import('@/features/processes/pages/ProcessListPage'));
