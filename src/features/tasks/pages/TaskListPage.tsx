@@ -18,7 +18,7 @@ import { priorityLabel } from '@/shared/utils/camunda';
 
 import type { Task } from '@/features/tasks/api/types';
 
-import TaskDetailDrawer from './TaskDetailPage';
+import TaskDetailModal from './TaskDetailPage';
 
 /* ── Constants ────────────────────────────────────────────── */
 
@@ -531,9 +531,10 @@ export default function TaskListPage() {
         </div>
       </div>
 
-      {/* ── Task detail drawer ───────────────────────────── */}
-      <TaskDetailDrawer
+      {/* ── Task detail modal ────────────────────────────── */}
+      <TaskDetailModal
         taskId={selectedTaskId}
+        open={selectedTaskId !== null}
         onClose={() => setSelectedTaskId(null)}
       />
     </div>

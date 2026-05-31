@@ -1,578 +1,437 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { User, Clock, AlertCircle, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-
-import Drawer from '@/shared/ui/Drawer';
-import Card from '@/shared/ui/Card';
+import {
+  X,
+  CheckCircle2,
+  Trash2,
+  Plus,
+  AlertTriangle,
+} from 'lucide-react';
 import Button from '@/shared/ui/Button';
-import Badge from '@/shared/ui/Badge';
-import CopyId from '@/shared/ui/CopyId';
-import Skeleton from '@/shared/ui/Skeleton';
-import VariableRenderer from '@/shared/ui/VariableRenderer';
-import Tooltip from '@/shared/ui/Tooltip';
-
 import {
   getTaskById,
-  getTaskFormVariables,
-  claimTask,
-  unclaimTask,
+  getTaskVariables,
   completeTask,
 } from '@/features/tasks/api/endpoints';
-import { useAuthStore } from '@/features/auth/stores/authStore';
-import { relativeTime, absoluteTime } from '@/shared/utils/date';
-import { priorityLabel } from '@/shared/utils/camunda';
-
 import type { VariablesMap } from '@/shared/api/types';
 
-/* ── Variable types supported by Camunda 7 ────────────────── */
+/* ── Variable type for the form ───────────────────────────── */
 
-const VARIABLE_TYPES = [
-  'String',
-  'Boolean',
-  'Integer',
-  'Long',
-  'Double',
-  'Json',
-] as const;
-
-type OutputVariable = {
-  key: string;
+interface OutputVariable {
+  name: string;
+  type: string;
   value: string;
-  type: (typeof VARIABLE_TYPES)[number];
-};
-
-/* ── Priority badge variant mapping ───────────────────────── */
-
-function priorityBadgeVariant(
-  priority: number,
-): 'danger' | 'warning' | 'info' | 'muted' {
-  if (priority >= 76) return 'danger';
-  if (priority >= 51) return 'warning';
-  if (priority >= 26) return 'info';
-  return 'muted';
 }
 
-/* ── Props ────────────────────────────────────────────────── */
+const VARIABLE_TYPES = ['String', 'Boolean', 'Integer', 'Long', 'Double', 'Date', 'Json'];
 
-interface TaskDetailDrawerProps {
+/* ── Component ─────────────────────────────────────────────── */
+
+interface TaskDetailModalProps {
   taskId: string | null;
+  open: boolean;
   onClose: () => void;
 }
 
-/* ── Component ────────────────────────────────────────────── */
-
-export default function TaskDetailDrawer({
-  taskId,
-  onClose,
-}: TaskDetailDrawerProps) {
+export default function TaskDetailModal({ taskId, open, onClose }: TaskDetailModalProps) {
   const queryClient = useQueryClient();
-  const username = useAuthStore((s) => s.username);
+  const [activeTab, setActiveTab] = useState<'details' | 'variables' | 'complete'>('details');
 
-  const [showCompleteForm, setShowCompleteForm] = useState(false);
-  const [outputVars, setOutputVars] = useState<OutputVariable[]>([]);
+  // Form state for completing a task
+  const [outputVariables, setOutputVariables] = useState<OutputVariable[]>([]);
+  // Nested "are you sure?" confirm when completing with no output data
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  /* ── Queries ──────────────────────────────────────────── */
+  /* ── Queries ─────────────────────────────────────────────── */
 
-  const taskQuery = useQuery({
+  const { data: task, isLoading: taskLoading } = useQuery({
     queryKey: ['task', taskId],
     queryFn: () => getTaskById(taskId!),
-    enabled: !!taskId,
+    enabled: !!taskId && open,
   });
 
-  const variablesQuery = useQuery({
-    queryKey: ['task', taskId, 'formVariables'],
-    queryFn: () => getTaskFormVariables(taskId!),
-    enabled: !!taskId,
+  const { data: variables } = useQuery({
+    queryKey: ['taskVariables', taskId],
+    queryFn: () => getTaskVariables(taskId!),
+    enabled: !!taskId && open && activeTab === 'variables',
   });
+  const variablesMap: VariablesMap = variables ?? {};
 
-  const task = taskQuery.data;
-  const variables: VariablesMap = variablesQuery.data ?? {};
-
-  /* ── Mutations ───────────────────────────────────────── */
-
-  const claimMutation = useMutation({
-    mutationFn: () => claimTask(taskId!, username!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task claimed successfully');
-    },
-    onError: () => toast.error('Failed to claim task'),
-  });
-
-  const unclaimMutation = useMutation({
-    mutationFn: () => unclaimTask(taskId!),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task'] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task unclaimed successfully');
-    },
-    onError: () => toast.error('Failed to unclaim task'),
-  });
+  /* ── Mutation ────────────────────────────────────────────── */
 
   const completeMutation = useMutation({
-    mutationFn: (vars: Record<string, any>) =>
-      completeTask(taskId!, vars),
+    mutationFn: () => {
+      const varsPayload: Record<string, { value: any; type: string }> = {};
+      for (const v of outputVariables) {
+        if (!v.name) continue;
+        let parsedValue: any = v.value;
+        if (v.type === 'Boolean') parsedValue = v.value === 'true';
+        else if (v.type === 'Integer' || v.type === 'Long') parsedValue = parseInt(v.value, 10);
+        else if (v.type === 'Double') parsedValue = parseFloat(v.value);
+        else if (v.type === 'Json') {
+          try { parsedValue = JSON.parse(v.value); } catch { /* keep as string */ }
+        }
+        varsPayload[v.name] = { value: parsedValue, type: v.type };
+      }
+      return completeTask(taskId!, varsPayload);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['task'] });
+      toast.success('Task completed');
+      setConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      toast.success('Task completed successfully');
-      setShowCompleteForm(false);
-      setOutputVars([]);
       onClose();
     },
-    onError: () => toast.error('Failed to complete task'),
+    onError: () => {
+      toast.error('Failed to complete task');
+      setConfirmOpen(false);
+    },
   });
 
-  /* ── Output variable helpers ─────────────────────────── */
+  /* ── Reset form when task changes ────────────────────────── */
 
-  function addOutputVar() {
-    setOutputVars((prev) => [
-      ...prev,
-      { key: '', value: '', type: 'String' },
-    ]);
+  useEffect(() => {
+    setOutputVariables([]);
+    setActiveTab('details');
+    setConfirmOpen(false);
+  }, [taskId]);
+
+  /* ── Variable form helpers ───────────────────────────────── */
+
+  function addVariable() {
+    setOutputVariables((prev) => [...prev, { name: '', type: 'String', value: '' }]);
   }
 
-  function removeOutputVar(index: number) {
-    setOutputVars((prev) => prev.filter((_, i) => i !== index));
-  }
-
-  function updateOutputVar(
-    index: number,
-    field: keyof OutputVariable,
-    val: string,
-  ) {
-    setOutputVars((prev) =>
-      prev.map((v, i) => (i === index ? { ...v, [field]: val } : v)),
+  function updateVariable(index: number, field: keyof OutputVariable, value: string) {
+    setOutputVariables((prev) =>
+      prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)),
     );
   }
 
-  function parseVariableValue(raw: string, type: string): any {
-    switch (type) {
-      case 'Boolean':
-        return raw.toLowerCase() === 'true';
-      case 'Integer':
-      case 'Long':
-        return parseInt(raw, 10);
-      case 'Double':
-        return parseFloat(raw);
-      case 'Json':
-        try {
-          return JSON.parse(raw);
-        } catch {
-          return raw;
-        }
-      default:
-        return raw;
-    }
+  function removeVariable(index: number) {
+    setOutputVariables((prev) => prev.filter((_, i) => i !== index));
   }
+
+  /* ── Complete handler — confirm if no output data ────────── */
 
   function handleComplete() {
-    const vars: Record<string, any> = {};
-    for (const v of outputVars) {
-      if (v.key.trim()) {
-        vars[v.key.trim()] = {
-          value: parseVariableValue(v.value, v.type),
-          type: v.type,
-        };
-      }
+    const hasData = outputVariables.some((v) => v.name.trim() !== '');
+    if (!hasData) {
+      setConfirmOpen(true);
+      return;
     }
-    completeMutation.mutate(vars);
+    completeMutation.mutate();
   }
 
-  /* ── Render ──────────────────────────────────────────── */
+  /* ── Render ──────────────────────────────────────────────── */
 
-  const isAssignedToMe = task?.assignee === username;
-  const isUnassigned = !task?.assignee;
-  const isOverdue = task?.due ? new Date(task.due) < new Date() : false;
+  if (!open) return null;
 
   return (
-    <Drawer
-      open={!!taskId}
-      onClose={() => {
-        setShowCompleteForm(false);
-        setOutputVars([]);
-        onClose();
-      }}
-      title={task?.name ?? 'Task Details'}
-      width={480}
-    >
-      {/* Loading state */}
-      {taskQuery.isLoading && (
-        <div className="space-y-4">
-          <Skeleton height={20} width="60%" />
-          <Skeleton height={16} width="40%" />
-          <Skeleton height={80} />
-          <Skeleton height={80} />
-          <Skeleton height={80} />
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]"
+        onClick={() => { if (!completeMutation.isPending) onClose(); }}
+      />
+
+      {/* Modal */}
+      <div
+        className="relative z-10 w-full max-w-xl max-h-[85vh] flex flex-col rounded-2xl border bg-white shadow-theme-xl dark:bg-gray-900"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center justify-between px-6 py-4 shrink-0 border-b"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <div className="min-w-0">
+            <h2 className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+              Task Details
+            </h2>
+            {task && (
+              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }} title={task.name}>
+                {task.name}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center justify-center w-9 h-9 rounded-lg"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            <X size={18} />
+          </button>
         </div>
-      )}
 
-      {/* Error state */}
-      {taskQuery.isError && (
-        <Card>
-          <div className="flex flex-col items-center gap-3 py-4">
-            <AlertCircle
-              size={32}
-              style={{ color: 'var(--accent-red)' }}
-            />
-            <p
-              className="text-sm"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Failed to load task details.
-            </p>
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => taskQuery.refetch()}
-            >
-              Retry
-            </Button>
-          </div>
-        </Card>
-      )}
-
-      {/* Task loaded */}
-      {task && (
-        <div className="space-y-5">
-          {/* Header info */}
-          <div>
-            <h3
-              className="text-base font-semibold mb-1"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              {task.name}
-            </h3>
-            <p
-              className="text-sm mb-2"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              {task.processDefinitionId}
-            </p>
-            <CopyId id={task.id} />
-          </div>
-
-          {/* Metadata cards */}
-          <div className="grid grid-cols-2 gap-3">
-            {/* Assignee */}
-            <Card>
-              <div className="flex items-center gap-2 mb-1">
-                <User
-                  size={14}
-                  style={{ color: 'var(--text-muted)' }}
-                />
-                <span
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Assignee
-                </span>
-              </div>
-              <p
-                className="text-sm"
-                style={{
-                  color: task.assignee
-                    ? 'var(--text-primary)'
-                    : 'var(--text-muted)',
-                  fontStyle: task.assignee ? 'normal' : 'italic',
-                }}
-              >
-                {task.assignee ?? 'Unassigned'}
-              </p>
-            </Card>
-
-            {/* Priority */}
-            <Card>
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Priority
-                </span>
-              </div>
-              <Badge variant={priorityBadgeVariant(task.priority)}>
-                {priorityLabel(task.priority)} ({task.priority})
-              </Badge>
-            </Card>
-
-            {/* Due date */}
-            <Card>
-              <div className="flex items-center gap-2 mb-1">
-                <Clock
-                  size={14}
-                  style={{ color: 'var(--text-muted)' }}
-                />
-                <span
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Due Date
-                </span>
-              </div>
-              {task.due ? (
-                <Tooltip content={absoluteTime(task.due)}>
-                  <span
-                    className="text-sm"
-                    style={{
-                      color: isOverdue
-                        ? 'var(--accent-red)'
-                        : 'var(--text-primary)',
-                    }}
-                  >
-                    {relativeTime(task.due)}
-                  </span>
-                </Tooltip>
-              ) : (
-                <span
-                  className="text-sm italic"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  No due date
-                </span>
-              )}
-            </Card>
-
-            {/* Created date */}
-            <Card>
-              <div className="flex items-center gap-2 mb-1">
-                <span
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Created
-                </span>
-              </div>
-              <Tooltip content={absoluteTime(task.created)}>
-                <span
-                  className="text-sm"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {relativeTime(task.created)}
-                </span>
-              </Tooltip>
-            </Card>
-          </div>
-
-          {/* Action buttons */}
-          <div className="flex gap-2">
-            {isUnassigned && (
-              <Button
-                variant="primary"
-                onClick={() => claimMutation.mutate()}
-                disabled={claimMutation.isPending}
-              >
-                {claimMutation.isPending ? 'Claiming...' : 'Claim'}
-              </Button>
-            )}
-            {isAssignedToMe && (
-              <Button
-                variant="secondary"
-                onClick={() => unclaimMutation.mutate()}
-                disabled={unclaimMutation.isPending}
-              >
-                {unclaimMutation.isPending ? 'Unclaiming...' : 'Unclaim'}
-              </Button>
-            )}
-            {!isUnassigned && !isAssignedToMe && (
-              <Button variant="secondary" disabled>
-                Assigned to {task.assignee}
-              </Button>
-            )}
-          </div>
-
-          {/* Variables section */}
-          <Card title="Form Variables">
-            {variablesQuery.isLoading ? (
-              <div className="space-y-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} height={20} />
-                ))}
-              </div>
-            ) : variablesQuery.isError ? (
-              <p
-                className="text-sm"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                Failed to load variables.
-              </p>
-            ) : Object.keys(variables).length === 0 ? (
-              <p
-                className="text-sm italic"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                No form variables.
-              </p>
-            ) : (
-              <div className="space-y-3">
-                {Object.entries(variables).map(([key, variable]) => (
-                  <div
-                    key={key}
-                    className="flex items-start justify-between gap-3 pb-2"
-                    style={{
-                      borderBottom: '1px solid var(--border)',
-                    }}
-                  >
-                    <span
-                      className="text-sm font-mono-id shrink-0"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {key}
-                    </span>
-                    <div className="text-right">
-                      <VariableRenderer variable={variable} name={key} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
-
-          {/* Complete task section — only when assigned to current user */}
-          {isAssignedToMe && !showCompleteForm && (
-            <Button
-              variant="primary"
-              className="w-full"
-              onClick={() => setShowCompleteForm(true)}
-            >
-              Complete Task
-            </Button>
-          )}
-          {isAssignedToMe && showCompleteForm && (
-            <Card title="Complete Task">
-              {/* Output variables editor */}
-              <div className="space-y-3 mb-4">
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-xs uppercase tracking-wider font-medium"
-                    style={{ color: 'var(--text-secondary)' }}
-                  >
-                    Output Variables
-                  </span>
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-4">
+          {taskLoading ? (
+            <div className="space-y-4">
+              <div className="h-8 rounded animate-pulse" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+              <div className="h-32 rounded animate-pulse" style={{ backgroundColor: 'var(--bg-elevated)' }} />
+            </div>
+          ) : !task ? (
+            <div className="text-center py-8" style={{ color: 'var(--text-muted)' }}>
+              Task not found
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {/* Tab navigation */}
+              <div className="flex gap-1 border-b" style={{ borderColor: 'var(--border)' }}>
+                {(['details', 'variables', 'complete'] as const).map((tab) => (
                   <button
-                    type="button"
-                    onClick={addOutputVar}
-                    className="inline-flex items-center gap-1 text-xs cursor-pointer bg-transparent border-none"
-                    style={{ color: 'var(--accent-blue)' }}
-                  >
-                    <Plus size={14} /> Add
-                  </button>
-                </div>
-
-                {outputVars.length === 0 && (
-                  <p
-                    className="text-sm italic"
-                    style={{ color: 'var(--text-muted)' }}
-                  >
-                    No output variables. Click Add to include variables.
-                  </p>
-                )}
-
-                {outputVars.map((v, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-start gap-2 pb-3"
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className="px-3 py-2 text-sm font-medium capitalize transition-colors"
                     style={{
-                      borderBottom: '1px solid var(--border)',
+                      color: activeTab === tab ? 'var(--accent-blue)' : 'var(--text-secondary)',
+                      borderBottom: activeTab === tab ? '2px solid var(--accent-blue)' : '2px solid transparent',
                     }}
                   >
-                    <div className="flex-1 space-y-2">
-                      <input
-                        type="text"
-                        placeholder="Variable name"
-                        value={v.key}
-                        onChange={(e) =>
-                          updateOutputVar(idx, 'key', e.target.value)
-                        }
-                        className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                        style={{
-                          backgroundColor: 'var(--bg-elevated)',
-                          border: '1px solid var(--border)',
-                          color: 'var(--text-primary)',
-                        }}
-                      />
-                      <div className="flex gap-2">
-                        <select
-                          value={v.type}
-                          onChange={(e) =>
-                            updateOutputVar(
-                              idx,
-                              'type',
-                              e.target.value,
-                            )
-                          }
-                          className="h-8 px-2 text-sm rounded-md outline-none"
-                          style={{
-                            backgroundColor: 'var(--bg-elevated)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                          }}
-                        >
-                          {VARIABLE_TYPES.map((t) => (
-                            <option key={t} value={t}>
-                              {t}
-                            </option>
-                          ))}
-                        </select>
-                        <input
-                          type="text"
-                          placeholder="Value"
-                          value={v.value}
-                          onChange={(e) =>
-                            updateOutputVar(
-                              idx,
-                              'value',
-                              e.target.value,
-                            )
-                          }
-                          className="flex-1 h-8 px-2 text-sm rounded-md outline-none"
-                          style={{
-                            backgroundColor: 'var(--bg-elevated)',
-                            border: '1px solid var(--border)',
-                            color: 'var(--text-primary)',
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => removeOutputVar(idx)}
-                      className="p-1.5 mt-1 rounded-md cursor-pointer bg-transparent border-none hover:bg-elevated"
-                      style={{ color: 'var(--text-muted)' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                    {tab}
+                  </button>
                 ))}
               </div>
 
-              <div className="flex gap-2">
-                <Button
-                  variant="primary"
-                  className="flex-1"
-                  onClick={handleComplete}
-                  disabled={completeMutation.isPending}
-                >
-                  {completeMutation.isPending
-                    ? 'Completing...'
-                    : 'Submit'}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setShowCompleteForm(false);
-                    setOutputVars([]);
-                  }}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </Card>
+              {/* Tab content */}
+              {activeTab === 'details' && <DetailsTab task={task} />}
+              {activeTab === 'variables' && <VariablesTab variables={variablesMap} />}
+              {activeTab === 'complete' && (
+                <CompleteTab
+                  outputVariables={outputVariables}
+                  onAdd={addVariable}
+                  onUpdate={updateVariable}
+                  onRemove={removeVariable}
+                  onComplete={handleComplete}
+                  isCompleting={completeMutation.isPending}
+                />
+              )}
+            </div>
           )}
         </div>
+      </div>
+
+      {/* Nested confirm modal — complete without output data */}
+      {confirmOpen && (
+        <ConfirmComplete
+          isCompleting={completeMutation.isPending}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={() => completeMutation.mutate()}
+        />
       )}
-    </Drawer>
+    </div>
+  );
+}
+
+/* ── Confirm Complete (nested modal) ─────────────────────── */
+
+function ConfirmComplete({
+  isCompleting,
+  onCancel,
+  onConfirm,
+}: {
+  isCompleting: boolean;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-gray-900/60" onClick={() => { if (!isCompleting) onCancel(); }} />
+      <div
+        className="relative z-10 w-full max-w-sm rounded-2xl border bg-white shadow-theme-xl dark:bg-gray-900"
+        style={{ borderColor: 'var(--border)' }}
+      >
+        <div className="px-6 py-5">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertTriangle size={18} style={{ color: 'var(--accent-amber, #f59e0b)' }} />
+            <h3 className="text-base font-medium" style={{ color: 'var(--text-primary)' }}>
+              Complete task?
+            </h3>
+          </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Are you sure you want to complete this task without adding any output data?
+          </p>
+        </div>
+        <div
+          className="flex items-center justify-end gap-2 px-6 py-4 border-t"
+          style={{ borderColor: 'var(--border)' }}
+        >
+          <Button variant="ghost" size="sm" onClick={onCancel} disabled={isCompleting}>
+            No
+          </Button>
+          <Button variant="primary" size="sm" onClick={onConfirm} disabled={isCompleting}>
+            <span className="inline-flex items-center gap-1.5">
+              <CheckCircle2 size={14} />
+              {isCompleting ? 'Completing...' : 'Yes, complete'}
+            </span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Details Tab ─────────────────────────────────────────── */
+
+function DetailsTab({ task }: { task: any }) {
+  const details = [
+    { label: 'Task ID', value: task.id },
+    { label: 'Name', value: task.name },
+    { label: 'Assignee', value: task.assignee ?? 'Unassigned' },
+    { label: 'Created', value: task.created ? new Date(task.created).toLocaleString() : '-' },
+    { label: 'Due', value: task.due ? new Date(task.due).toLocaleString() : '-' },
+    { label: 'Priority', value: String(task.priority ?? 0) },
+    { label: 'Process Instance', value: task.processInstanceId ?? '-' },
+    { label: 'Task Definition Key', value: task.taskDefinitionKey ?? '-' },
+  ];
+
+  return (
+    <div className="space-y-3">
+      {details.map((d) => (
+        <div key={d.label} className="flex flex-col gap-0.5">
+          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+            {d.label}
+          </span>
+          <span className="text-sm font-mono-id" style={{ color: 'var(--text-primary)' }}>
+            {d.value}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Variables Tab ───────────────────────────────────────── */
+
+function VariablesTab({ variables }: { variables: VariablesMap }) {
+  const entries = Object.entries(variables);
+  if (entries.length === 0) {
+    return (
+      <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        No variables for this task.
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {entries.map(([name, v]) => (
+        <div
+          key={name}
+          className="flex items-center justify-between p-2 rounded"
+          style={{ backgroundColor: 'var(--bg-elevated)' }}
+        >
+          <div className="flex flex-col">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+              {name}
+            </span>
+            <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+              {v.type}
+            </span>
+          </div>
+          <span className="text-sm font-mono-id" style={{ color: 'var(--text-secondary)' }}>
+            {typeof v.value === 'object' ? JSON.stringify(v.value) : String(v.value)}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── Complete Tab ────────────────────────────────────────── */
+
+function CompleteTab({
+  outputVariables,
+  onAdd,
+  onUpdate,
+  onRemove,
+  onComplete,
+  isCompleting,
+}: {
+  outputVariables: OutputVariable[];
+  onAdd: () => void;
+  onUpdate: (index: number, field: keyof OutputVariable, value: string) => void;
+  onRemove: (index: number) => void;
+  onComplete: () => void;
+  isCompleting: boolean;
+}) {
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+          Output Variables
+        </span>
+        <Button variant="ghost" size="sm" onClick={onAdd}>
+          <Plus size={14} className="mr-1" />
+          Add
+        </Button>
+      </div>
+
+      {outputVariables.length === 0 ? (
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+          No output variables. The task will be completed without setting variables.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {outputVariables.map((variable, index) => (
+            <div
+              key={index}
+              className="flex gap-2 items-start p-2 rounded"
+              style={{ backgroundColor: 'var(--bg-elevated)' }}
+            >
+              <div className="flex-1 space-y-2">
+                <input
+                  type="text"
+                  placeholder="Variable name"
+                  value={variable.name}
+                  onChange={(e) => onUpdate(index, 'name', e.target.value)}
+                  className="w-full px-2 py-1 text-sm rounded"
+                  style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                />
+                <div className="flex gap-2">
+                  <select
+                    value={variable.type}
+                    onChange={(e) => onUpdate(index, 'type', e.target.value)}
+                    className="px-2 py-1 text-sm rounded"
+                    style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  >
+                    {VARIABLE_TYPES.map((t) => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                  <input
+                    type="text"
+                    placeholder="Value"
+                    value={variable.value}
+                    onChange={(e) => onUpdate(index, 'value', e.target.value)}
+                    className="flex-1 px-2 py-1 text-sm rounded"
+                    style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  />
+                </div>
+              </div>
+              <button
+                onClick={() => onRemove(index)}
+                className="p-1"
+                style={{ color: 'var(--accent-red)' }}
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <Button
+        variant="primary"
+        onClick={onComplete}
+        disabled={isCompleting}
+        className="w-full"
+      >
+        <CheckCircle2 size={16} className="mr-2" />
+        {isCompleting ? 'Completing...' : 'Complete Task'}
+      </Button>
+    </div>
   );
 }
