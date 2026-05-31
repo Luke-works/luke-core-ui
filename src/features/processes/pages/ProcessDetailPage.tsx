@@ -16,6 +16,7 @@ import Button from '@/shared/ui/Button';
 import StatusBadge from '@/shared/ui/StatusBadge';
 import CopyId from '@/shared/ui/CopyId';
 import Skeleton from '@/shared/ui/Skeleton';
+import StartInstanceModal from '@/features/processes/components/StartInstanceModal';
 import type { DetailItem } from '@/shared/ui/DetailPanel';
 import {
   getProcessDefinitionById,
@@ -25,6 +26,7 @@ import {
   startProcessInstance,
   getActivityStatistics,
 } from '@/features/processes/api/endpoints';
+import type { StartProcessBody } from '@/features/processes/api/types';
 import {
   getHistoricProcessInstances,
   getHistoricProcessInstanceCount,
@@ -62,6 +64,7 @@ export default function ProcessDetailPage() {
   const [activeTab, setActiveTab] = useState('instances');
   const [heatmapEnabled, setHeatmapEnabled] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [startModalOpen, setStartModalOpen] = useState(false);
 
   /* ── Search & pagination state ────────────────────────────── */
   const [instanceSearch, setInstanceSearch] = useState('');
@@ -255,12 +258,10 @@ export default function ProcessDetailPage() {
   /* ── Mutations ─────────────────────────────────────────────── */
 
   const startMutation = useMutation({
-    mutationFn: () => {
-      const businessKey = window.prompt('Business key (optional):');
-      return startProcessInstance(id!, { businessKey: businessKey || undefined });
-    },
+    mutationFn: (body: StartProcessBody) => startProcessInstance(id!, body),
     onSuccess: () => {
       toast.success('Process instance started');
+      setStartModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['processInstances'] });
       queryClient.invalidateQueries({ queryKey: ['historicProcessInstances'] });
       queryClient.invalidateQueries({ queryKey: ['processInstanceCount'] });
@@ -550,7 +551,7 @@ export default function ProcessDetailPage() {
         </div>
         {/* Right: actions */}
         <div className="flex items-center gap-2">
-          <Button variant="primary" size="sm" onClick={() => startMutation.mutate()} disabled={startMutation.isPending}>
+          <Button variant="primary" size="sm" onClick={() => setStartModalOpen(true)} disabled={startMutation.isPending}>
             <Play size={13} className="mr-1.5" />Start Instance
           </Button>
           <button type="button" onClick={() => setHeatmapEnabled((v) => !v)}
@@ -953,6 +954,14 @@ export default function ProcessDetailPage() {
           </div>
         </Tabs>
       </div>
+
+      <StartInstanceModal
+        open={startModalOpen}
+        processName={displayName}
+        isSubmitting={startMutation.isPending}
+        onClose={() => setStartModalOpen(false)}
+        onSubmit={(body) => startMutation.mutate(body)}
+      />
     </div>
   );
 }

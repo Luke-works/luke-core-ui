@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { GitBranch, Play, Eye } from 'lucide-react';
@@ -11,12 +11,17 @@ import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
 import StatusBadge from '@/shared/ui/StatusBadge';
 import EmptyState from '@/shared/ui/EmptyState';
+import StartInstanceModal from '@/features/processes/components/StartInstanceModal';
 import {
   getProcessDefinitions,
   getProcessDefinitionStatistics,
   startProcessInstance,
 } from '@/features/processes/api/endpoints';
-import type { ProcessDefinition, ProcessDefinitionStatistics } from '@/features/processes/api/types';
+import type {
+  ProcessDefinition,
+  ProcessDefinitionStatistics,
+  StartProcessBody,
+} from '@/features/processes/api/types';
 
 /* ------------------------------------------------------------------ */
 /*  Row type combining definition + statistics                         */
@@ -45,6 +50,9 @@ export default function ProcessListPage() {
   const search = searchParams.get('search') ?? '';
   const page = Number(searchParams.get('page') ?? '0');
 
+  // Which definition the Start Instance modal is open for (null = closed).
+  const [startTarget, setStartTarget] = useState<{ id: string; name: string } | null>(null);
+
   /* ── Data fetching ─────────────────────────────────────────── */
 
   const {
@@ -70,14 +78,11 @@ export default function ProcessListPage() {
   /* ── Start instance mutation ───────────────────────────────── */
 
   const startMutation = useMutation({
-    mutationFn: (defId: string) => {
-      const businessKey = window.prompt('Business key (optional):');
-      return startProcessInstance(defId, {
-        businessKey: businessKey || undefined,
-      });
-    },
+    mutationFn: ({ defId, body }: { defId: string; body: StartProcessBody }) =>
+      startProcessInstance(defId, body),
     onSuccess: () => {
       toast.success('Process instance started');
+      setStartTarget(null);
       queryClient.invalidateQueries({ queryKey: ['processDefinitions'] });
       queryClient.invalidateQueries({ queryKey: ['processDefinitionStatistics'] });
     },
@@ -207,7 +212,10 @@ export default function ProcessListPage() {
               title="Start instance"
               onClick={(e) => {
                 e.stopPropagation();
-                startMutation.mutate(row.original.id);
+                setStartTarget({
+                  id: row.original.id,
+                  name: row.original.name ?? row.original.key,
+                });
               }}
             >
               <Play size={14} />
@@ -216,7 +224,7 @@ export default function ProcessListPage() {
         ),
       },
     ],
-    [navigate, startMutation],
+    [navigate],
   );
 
   /* ── Handlers ──────────────────────────────────────────────── */
@@ -273,6 +281,16 @@ export default function ProcessListPage() {
           />
         </Card>
       )}
+
+      <StartInstanceModal
+        open={startTarget !== null}
+        processName={startTarget?.name ?? ''}
+        isSubmitting={startMutation.isPending}
+        onClose={() => setStartTarget(null)}
+        onSubmit={(body) => {
+          if (startTarget) startMutation.mutate({ defId: startTarget.id, body });
+        }}
+      />
     </div>
   );
 }
