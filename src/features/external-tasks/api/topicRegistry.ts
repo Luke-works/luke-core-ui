@@ -26,8 +26,8 @@ export type RegisteredTopic = {
   updatedAt: string | null;
 };
 
-const baseURL = import.meta.env.VITE_CAMUNDA_BASE_URL
-  ? `${import.meta.env.VITE_CAMUNDA_BASE_URL}/api/topics`
+const baseURL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api/topics`
   : '/api/topics';
 
 const topicApi = axios.create({ baseURL });

@@ -17,7 +17,6 @@ import {
   Cpu,
   BookCheck,
   GitBranch,
-  Database,
   CalendarDays,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
@@ -37,8 +36,8 @@ interface CapabilitySubscription {
   tier: string;
 }
 
-const subscriptionBaseUrl = import.meta.env.VITE_CAMUNDA_BASE_URL
-  ? `${import.meta.env.VITE_CAMUNDA_BASE_URL}/api`
+const subscriptionBaseUrl = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api`
   : '/api';
 
 async function fetchMySubscriptions(): Promise<CapabilitySubscription[]> {
@@ -108,12 +107,6 @@ const calendarSection: NavSection = {
 };
 
 const trailingSections: NavSection[] = [
-  {
-    title: 'Data',
-    items: [
-      { label: 'Database', to: '/database', icon: Database },
-    ],
-  },
   {
     title: 'Admin',
     items: [

@@ -22,7 +22,6 @@ const ExternalTaskPage = lazy(() => import('@/features/external-tasks/pages/Exte
 const TopicRegistryPage = lazy(() => import('@/features/external-tasks/pages/TopicRegistryPage'));
 const RegisterTopicPage = lazy(() => import('@/features/external-tasks/pages/RegisterTopicPage'));
 const WorkflowBuilderPage = lazy(() => import('@/features/external-tasks/pages/WorkflowBuilderPage'));
-const DatabasePage = lazy(() => import('@/features/database/pages/DatabasePage'));
 const CalendarDashboardPage = lazy(() => import('@/features/calendars/pages/CalendarDashboardPage'));
 const CalendarDetailPage = lazy(() => import('@/features/calendars/pages/CalendarDetailPage'));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
@@ -66,7 +65,6 @@ export default function App() {
           <Route path="/admin/users" element={<SuspenseWrapper><UsersPage /></SuspenseWrapper>} />
           <Route path="/admin/groups" element={<SuspenseWrapper><GroupsPage /></SuspenseWrapper>} />
           <Route path="/settings" element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>} />
-          <Route path="/database" element={<SuspenseWrapper><DatabasePage /></SuspenseWrapper>} />
           <Route path="/calendars" element={<SuspenseWrapper><CalendarDashboardPage /></SuspenseWrapper>} />
           <Route path="/calendars/:calendarCode" element={<SuspenseWrapper><CalendarDetailPage /></SuspenseWrapper>} />
           <Route path="/external-tasks" element={<SuspenseWrapper><ExternalTaskPage /></SuspenseWrapper>} />

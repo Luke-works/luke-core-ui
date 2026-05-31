@@ -1,0 +1,44 @@
+# Render blueprint — static site for the Luke Core operator UI.
+# On Render: New → Blueprint → connect this repo → Render reads this file.
+#
+# This is a Vite SPA. It is built to static assets and served from a CDN;
+# there is no Node server at runtime. All API calls go directly to the
+# core-engine, so VITE_API_BASE_URL must point at the engine's public URL
+# at BUILD time (Vite inlines VITE_* vars into the bundle).
+
+services:
+  - type: web
+    name: luke-core-ui
+    runtime: static
+    branch: main
+    # npm ci for reproducible installs from package-lock.json
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    # Don't auto-build untrusted PRs (the build bakes in env vars)
+    pullRequestPreviewsEnabled: false
+    envVars:
+      # Pin Node to a version Vite 8 supports (>=20.19 || >=22.12)
+      - key: NODE_VERSION
+        value: 22.12.0
+
+      # Public URL of the deployed luke-core-engine, e.g.
+      # https://luke-core-engine.onrender.com  (NO trailing slash).
+      # Marked sync:false so you set it per-environment in the dashboard.
+      # NOTE: the engine's ALLOWED_ORIGINS must include this site's URL
+      # (https://<this-service>.onrender.com) or browser calls will be
+      # blocked by CORS.
+      - key: VITE_API_BASE_URL
+        sync: false
+
+    # SPA fallback: serve index.html for client-side (react-router) routes
+    # so deep links like /dashboard or /processes/:id don't 404.
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    # Long-cache the fingerprinted build assets; never cache index.html.
+    headers:
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable

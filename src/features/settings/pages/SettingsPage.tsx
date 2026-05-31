@@ -54,7 +54,7 @@ export default function SettingsPage() {
   const tenants = useTenantStore((s) => s.tenants);
   const clearTenants = useTenantStore((s) => s.clear);
 
-  const engineUrl = import.meta.env.VITE_CAMUNDA_BASE_URL || 'http://localhost:8080';
+  const engineUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
   const taskEngineUrl = import.meta.env.VITE_TASK_ENGINE_URL || 'http://localhost:8090';
 
   /* ── Health checks ─────────────────────────────────────── */
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                     </p>
                     <div className="space-y-1.5">
                       {[
-                        { key: 'VITE_CAMUNDA_BASE_URL', value: engineUrl, desc: 'Core engine URL' },
+                        { key: 'VITE_API_BASE_URL', value: engineUrl, desc: 'Core engine URL' },
                         { key: 'VITE_TASK_ENGINE_URL', value: taskEngineUrl, desc: 'Task engine URL' },
                       ].map((env) => (
                         <div key={env.key} className="flex items-center gap-2 px-2 py-1.5 rounded text-xs" style={{ backgroundColor: 'var(--bg-elevated)' }}>

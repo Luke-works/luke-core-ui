@@ -66,7 +66,7 @@ export default function DeploymentDetailPage() {
     if (!activeResource || !id) return;
     try {
       const { username, password } = useAuthStore.getState();
-      const baseURL = import.meta.env.VITE_CAMUNDA_BASE_URL || '';
+      const baseURL = import.meta.env.VITE_API_BASE_URL || '';
       const url = `${baseURL}/engine-rest/deployment/${id}/resources/${activeResource.id}/data`;
       const res = await fetch(url, {
         headers: {

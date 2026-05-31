@@ -76,7 +76,7 @@ export default function SetupPage() {
   const handleFinish = async () => {
     setIsSubmitting(true);
     try {
-      const engineUrl = import.meta.env.VITE_CAMUNDA_BASE_URL || 'http://localhost:8080';
+      const engineUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
       // Save setup config to backend
       const res = await fetch(`${engineUrl}/api/setup`, {

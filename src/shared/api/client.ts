@@ -2,8 +2,8 @@ import axios from 'axios';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useTenantStore } from '@/shared/stores/tenantStore';
 
-const baseURL = import.meta.env.VITE_CAMUNDA_BASE_URL
-  ? `${import.meta.env.VITE_CAMUNDA_BASE_URL}/engine-rest`
+const baseURL = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/engine-rest`
   : '/engine-rest';
 
 const api = axios.create({ baseURL });
