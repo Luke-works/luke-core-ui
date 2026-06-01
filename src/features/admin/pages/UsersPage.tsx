@@ -33,6 +33,7 @@ import {
   removeTenantMember,
   type Tenant,
 } from '@/features/admin/api/tenant';
+import { onboardUser } from '@/features/admin/api/onboarding';
 
 /* ── Shared input style ──────────────────────────────────── */
 
@@ -169,21 +170,9 @@ export default function UsersPage() {
   });
 
   // Onboard = create the user, add them to a tenant, and assign a role group
-  // (which carries the authorizations). Done as a sequence of engine-rest calls.
+  // (which carries the authorizations) — done atomically by core-engine.
   const onboardMutation = useMutation({
-    mutationFn: async (data: OnboardUserForm) => {
-      await createUser({
-        profile: {
-          id: data.id,
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-        },
-        credentials: { password: data.password },
-      });
-      await addTenantMember(data.tenantId, data.id);
-      await addGroupMember(data.role, data.id);
-    },
+    mutationFn: (data: OnboardUserForm) => onboardUser(data),
     onSuccess: () => {
       toast.success('User onboarded');
       setOnboardDrawerOpen(false);
