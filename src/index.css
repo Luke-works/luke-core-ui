@@ -250,6 +250,11 @@ html.dark { color-scheme: dark; }
 }
 .font-mono-id {
   font-family: "JetBrains Mono", ui-monospace, monospace;
+  /* JetBrains Mono is ~10% wider than the body font; tighten so code cells
+     don't bloat table columns and clip neighbouring text. */
+  font-size: 0.9em;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
 }
 .font-body {
   font-family: "Anek Telugu", system-ui, -apple-system, sans-serif;
