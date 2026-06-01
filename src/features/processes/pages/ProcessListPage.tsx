@@ -13,6 +13,7 @@ import StatusBadge from '@/shared/ui/StatusBadge';
 import Tooltip from '@/shared/ui/Tooltip';
 import EmptyState from '@/shared/ui/EmptyState';
 import StartInstanceModal from '@/features/processes/components/StartInstanceModal';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import {
   getProcessDefinitions,
   getProcessDefinitionStatistics,
@@ -53,6 +54,9 @@ export default function ProcessListPage() {
 
   // Which definition the Start Instance modal is open for (null = closed).
   const [startTarget, setStartTarget] = useState<{ id: string; name: string } | null>(null);
+
+  const { can } = useAuthz();
+  const canStart = can('startProcess');
 
   /* ── Data fetching ─────────────────────────────────────────── */
 
@@ -226,25 +230,27 @@ export default function ProcessListPage() {
             >
               <Eye size={14} />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Start instance"
-              onClick={(e) => {
-                e.stopPropagation();
-                setStartTarget({
-                  id: row.original.id,
-                  name: row.original.name ?? row.original.key,
-                });
-              }}
-            >
-              <Play size={14} />
-            </Button>
+            {canStart && (
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Start instance"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setStartTarget({
+                    id: row.original.id,
+                    name: row.original.name ?? row.original.key,
+                  });
+                }}
+              >
+                <Play size={14} />
+              </Button>
+            )}
           </div>
         ),
       },
     ],
-    [navigate],
+    [navigate, canStart],
   );
 
   /* ── Handlers ──────────────────────────────────────────────── */

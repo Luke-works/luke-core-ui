@@ -29,6 +29,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useTenantStore } from '@/shared/stores/tenantStore';
 import { useUiStore } from '@/shared/stores/uiStore';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 
 /* ── Subscription types & fetcher ─────────────────────────── */
 
@@ -137,6 +138,7 @@ export default function Sidebar() {
   const { pathname } = useLocation();
 
   const activeTenantId = useTenantStore((s) => s.activeTenantId);
+  const { isOperator } = useAuthz();
 
   const { data: subscriptions } = useQuery({
     queryKey: ['my-subscriptions', activeTenantId],
@@ -158,9 +160,16 @@ export default function Sidebar() {
     if (hasActiveCalendar) {
       sections.push(calendarSection);
     }
-    sections.push(...trailingSections);
+    // Operator-only nav (e.g. /admin/*) is hidden for non-operators.
+    const trailing = trailingSections
+      .map((s) => ({
+        ...s,
+        items: s.items.filter((i) => isOperator || !i.to.startsWith('/admin')),
+      }))
+      .filter((s) => s.items.length > 0);
+    sections.push(...trailing);
     return sections;
-  }, [hasActiveCalendar]);
+  }, [hasActiveCalendar, isOperator]);
 
   const allPaths = useMemo(
     () => navSections.flatMap((s) => s.items.map((i) => i.to)),

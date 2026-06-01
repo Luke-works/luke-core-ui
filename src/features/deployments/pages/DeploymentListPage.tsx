@@ -17,6 +17,7 @@ import {
   type DeploymentResource,
 } from '@/features/deployments/api/endpoints';
 import { relativeTime, absoluteTime } from '@/shared/utils/date';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -33,6 +34,9 @@ export default function DeploymentListPage() {
 
   const [page, setPage] = useState(0);
   const [expandedDeploymentId, setExpandedDeploymentId] = useState<string | null>(null);
+
+  const { can } = useAuthz();
+  const canDeploy = can('deploy');
 
   /* ── Data fetching ─────────────────────────────────────────── */
 
@@ -149,25 +153,26 @@ export default function DeploymentListPage() {
         id: 'actions',
         header: '',
         enableSorting: false,
-        cell: ({ row }) => (
-          <div className="flex items-center justify-end">
-            <Button
-              variant="ghost"
-              size="sm"
-              title="Delete deployment"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(row.original.id);
-              }}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
-            </Button>
-          </div>
-        ),
+        cell: ({ row }) =>
+          canDeploy ? (
+            <div className="flex items-center justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                title="Delete deployment"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(row.original.id);
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
+              </Button>
+            </div>
+          ) : null,
       },
     ],
-    [expandedDeploymentId, deleteMutation.isPending],
+    [expandedDeploymentId, deleteMutation.isPending, canDeploy],
   );
 
   /* ── Render ────────────────────────────────────────────────── */

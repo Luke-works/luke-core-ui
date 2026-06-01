@@ -2,6 +2,7 @@ import { Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AppShell from '@/shared/layout/AppShell';
 import AuthGuard from '@/features/auth/components/AuthGuard';
+import RequireOperator from '@/features/auth/components/RequireOperator';
 import { lazyWithReload as lazy } from '@/shared/utils/lazyWithReload';
 
 const DashboardPage = lazy(() => import('@/features/dashboard/pages/DashboardPage'));
@@ -70,9 +71,9 @@ export default function App() {
           <Route path="/deployments/:id" element={<SuspenseWrapper><DeploymentDetailPage /></SuspenseWrapper>} />
           <Route path="/decisions" element={<SuspenseWrapper><DecisionListPage /></SuspenseWrapper>} />
           <Route path="/decisions/:id" element={<SuspenseWrapper><DecisionDetailPage /></SuspenseWrapper>} />
-          <Route path="/admin/users" element={<SuspenseWrapper><UsersPage /></SuspenseWrapper>} />
-          <Route path="/admin/groups" element={<SuspenseWrapper><GroupsPage /></SuspenseWrapper>} />
-          <Route path="/admin/tenancy" element={<SuspenseWrapper><TenancyDashboardPage /></SuspenseWrapper>} />
+          <Route path="/admin/users" element={<RequireOperator><SuspenseWrapper><UsersPage /></SuspenseWrapper></RequireOperator>} />
+          <Route path="/admin/groups" element={<RequireOperator><SuspenseWrapper><GroupsPage /></SuspenseWrapper></RequireOperator>} />
+          <Route path="/admin/tenancy" element={<RequireOperator><SuspenseWrapper><TenancyDashboardPage /></SuspenseWrapper></RequireOperator>} />
           <Route path="/settings" element={<SuspenseWrapper><SettingsPage /></SuspenseWrapper>} />
           <Route path="/calendars" element={<SuspenseWrapper><CalendarDashboardPage /></SuspenseWrapper>} />
           <Route path="/calendars/:calendarCode" element={<SuspenseWrapper><CalendarDetailPage /></SuspenseWrapper>} />
