@@ -9,7 +9,7 @@ import PageHeader from '@/shared/layout/PageHeader';
 import Card from '@/shared/ui/Card';
 import Button from '@/shared/ui/Button';
 import Badge from '@/shared/ui/Badge';
-import Drawer from '@/shared/ui/Drawer';
+import Modal from '@/shared/ui/Modal';
 import EmptyState from '@/shared/ui/EmptyState';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import CopyId from '@/shared/ui/CopyId';
@@ -74,7 +74,7 @@ type CreateUserForm = z.infer<typeof createUserSchema>;
 const createGroupSchema = z.object({
   id: z.string().min(1, 'Group ID is required'),
   name: z.string().min(1, 'Group name is required'),
-  type: z.enum(['WORKFLOW', 'ORGANIZATIONAL'], {
+  type: z.enum(['ORGANIZATIONAL', 'WORKFLOW'], {
     message: 'Type is required',
   }),
 });
@@ -519,7 +519,7 @@ export default function UsersPage() {
       </div>
 
       {/* ── Create User Drawer ─────────────────────────────── */}
-      <Drawer
+      <Modal
         open={userDrawerOpen}
         onClose={() => setUserDrawerOpen(false)}
         title="Create User"
@@ -542,10 +542,10 @@ export default function UsersPage() {
           }}
           onCancel={() => setUserDrawerOpen(false)}
         />
-      </Drawer>
+      </Modal>
 
       {/* ── Onboard User Drawer ────────────────────────────── */}
-      <Drawer
+      <Modal
         open={onboardDrawerOpen}
         onClose={() => setOnboardDrawerOpen(false)}
         title="Onboard User"
@@ -557,10 +557,10 @@ export default function UsersPage() {
           onSubmit={(data) => onboardMutation.mutate(data)}
           onCancel={() => setOnboardDrawerOpen(false)}
         />
-      </Drawer>
+      </Modal>
 
       {/* ── Create Group Drawer ────────────────────────────── */}
-      <Drawer
+      <Modal
         open={groupDrawerOpen}
         onClose={() => setGroupDrawerOpen(false)}
         title="Create Group"
@@ -577,10 +577,10 @@ export default function UsersPage() {
           }}
           onCancel={() => setGroupDrawerOpen(false)}
         />
-      </Drawer>
+      </Modal>
 
       {/* ── Manage Group Members Drawer ────────────────────── */}
-      <Drawer
+      <Modal
         open={managingGroup !== null}
         onClose={() => setManagingGroup(null)}
         title={managingGroup ? `Manage Members — ${managingGroup.name}` : 'Manage Members'}
@@ -589,10 +589,10 @@ export default function UsersPage() {
         {managingGroup && (
           <ManageMembersPanel group={managingGroup} allUsers={users} />
         )}
-      </Drawer>
+      </Modal>
 
       {/* ── Create Tenant Drawer ───────────────────────────── */}
-      <Drawer
+      <Modal
         open={tenantDrawerOpen}
         onClose={() => setTenantDrawerOpen(false)}
         title="Create Tenant"
@@ -605,10 +605,10 @@ export default function UsersPage() {
           }}
           onCancel={() => setTenantDrawerOpen(false)}
         />
-      </Drawer>
+      </Modal>
 
       {/* ── Manage Tenant Members Drawer ───────────────────── */}
-      <Drawer
+      <Modal
         open={managingTenant !== null}
         onClose={() => setManagingTenant(null)}
         title={managingTenant ? `Manage Members — ${managingTenant.name || managingTenant.id}` : 'Manage Members'}
@@ -617,7 +617,7 @@ export default function UsersPage() {
         {managingTenant && (
           <ManageTenantMembersPanel tenant={managingTenant} allUsers={users} />
         )}
-      </Drawer>
+      </Modal>
     </div>
   );
 }
@@ -937,7 +937,7 @@ function CreateGroupFormPanel({
     defaultValues: {
       id: '',
       name: '',
-      type: 'WORKFLOW',
+      type: 'ORGANIZATIONAL',
     },
   });
 
@@ -994,8 +994,8 @@ function CreateGroupFormPanel({
           onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
           onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
         >
-          <option value="WORKFLOW">WORKFLOW</option>
-          <option value="ORGANIZATIONAL">ORGANIZATIONAL</option>
+          <option value="ORGANIZATIONAL">Organizational (candidate group)</option>
+          <option value="WORKFLOW">Workflow (legacy)</option>
         </select>
         {errors.type && (
           <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
