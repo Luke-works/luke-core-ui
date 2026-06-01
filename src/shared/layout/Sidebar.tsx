@@ -29,7 +29,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useTenantStore } from '@/shared/stores/tenantStore';
 import { useUiStore } from '@/shared/stores/uiStore';
-import { useAuthz } from '@/features/auth/hooks/useAuthz';
+import { useAuthz, type ViewArea } from '@/features/auth/hooks/useAuthz';
 
 /* ── Subscription types & fetcher ─────────────────────────── */
 
@@ -132,13 +132,21 @@ const trailingSections: NavSection[] = [
   },
 ];
 
+// Nav paths that require a role's read access to a given area.
+const AREA_BY_PATH: Record<string, ViewArea> = {
+  '/tasks': 'tasks',
+  '/deployments': 'deployments',
+  '/decisions': 'decisions',
+  '/history': 'history',
+};
+
 export default function Sidebar() {
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
   const { pathname } = useLocation();
 
   const activeTenantId = useTenantStore((s) => s.activeTenantId);
-  const { isOperator } = useAuthz();
+  const { isOperator, canView } = useAuthz();
 
   const { data: subscriptions } = useQuery({
     queryKey: ['my-subscriptions', activeTenantId],
@@ -156,20 +164,25 @@ export default function Sidebar() {
   }, [subscriptions]);
 
   const navSections = useMemo(() => {
+    // Hide nav items the user can't use:
+    //  - /admin/* → operators only
+    //  - area-mapped items (tasks, deployments, decisions, history) → roles with read access
+    const itemVisible = (to: string) => {
+      if (to.startsWith('/admin')) return isOperator;
+      const area = AREA_BY_PATH[to];
+      return area ? canView(area) : true;
+    };
+
     const sections = [...staticSections];
     if (hasActiveCalendar) {
       sections.push(calendarSection);
     }
-    // Operator-only nav (e.g. /admin/*) is hidden for non-operators.
-    const trailing = trailingSections
-      .map((s) => ({
-        ...s,
-        items: s.items.filter((i) => isOperator || !i.to.startsWith('/admin')),
-      }))
+    sections.push(...trailingSections);
+
+    return sections
+      .map((s) => ({ ...s, items: s.items.filter((i) => itemVisible(i.to)) }))
       .filter((s) => s.items.length > 0);
-    sections.push(...trailing);
-    return sections;
-  }, [hasActiveCalendar, isOperator]);
+  }, [hasActiveCalendar, isOperator, canView]);
 
   const allPaths = useMemo(
     () => navSections.flatMap((s) => s.items.map((i) => i.to)),

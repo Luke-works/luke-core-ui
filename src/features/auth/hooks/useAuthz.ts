@@ -28,6 +28,17 @@ const ROLE_WRITE_CAPS: Record<string, Capability[]> = {
   'deployer': ['deploy', 'startProcess'],
 };
 
+/** Nav areas a role can read (used to hide irrelevant nav items). */
+export type ViewArea = 'tasks' | 'deployments' | 'decisions' | 'history';
+
+const ROLE_VIEW_AREAS: Record<string, ViewArea[]> = {
+  'tenant-admin': ['tasks', 'deployments', 'decisions', 'history'],
+  'tenant-user': ['tasks', 'deployments', 'decisions', 'history'],
+  'task-worker': ['tasks'],
+  'process-operator': ['tasks', 'history'],
+  'deployer': ['deployments', 'decisions', 'history'],
+};
+
 export function useAuthz() {
   const username = useAuthStore((s) => s.username);
 
@@ -56,6 +67,10 @@ export function useAuthz() {
     }
   });
 
+  // View areas are tier-independent (read-only roles can still view).
+  const viewAreas = new Set<ViewArea>();
+  roles.forEach((r) => (ROLE_VIEW_AREAS[r] ?? []).forEach((a) => viewAreas.add(a)));
+
   return {
     isLoading,
     isOperator,
@@ -63,6 +78,8 @@ export function useAuthz() {
     roles,
     /** True if the user can perform a write capability. */
     can: (cap: Capability) => writeCaps.has(cap),
+    /** True if the user can view a nav area (operators see all). */
+    canView: (area: ViewArea) => isOperator || viewAreas.has(area),
     /** Operator-only (identity/admin management). */
     canAdmin: isOperator,
   };
