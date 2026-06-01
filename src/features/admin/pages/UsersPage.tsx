@@ -87,11 +87,31 @@ const createTenantSchema = z.object({
 
 type CreateTenantForm = z.infer<typeof createTenantSchema>;
 
+/* ── Roles (authorization spaces seeded by core-engine) ──── */
+
+const ROLES = [
+  { id: 'tenant-user', label: 'Tenant User' },
+  { id: 'tenant-admin', label: 'Tenant Admin' },
+] as const;
+
+const onboardUserSchema = z.object({
+  id: z.string().min(3, 'Username must be at least 3 characters'),
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Must be a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  tenantId: z.string().min(1, 'Tenant is required'),
+  role: z.string().min(1, 'Role is required'),
+});
+
+type OnboardUserForm = z.infer<typeof onboardUserSchema>;
+
 /* ── Users Page ──────────────────────────────────────────── */
 
 export default function UsersPage() {
   const queryClient = useQueryClient();
   const [userDrawerOpen, setUserDrawerOpen] = useState(false);
+  const [onboardDrawerOpen, setOnboardDrawerOpen] = useState(false);
   const [groupDrawerOpen, setGroupDrawerOpen] = useState(false);
   const [managingGroup, setManagingGroup] = useState<Group | null>(null);
   const [tenantDrawerOpen, setTenantDrawerOpen] = useState(false);
@@ -145,6 +165,32 @@ export default function UsersPage() {
     },
     onError: () => {
       toast.error('Failed to create user');
+    },
+  });
+
+  // Onboard = create the user, add them to a tenant, and assign a role group
+  // (which carries the authorizations). Done as a sequence of engine-rest calls.
+  const onboardMutation = useMutation({
+    mutationFn: async (data: OnboardUserForm) => {
+      await createUser({
+        profile: {
+          id: data.id,
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+        },
+        credentials: { password: data.password },
+      });
+      await addTenantMember(data.tenantId, data.id);
+      await addGroupMember(data.role, data.id);
+    },
+    onSuccess: () => {
+      toast.success('User onboarded');
+      setOnboardDrawerOpen(false);
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message || 'Failed to onboard user');
     },
   });
 
@@ -362,16 +408,28 @@ export default function UsersPage() {
         <Card
           title="Users"
           action={
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setUserDrawerOpen(true)}
-            >
-              <span className="inline-flex items-center gap-1.5">
-                <UserPlus size={14} />
-                Create User
-              </span>
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setUserDrawerOpen(true)}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <UserPlus size={14} />
+                  Create User
+                </span>
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => setOnboardDrawerOpen(true)}
+              >
+                <span className="inline-flex items-center gap-1.5">
+                  <Shield size={14} />
+                  Onboard User
+                </span>
+              </Button>
+            </div>
           }
         >
           {!usersLoading && users.length === 0 ? (
@@ -490,6 +548,21 @@ export default function UsersPage() {
             });
           }}
           onCancel={() => setUserDrawerOpen(false)}
+        />
+      </Drawer>
+
+      {/* ── Onboard User Drawer ────────────────────────────── */}
+      <Drawer
+        open={onboardDrawerOpen}
+        onClose={() => setOnboardDrawerOpen(false)}
+        title="Onboard User"
+        width={420}
+      >
+        <OnboardUserFormPanel
+          tenants={tenants}
+          isSubmitting={onboardMutation.isPending}
+          onSubmit={(data) => onboardMutation.mutate(data)}
+          onCancel={() => setOnboardDrawerOpen(false)}
         />
       </Drawer>
 
@@ -690,6 +763,135 @@ function CreateUserFormPanel({
           <span className="inline-flex items-center gap-1.5">
             <UserPlus size={14} />
             {isSubmitting ? 'Creating...' : 'Create User'}
+          </span>
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+/* ── Onboard User Form ───────────────────────────────────── */
+
+function OnboardUserFormPanel({
+  tenants,
+  isSubmitting,
+  onSubmit,
+  onCancel,
+}: {
+  tenants: Tenant[];
+  isSubmitting: boolean;
+  onSubmit: (data: OnboardUserForm) => void;
+  onCancel: () => void;
+}) {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<OnboardUserForm>({
+    resolver: zodResolver(onboardUserSchema),
+    defaultValues: {
+      id: '',
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      // Preselect when the operator only has access to a single tenant.
+      tenantId: tenants.length === 1 ? tenants[0].id : '',
+      role: 'tenant-user',
+    },
+  });
+
+  const field = (
+    name: keyof OnboardUserForm,
+    label: string,
+    type = 'text',
+    placeholder = '',
+  ) => (
+    <div>
+      <label className={labelClass} style={labelStyle}>
+        {label}
+      </label>
+      <input
+        type={type}
+        placeholder={placeholder}
+        {...register(name)}
+        style={inputStyle}
+        onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+        onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+      />
+      {errors[name] && (
+        <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+          {errors[name]?.message as string}
+        </p>
+      )}
+    </div>
+  );
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+      {field('id', 'Username', 'text', 'john.doe')}
+      {field('firstName', 'First Name', 'text', 'John')}
+      {field('lastName', 'Last Name', 'text', 'Doe')}
+      {field('email', 'Email', 'email', 'john.doe@example.com')}
+      {field('password', 'Password', 'password', 'Min 6 characters')}
+
+      {/* Tenant */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Tenant
+        </label>
+        <select
+          {...register('tenantId')}
+          style={selectStyle}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        >
+          <option value="">Select tenant…</option>
+          {tenants.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.name ? `${t.name} (${t.id})` : t.id}
+            </option>
+          ))}
+        </select>
+        {errors.tenantId && (
+          <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+            {errors.tenantId.message}
+          </p>
+        )}
+      </div>
+
+      {/* Role */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Role
+        </label>
+        <select
+          {...register('role')}
+          style={selectStyle}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        >
+          {ROLES.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </select>
+        {errors.role && (
+          <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+            {errors.role.message}
+          </p>
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 pt-2">
+        <Button type="submit" variant="primary" size="sm" disabled={isSubmitting}>
+          <span className="inline-flex items-center gap-1.5">
+            <Shield size={14} />
+            {isSubmitting ? 'Onboarding…' : 'Onboard User'}
           </span>
         </Button>
         <Button type="button" variant="ghost" size="sm" onClick={onCancel}>
