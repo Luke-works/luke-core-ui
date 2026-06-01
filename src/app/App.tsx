@@ -27,6 +27,10 @@ const RegisterTopicPage = lazy(() => import('@/features/external-tasks/pages/Reg
 const WorkflowBuilderPage = lazy(() => import('@/features/external-tasks/pages/WorkflowBuilderPage'));
 const CalendarDashboardPage = lazy(() => import('@/features/calendars/pages/CalendarDashboardPage'));
 const CalendarDetailPage = lazy(() => import('@/features/calendars/pages/CalendarDetailPage'));
+const RuntimeMonitorPage = lazy(() => import('@/features/runtime/pages/RuntimeMonitorPage'));
+const RuntimeLogsPage = lazy(() => import('@/features/runtime/pages/LogsPage'));
+const RuntimeMetricsPage = lazy(() => import('@/features/runtime/pages/MetricsPage'));
+const RuntimeHealthPage = lazy(() => import('@/features/runtime/pages/HealthDashboardPage'));
 const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
 const SetupPage = lazy(() => import('@/features/setup/pages/SetupPage'));
 
@@ -76,6 +80,10 @@ export default function App() {
           <Route path="/external-tasks/topics" element={<SuspenseWrapper><TopicRegistryPage /></SuspenseWrapper>} />
           <Route path="/external-tasks/topics/register" element={<SuspenseWrapper><RegisterTopicPage /></SuspenseWrapper>} />
           <Route path="/external-tasks/workflows/builder" element={<SuspenseWrapper><WorkflowBuilderPage /></SuspenseWrapper>} />
+          <Route path="/runtime" element={<SuspenseWrapper><RuntimeMonitorPage /></SuspenseWrapper>} />
+          <Route path="/runtime/logs" element={<SuspenseWrapper><RuntimeLogsPage /></SuspenseWrapper>} />
+          <Route path="/runtime/metrics" element={<SuspenseWrapper><RuntimeMetricsPage /></SuspenseWrapper>} />
+          <Route path="/runtime/health" element={<SuspenseWrapper><RuntimeHealthPage /></SuspenseWrapper>} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -19,6 +19,10 @@ import {
   GitBranch,
   CalendarDays,
   Building2,
+  Activity,
+  ScrollText,
+  BarChart3,
+  HeartPulse,
 } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
@@ -89,6 +93,15 @@ const staticSections: NavSection[] = [
       { label: 'Ext. Tasks', to: '/external-tasks', icon: Cpu },
       { label: 'Topic Registry', to: '/external-tasks/topics', icon: BookCheck },
       { label: 'Workflows', to: '/external-tasks/workflows/builder', icon: GitBranch },
+    ],
+  },
+  {
+    title: 'Runtime',
+    items: [
+      { label: 'Runtime Monitor', to: '/runtime', icon: Activity },
+      { label: 'Logs', to: '/runtime/logs', icon: ScrollText },
+      { label: 'Metrics', to: '/runtime/metrics', icon: BarChart3 },
+      { label: 'Health', to: '/runtime/health', icon: HeartPulse },
     ],
   },
   {
