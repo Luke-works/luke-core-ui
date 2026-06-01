@@ -92,6 +92,10 @@ type CreateTenantForm = z.infer<typeof createTenantSchema>;
 
 const ROLES = [
   { id: 'tenant-user', label: 'Tenant User' },
+  { id: 'task-worker', label: 'Task Worker' },
+  { id: 'process-operator', label: 'Process Operator' },
+  { id: 'deployer', label: 'Deployer' },
+  { id: 'tenant-viewer', label: 'Tenant Viewer' },
   { id: 'tenant-admin', label: 'Tenant Admin' },
 ] as const;
 
