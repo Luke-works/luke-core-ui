@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Clipboard, Check } from 'lucide-react';
-import { truncateId } from '@/shared/utils/camunda';
 
 interface IdLinkProps {
-  /** Full id to display (truncated) and copy. */
+  /** Full id to display (capped + ellipsized) and copy. */
   id: string;
   /** Route to navigate to when the id is clicked. */
   to: string;
   className?: string;
+  /** Max width of the id text (CSS length). */
+  maxWidth?: string;
 }
 
 /**
  * A clickable, copyable id — like CopyId, but the id text is a router link to a
- * detail page. The copy icon is separate so clicking the id navigates while the
- * icon copies. Stops propagation so it works inside clickable table rows.
+ * detail page. The full id is shown, capped with an ellipsis so long UUIDs
+ * don't bloat table columns; hover/copy reveal the full value.
  */
-export default function IdLink({ id, to, className = '' }: IdLinkProps) {
+export default function IdLink({ id, to, className = '', maxWidth = '16ch' }: IdLinkProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async (e: React.MouseEvent) => {
@@ -32,20 +33,29 @@ export default function IdLink({ id, to, className = '' }: IdLinkProps) {
   };
 
   return (
-    <span className={`group inline-flex items-center gap-1.5 ${className}`}>
+    <span className={`group inline-flex max-w-full items-center gap-1.5 ${className}`}>
       <Link
         to={to}
         onClick={(e) => e.stopPropagation()}
         className="font-mono-id text-theme-xs hover:underline"
-        style={{ color: 'var(--accent-blue)' }}
+        style={{
+          color: 'var(--accent-blue)',
+          display: 'inline-block',
+          maxWidth,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+          verticalAlign: 'bottom',
+          minWidth: 0,
+        }}
         title={id}
       >
-        {truncateId(id)}
+        {id}
       </Link>
       <button
         type="button"
         onClick={handleCopy}
-        className="opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+        className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
         title="Copy id"
       >
         {copied ? (
