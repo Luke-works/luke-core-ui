@@ -240,7 +240,7 @@ export default function UsersPage() {
       {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({ row }) => <CopyId id={row.original.id} />,
+        cell: ({ row }) => <CopyId id={row.original.id} truncate={false} />,
       },
       {
         accessorKey: 'firstName',
@@ -285,7 +285,7 @@ export default function UsersPage() {
       {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({ row }) => <CopyId id={row.original.id} />,
+        cell: ({ row }) => <CopyId id={row.original.id} truncate={false} />,
       },
       {
         accessorKey: 'name',
@@ -344,7 +344,7 @@ export default function UsersPage() {
       {
         accessorKey: 'id',
         header: 'ID',
-        cell: ({ row }) => <CopyId id={row.original.id} />,
+        cell: ({ row }) => <CopyId id={row.original.id} truncate={false} />,
       },
       {
         accessorKey: 'name',

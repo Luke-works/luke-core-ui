@@ -5,9 +5,11 @@ import { truncateId } from '@/shared/utils/camunda';
 interface CopyIdProps {
   id: string;
   className?: string;
+  /** Truncate long ids to first8…last4 (good for UUIDs). Off for short slugs. */
+  truncate?: boolean;
 }
 
-export default function CopyId({ id, className = '' }: CopyIdProps) {
+export default function CopyId({ id, className = '', truncate = true }: CopyIdProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -27,7 +29,7 @@ export default function CopyId({ id, className = '' }: CopyIdProps) {
       className={`group inline-flex items-center gap-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 ${className}`}
       title={id}
     >
-      <span className="font-mono-id text-theme-xs">{truncateId(id)}</span>
+      <span className="font-mono-id text-theme-xs">{truncate ? truncateId(id) : id}</span>
       <span className="opacity-0 group-hover:opacity-100 transition-opacity">
         {copied ? (
           <Check size={13} className="text-success-500" />
