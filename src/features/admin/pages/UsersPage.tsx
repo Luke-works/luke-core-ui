@@ -95,7 +95,6 @@ const ROLES = [
   { id: 'task-worker', label: 'Task Worker' },
   { id: 'process-operator', label: 'Process Operator' },
   { id: 'deployer', label: 'Deployer' },
-  { id: 'tenant-viewer', label: 'Tenant Viewer' },
   { id: 'tenant-admin', label: 'Tenant Admin' },
 ] as const;
 
@@ -107,6 +106,7 @@ const onboardUserSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
   tenantId: z.string().min(1, 'Tenant is required'),
   role: z.string().min(1, 'Role is required'),
+  accessLevel: z.enum(['READ_WRITE', 'READ_ONLY']),
 });
 
 type OnboardUserForm = z.infer<typeof onboardUserSchema>;
@@ -794,6 +794,7 @@ function OnboardUserFormPanel({
       // Preselect when the operator only has access to a single tenant.
       tenantId: tenants.length === 1 ? tenants[0].id : '',
       role: 'tenant-user',
+      accessLevel: 'READ_WRITE',
     },
   });
 
@@ -876,6 +877,27 @@ function OnboardUserFormPanel({
         {errors.role && (
           <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
             {errors.role.message}
+          </p>
+        )}
+      </div>
+
+      {/* Access level */}
+      <div>
+        <label className={labelClass} style={labelStyle}>
+          Access
+        </label>
+        <select
+          {...register('accessLevel')}
+          style={selectStyle}
+          onFocus={(e) => (e.currentTarget.style.borderColor = 'var(--accent-blue)')}
+          onBlur={(e) => (e.currentTarget.style.borderColor = 'var(--border)')}
+        >
+          <option value="READ_WRITE">Read &amp; Write</option>
+          <option value="READ_ONLY">Read Only</option>
+        </select>
+        {errors.accessLevel && (
+          <p className="text-xs mt-1" style={{ color: 'var(--accent-red)' }}>
+            {errors.accessLevel.message}
           </p>
         )}
       </div>

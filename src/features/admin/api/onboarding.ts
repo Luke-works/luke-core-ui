@@ -33,6 +33,7 @@ export type OnboardUserBody = {
   password: string;
   tenantId: string;
   role: string;
+  accessLevel: 'READ_WRITE' | 'READ_ONLY';
 };
 
 export async function onboardUser(body: OnboardUserBody): Promise<void> {
