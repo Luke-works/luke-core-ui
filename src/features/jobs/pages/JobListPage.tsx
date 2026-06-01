@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import { RefreshCw, Eye, Play, Pause, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -64,6 +65,9 @@ function FailedJobsTab({
       }),
     refetchInterval: 30000,
   });
+
+  const { can } = useAuthz();
+  const canOperate = can('operate');
 
   const retryMutation = useMutation({
     mutationFn: (jobId: string) => retryJob(jobId, 1),
@@ -135,19 +139,21 @@ function FailedJobsTab({
           const job = row.original;
           return (
             <div className="flex items-center gap-1">
-              <Tooltip content="Retry job">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    retryMutation.mutate(job.id);
-                  }}
-                  disabled={retryMutation.isPending}
-                >
-                  <RefreshCw size={14} />
-                </Button>
-              </Tooltip>
+              {canOperate && (
+                <Tooltip content="Retry job">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      retryMutation.mutate(job.id);
+                    }}
+                    disabled={retryMutation.isPending}
+                  >
+                    <RefreshCw size={14} />
+                  </Button>
+                </Tooltip>
+              )}
               <Tooltip content="View stack trace">
                 <Button
                   variant="ghost"
@@ -165,7 +171,7 @@ function FailedJobsTab({
         },
       },
     ],
-    [retryMutation, onOpenStacktrace],
+    [retryMutation, onOpenStacktrace, canOperate],
   );
 
   const data = failedJobsQuery.data ?? [];
@@ -201,6 +207,9 @@ function AllJobsTab() {
     queryFn: () => getJobs({ maxResults: 50 }),
     refetchInterval: 30000,
   });
+
+  const { can } = useAuthz();
+  const canOperate = can('operate');
 
   const suspendMutation = useMutation({
     mutationFn: ({ id, suspended }: { id: string; suspended: boolean }) =>
@@ -262,6 +271,7 @@ function AllJobsTab() {
         enableSorting: false,
         cell: ({ row }) => {
           const job = row.original;
+          if (!canOperate) return null;
           return (
             <Tooltip content={job.suspended ? 'Activate job' : 'Suspend job'}>
               <Button
@@ -283,7 +293,7 @@ function AllJobsTab() {
         },
       },
     ],
-    [suspendMutation],
+    [suspendMutation, canOperate],
   );
 
   const data = allJobsQuery.data ?? [];
@@ -319,6 +329,9 @@ function JobDefinitionsTab() {
     queryFn: () => getJobDefinitions({ maxResults: 50 }),
     refetchInterval: 30000,
   });
+
+  const { can } = useAuthz();
+  const canOperate = can('operate');
 
   const suspendDefMutation = useMutation({
     mutationFn: ({ id, suspended }: { id: string; suspended: boolean }) =>
@@ -387,6 +400,7 @@ function JobDefinitionsTab() {
         enableSorting: false,
         cell: ({ row }) => {
           const def = row.original;
+          if (!canOperate) return null;
           return (
             <Tooltip
               content={def.suspended ? 'Activate definition' : 'Suspend definition'}
@@ -410,7 +424,7 @@ function JobDefinitionsTab() {
         },
       },
     ],
-    [suspendDefMutation],
+    [suspendDefMutation, canOperate],
   );
 
   const data = definitionsQuery.data ?? [];

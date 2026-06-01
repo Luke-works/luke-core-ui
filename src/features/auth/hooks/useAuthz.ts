@@ -22,7 +22,7 @@ const ALL_CAPS: Capability[] = ['deploy', 'startProcess', 'workTasks', 'operate'
 
 const ROLE_WRITE_CAPS: Record<string, Capability[]> = {
   'tenant-admin': ['deploy', 'startProcess', 'workTasks', 'operate', 'manageDecisions'],
-  'tenant-user': ['startProcess', 'workTasks'],
+  'tenant-user': ['startProcess', 'workTasks', 'operate'],
   'task-worker': ['startProcess', 'workTasks'],
   'process-operator': ['operate'],
   'deployer': ['deploy', 'startProcess'],

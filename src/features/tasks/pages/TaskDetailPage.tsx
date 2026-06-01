@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import { toast } from 'sonner';
 import {
   ArrowLeft,
@@ -156,6 +157,8 @@ export default function TaskDetailPage() {
 
   /* ── Derived ─────────────────────────────────────────────── */
 
+  const { can } = useAuthz();
+  const canWork = can('workTasks');
   const isMine = !!task?.assignee && task.assignee === username;
   const isOverdue = !!task?.due && new Date(task.due) < new Date();
   // A task must be claimed by the current user before it can be completed.
@@ -186,7 +189,7 @@ export default function TaskDetailPage() {
           </div>
         </div>
 
-        {task && (
+        {task && canWork && (
           <div className="flex items-center gap-2">
             {isMine ? (
               <Button

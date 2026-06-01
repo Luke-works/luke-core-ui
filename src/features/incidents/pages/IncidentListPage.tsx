@@ -15,6 +15,7 @@ import PageHeader from '@/shared/layout/PageHeader';
 
 import { getIncidents, getIncidentCount, deleteIncident } from '@/features/incidents/api/endpoints';
 import { retryJob } from '@/features/jobs/api/endpoints';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import { relativeTime } from '@/shared/utils/date';
 
 
@@ -78,6 +79,9 @@ export default function IncidentListPage() {
   });
 
   // ---- Mutations -----------------------------------------------------------
+
+  const { can } = useAuthz();
+  const canOperate = can('operate');
 
   const retryMutation = useMutation({
     mutationFn: (jobId: string) => retryJob(jobId, 1),
@@ -225,7 +229,7 @@ export default function IncidentListPage() {
           const incident = row.original;
           return (
             <div className="flex items-center gap-1">
-              {incident.jobDefinitionId && (
+              {canOperate && incident.jobDefinitionId && (
                 <Tooltip content="Retry job">
                   <Button
                     variant="ghost"
@@ -240,19 +244,21 @@ export default function IncidentListPage() {
                   </Button>
                 </Tooltip>
               )}
-              <Tooltip content="Resolve incident">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteMutation.mutate(incident.id);
-                  }}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </Tooltip>
+              {canOperate && (
+                <Tooltip content="Resolve incident">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(incident.id);
+                    }}
+                    disabled={deleteMutation.isPending}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </Tooltip>
+              )}
               {incident.configuration && (
                 <Tooltip content="View stack trace">
                   <Button
@@ -280,6 +286,7 @@ export default function IncidentListPage() {
       retryMutation,
       deleteMutation,
       openStacktrace,
+      canOperate,
     ],
   );
 
@@ -311,7 +318,7 @@ export default function IncidentListPage() {
 
       <Card>
         {/* Bulk actions bar */}
-        {selectedIds.size > 0 && (
+        {canOperate && selectedIds.size > 0 && (
           <div
             className="flex items-center gap-3 px-4 py-2 mb-3 rounded-md"
             style={{
