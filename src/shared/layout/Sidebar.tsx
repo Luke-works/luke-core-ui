@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   Gauge,
@@ -151,7 +151,13 @@ export default function Sidebar() {
   // On mobile the sidebar is a full-width off-canvas drawer; the desktop
   // "collapsed" (icon-only) state only applies at lg and above.
   const collapsedRaw = useUiStore((s) => s.sidebarCollapsed);
-  const sidebarCollapsed = isMobile ? false : collapsedRaw;
+
+  // On desktop, hovering a collapsed sidebar temporarily expands it (floating
+  // over the content) without changing the persisted collapsed state.
+  const [hovered, setHovered] = useState(false);
+  const isCollapsedPersisted = !isMobile && collapsedRaw;
+  const sidebarCollapsed = isCollapsedPersisted && !hovered;
+  const isHoverExpanded = isCollapsedPersisted && hovered;
 
   const activeTenantId = useTenantStore((s) => s.activeTenantId);
   const { isOperator, canView } = useAuthz();
@@ -211,6 +217,8 @@ export default function Sidebar() {
 
   return (
     <aside
+      onMouseEnter={() => !isMobile && setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className="fixed left-0 top-0 h-screen flex flex-col border-r"
       style={{
         width: sidebarCollapsed ? 64 : 240,
@@ -218,6 +226,7 @@ export default function Sidebar() {
         borderColor: 'var(--border)',
         zIndex: isMobile ? 50 : 30,
         transform: isMobile && !mobileSidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
+        boxShadow: isHoverExpanded ? 'var(--shadow-theme-lg)' : undefined,
         transition: 'width 200ms ease-in-out, transform 200ms ease-in-out',
       }}
     >
@@ -312,15 +321,19 @@ export default function Sidebar() {
           onMouseLeave={(e) =>
             (e.currentTarget.style.backgroundColor = 'transparent')
           }
-          title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={isCollapsedPersisted ? 'Expand sidebar' : 'Collapse sidebar'}
         >
           {sidebarCollapsed ? (
             <PanelLeftOpen size={18} className="shrink-0 mx-auto" />
           ) : (
             <>
-              <PanelLeftClose size={18} className="shrink-0" />
+              {isCollapsedPersisted ? (
+                <PanelLeftOpen size={18} className="shrink-0" />
+              ) : (
+                <PanelLeftClose size={18} className="shrink-0" />
+              )}
               <span className="whitespace-nowrap overflow-hidden">
-                Collapse
+                {isCollapsedPersisted ? 'Expand' : 'Collapse'}
               </span>
             </>
           )}
