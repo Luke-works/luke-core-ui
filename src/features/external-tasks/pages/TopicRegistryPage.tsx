@@ -402,7 +402,7 @@ export default function TopicRegistryPage() {
       <PageHeader title="Topic Registry" subtitle="Register and configure external task topics — unregistered topics block deployment"
         actions={<Button variant="primary" size="sm" onClick={() => navigate('/external-tasks/topics/register')}><Plus size={14} className="mr-1.5" />Register Topic</Button>} />
 
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
         <Card><div className="text-2xl font-heading" style={{ color: 'var(--text-primary)' }}>{(topics ?? []).length}</div><p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Total Topics</p></Card>
         <Card><div className="text-2xl font-heading" style={{ color: 'var(--accent-green)' }}>{activeCount}</div><p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Active</p></Card>
         <Card><div className="text-2xl font-heading" style={{ color: 'var(--text-muted)' }}>{(topics ?? []).length - activeCount}</div><p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Inactive</p></Card>

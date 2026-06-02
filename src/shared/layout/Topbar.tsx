@@ -1,12 +1,15 @@
 import { useState, useRef, useEffect } from 'react';
 import { RefreshCw, ChevronDown, LogOut, User, Sun, Moon, Building2, Menu } from 'lucide-react';
 import { useUiStore } from '@/shared/stores/uiStore';
+import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 import { useTenantStore, useActiveTenant } from '@/shared/stores/tenantStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 
 export default function Topbar() {
+  const isMobile = useIsMobile();
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const toggleMobileSidebar = useUiStore((s) => s.toggleMobileSidebar);
   const theme = useUiStore((s) => s.theme);
   const tenants = useTenantStore((s) => s.tenants);
   const activeTenant = useActiveTenant();
@@ -38,7 +41,7 @@ export default function Topbar() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
-  const sidebarWidth = sidebarCollapsed ? 64 : 240;
+  const sidebarWidth = isMobile ? 0 : sidebarCollapsed ? 64 : 240;
 
   const handleLogout = () => {
     logout();
@@ -59,7 +62,7 @@ export default function Topbar() {
       {/* Left: hamburger + tenant selector */}
       <div className="flex items-center gap-3">
       <button
-        onClick={toggleSidebar}
+        onClick={isMobile ? toggleMobileSidebar : toggleSidebar}
         className="flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors duration-150"
         style={{
           color: 'var(--text-secondary)',
@@ -96,7 +99,7 @@ export default function Topbar() {
               }
             >
               <Building2 size={14} style={{ color: activeTenant ? 'var(--accent-blue)' : 'var(--accent-amber, #f59e0b)' }} />
-              <span className="truncate max-w-[180px]">
+              <span className="truncate max-w-[110px] sm:max-w-[180px]">
                 {activeTenant?.name ?? activeTenant?.id ?? 'Select tenant'}
               </span>
               <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
@@ -223,7 +226,7 @@ export default function Topbar() {
             }
           >
             <User size={16} />
-            <span className="text-sm">{username ?? 'Guest'}</span>
+            <span className="text-sm hidden sm:inline truncate max-w-[120px]">{username ?? 'Guest'}</span>
             <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
           </button>
 

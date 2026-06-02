@@ -29,6 +29,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useTenantStore } from '@/shared/stores/tenantStore';
 import { useUiStore } from '@/shared/stores/uiStore';
+import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 import { useAuthz, type ViewArea } from '@/features/auth/hooks/useAuthz';
 
 /* ── Subscription types & fetcher ─────────────────────────── */
@@ -141,9 +142,16 @@ const AREA_BY_PATH: Record<string, ViewArea> = {
 };
 
 export default function Sidebar() {
-  const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
+  const isMobile = useIsMobile();
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+  const mobileSidebarOpen = useUiStore((s) => s.mobileSidebarOpen);
+  const setMobileSidebarOpen = useUiStore((s) => s.setMobileSidebarOpen);
   const { pathname } = useLocation();
+
+  // On mobile the sidebar is a full-width off-canvas drawer; the desktop
+  // "collapsed" (icon-only) state only applies at lg and above.
+  const collapsedRaw = useUiStore((s) => s.sidebarCollapsed);
+  const sidebarCollapsed = isMobile ? false : collapsedRaw;
 
   const activeTenantId = useTenantStore((s) => s.activeTenantId);
   const { isOperator, canView } = useAuthz();
@@ -203,12 +211,14 @@ export default function Sidebar() {
 
   return (
     <aside
-      className="fixed left-0 top-0 h-screen flex flex-col border-r z-30"
+      className="fixed left-0 top-0 h-screen flex flex-col border-r"
       style={{
         width: sidebarCollapsed ? 64 : 240,
         backgroundColor: 'var(--bg-surface)',
         borderColor: 'var(--border)',
-        transition: 'width 200ms ease-in-out',
+        zIndex: isMobile ? 50 : 30,
+        transform: isMobile && !mobileSidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
+        transition: 'width 200ms ease-in-out, transform 200ms ease-in-out',
       }}
     >
       {/* Logo */}
@@ -248,6 +258,7 @@ export default function Sidebar() {
                   <li key={item.to}>
                     <NavLink
                       to={item.to}
+                      onClick={() => isMobile && setMobileSidebarOpen(false)}
                       className={[
                           'flex items-center gap-3 rounded-md text-sm font-medium',
                           'transition-colors duration-150',
@@ -281,7 +292,8 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* Collapse toggle */}
+      {/* Collapse toggle — desktop only; on mobile the drawer is full-width */}
+      {!isMobile && (
       <div
         className="shrink-0 px-2 py-3"
         style={{ borderTop: '1px solid var(--border)' }}
@@ -314,6 +326,7 @@ export default function Sidebar() {
           )}
         </button>
       </div>
+      )}
     </aside>
   );
 }

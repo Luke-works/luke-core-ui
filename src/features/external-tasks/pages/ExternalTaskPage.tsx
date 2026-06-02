@@ -241,7 +241,7 @@ export default function ExternalTaskPage() {
         ) : undefined} />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <LifecycleCard label="Total Tasks" value={counts.total} icon={<Cpu size={20} />} color="var(--text-primary)" isLoading={tasksLoading} onClick={() => setActiveTab('all')} />
         <LifecycleCard label="Available" value={counts.available} icon={<Clock size={20} />} color="var(--accent-blue)" isLoading={tasksLoading} onClick={() => setActiveTab('available')} />
         <LifecycleCard label="Locked (Processing)" value={counts.locked} icon={<Lock size={20} />} color="var(--accent-orange)" isLoading={tasksLoading} onClick={() => setActiveTab('locked')} />

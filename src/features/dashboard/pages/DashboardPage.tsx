@@ -231,7 +231,7 @@ export default function DashboardPage() {
       <PageHeader title="Dashboard" subtitle="System overview" />
 
       {/* KPI Row */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <KpiCard
           label="Running Instances"
           value={runningInstances.data?.count}
@@ -325,7 +325,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Bottom Row: Top Processes + Recent Incidents */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Top Processes */}
         <Card title="Top Processes">
           {processStats.isLoading ? (

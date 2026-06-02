@@ -533,7 +533,7 @@ export default function CalendarDetailPage() {
 
                 {showAddProcess && (
                   <Card className="mb-4">
-                    <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                       <div>
                         <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Process Definition Key</label>
                         <input type="text" value={processForm.processDefinitionKey}
@@ -689,7 +689,7 @@ function LocationsTab({
       {/* Add Location Form */}
       {showAddForm && (
         <Card className="mb-4">
-          <div className="grid grid-cols-2 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             {/* Location Code */}
             <div>
               <label className="block text-xs font-medium mb-1" style={labelStyle}>Location Code</label>
@@ -865,7 +865,7 @@ function BusinessHoursTab({
       {/* Add Hours Form */}
       {showAddForm && (
         <Card className="mb-4">
-          <div className="grid grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={labelStyle}>Day of Week</label>
               <select
@@ -1078,7 +1078,7 @@ function HolidaysTab({
       {/* Add Holiday Form */}
       {showAddForm && (
         <Card className="mb-4">
-          <div className="grid grid-cols-3 gap-3 mb-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
               <label className="block text-xs font-medium mb-1" style={labelStyle}>Date</label>
               <input
@@ -1216,7 +1216,7 @@ function SlaTab({ form, onFormChange, onCalculate, isCalculating, result }: SlaT
       </h3>
 
       <Card className="mb-4">
-        <div className="grid grid-cols-2 gap-3 mb-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
             <label className="block text-xs font-medium mb-1" style={labelStyle}>Received Date/Time</label>
             <input
@@ -1276,7 +1276,7 @@ function SlaTab({ form, onFormChange, onCalculate, isCalculating, result }: SlaT
       {/* Result */}
       {result && (
         <Card title="SLA Result">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
               { label: 'Received (UTC)', value: result.receivedDateTimeUtc },
               { label: 'Due Date (UTC)', value: result.dueDateTimeUtc },

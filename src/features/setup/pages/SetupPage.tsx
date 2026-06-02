@@ -157,7 +157,7 @@ export default function SetupPage() {
                   Let's get your platform configured. This wizard will set up your admin account,
                   database connection, and core services. It only takes a minute.
                 </p>
-                <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
                   {[
                     { icon: User, label: 'Admin Account', desc: 'Create your first user' },
                     { icon: Database, label: 'Database', desc: 'H2 or PostgreSQL' },
@@ -180,7 +180,7 @@ export default function SetupPage() {
                   <User size={20} style={{ color: 'var(--accent-blue)' }} />
                   <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Create Admin Account</h2>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="First Name">
                     <input type="text" value={form.adminFirstName} onChange={(e) => set('adminFirstName', e.target.value)} style={inputStyle} />
                   </Field>
@@ -196,7 +196,7 @@ export default function SetupPage() {
                   <input type="email" value={form.adminEmail} onChange={(e) => set('adminEmail', e.target.value)}
                     placeholder="admin@company.com" style={inputStyle} />
                 </Field>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Password *">
                     <input type="password" value={form.adminPassword} onChange={(e) => set('adminPassword', e.target.value)}
                       placeholder="Min 4 characters" style={inputStyle} />
@@ -224,7 +224,7 @@ export default function SetupPage() {
                 </div>
 
                 <Field label="Database Type">
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {[
                       { id: 'h2', label: 'H2 (Embedded)', desc: 'In-memory, no setup needed. Data lost on restart. Best for testing.' },
                       { id: 'postgresql', label: 'PostgreSQL', desc: 'Persistent storage. Recommended for production.' },
@@ -257,7 +257,7 @@ export default function SetupPage() {
                     <Field label="Database Name">
                       <input type="text" value={form.dbName} onChange={(e) => set('dbName', e.target.value)} style={inputStyle} />
                     </Field>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <Field label="Username">
                         <input type="text" value={form.dbUsername} onChange={(e) => set('dbUsername', e.target.value)} style={inputStyle} />
                       </Field>
@@ -336,7 +336,7 @@ export default function SetupPage() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Review your configuration and click Finish to start the platform.</p>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <ReviewCard title="Admin Account">
                     <ReviewRow label="Username" value={form.adminUsername} />
                     <ReviewRow label="Name" value={`${form.adminFirstName} ${form.adminLastName}`} />

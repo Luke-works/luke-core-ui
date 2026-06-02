@@ -448,7 +448,7 @@ export default function RegisterTopicPage() {
 
               <Field label="Worker Type" hint="Language / runtime of the external task handler"
                 tooltip="Select the programming language your worker is written in. Java and C# use the official Camunda client SDK. Python and JavaScript have community clients. REST type lets you configure an HTTP call without writing code. Connector uses pre-built integration plugins.">
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {WORKER_TYPES.map((wt) => (
                     <button key={wt.id} type="button"
                       onClick={() => { set('workerType', wt.id); set('workerCode', getTemplate(wt.id, form.topicName || 'myTopic')); }}
@@ -546,7 +546,7 @@ export default function RegisterTopicPage() {
                 </Field>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Lock Duration (ms)" hint="How long the worker holds the task lock"
                   tooltip="When a worker fetches a task, it acquires an exclusive lock for this duration. If the worker doesn't complete or extend the lock before it expires, the task becomes available for other workers. Set this longer than your expected processing time. Too short = tasks get picked up by multiple workers. Too long = failed workers block the task.">
                   <input type="number" value={form.lockDurationMs} onChange={(e) => set('lockDurationMs', Number(e.target.value))} placeholder="300000" style={inputStyle} />
@@ -585,7 +585,7 @@ export default function RegisterTopicPage() {
             <div className="space-y-5">
               <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Retry & Resolution Strategy</h2>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Retry Count" hint="Attempts before creating an incident"
                   tooltip="When a worker reports a failure (via handleFailure), the engine decrements this counter. When retries reach 0, the engine creates an incident — a persistent failure that requires manual intervention or automated resolution. Set to 0 to immediately create an incident on first failure. Typical: 3 for transient errors, 0 for business validation failures.">
                   <input type="number" value={form.retries} onChange={(e) => set('retries', Number(e.target.value))} placeholder="3" min={0} style={inputStyle} />
@@ -650,7 +650,7 @@ export default function RegisterTopicPage() {
             <div className="space-y-5">
               <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>Review & Register</h2>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <ReviewSection title="Identity">
                   <ReviewRow label="Topic Name" value={form.topicName} />
                   <ReviewRow label="Description" value={form.description || '—'} />

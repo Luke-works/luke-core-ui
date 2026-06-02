@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useUiStore } from '@/shared/stores/uiStore';
+import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 import { useKeyboardShortcuts } from '@/shared/hooks/useKeyboardShortcuts';
 
 const SHORTCUT_GROUPS = [
@@ -28,8 +29,13 @@ const SHORTCUT_GROUPS = [
 ];
 
 export default function AppShell() {
+  const isMobile = useIsMobile();
   const sidebarCollapsed = useUiStore((s) => s.sidebarCollapsed);
-  const sidebarWidth = sidebarCollapsed ? 64 : 240;
+  const mobileSidebarOpen = useUiStore((s) => s.mobileSidebarOpen);
+  const setMobileSidebarOpen = useUiStore((s) => s.setMobileSidebarOpen);
+  // On mobile the sidebar floats over the content as a drawer, so the main
+  // column takes the full width; on desktop it sits beside the pinned sidebar.
+  const sidebarWidth = isMobile ? 0 : sidebarCollapsed ? 64 : 240;
   const { showShortcuts, setShowShortcuts } = useKeyboardShortcuts();
 
   return (
@@ -40,8 +46,17 @@ export default function AppShell() {
       <Sidebar />
       <Topbar />
 
+      {/* Backdrop behind the mobile drawer */}
+      {isMobile && mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50"
+          aria-hidden="true"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
       <main
-        className="px-5 pt-3 pb-1"
+        className="px-4 pt-3 pb-1 sm:px-5"
         style={{
           marginLeft: sidebarWidth,
           marginTop: 48,

@@ -6,6 +6,10 @@ type Theme = 'light' | 'dark';
 interface UiState {
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+  /** Off-canvas drawer state for the mobile (<lg) sidebar. Not persisted. */
+  mobileSidebarOpen: boolean;
+  setMobileSidebarOpen: (open: boolean) => void;
+  toggleMobileSidebar: () => void;
   activeDrawer: { type: string; id: string } | null;
   openDrawer: (type: string, id: string) => void;
   closeDrawer: () => void;
@@ -27,6 +31,16 @@ export const useUiStore = create<UiState>()(
 
       toggleSidebar: () => {
         set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed }));
+      },
+
+      mobileSidebarOpen: false,
+
+      setMobileSidebarOpen: (open: boolean) => {
+        set({ mobileSidebarOpen: open });
+      },
+
+      toggleMobileSidebar: () => {
+        set((state) => ({ mobileSidebarOpen: !state.mobileSidebarOpen }));
       },
 
       activeDrawer: null,
