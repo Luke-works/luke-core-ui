@@ -357,172 +357,166 @@ export default function TaskListPage() {
         subtitle="Manage and complete user tasks"
       />
 
-      <div className="flex gap-0" style={{ minHeight: 'calc(100vh - 160px)' }}>
-        {/* ── Left sidebar ───────────────────────────────── */}
-        <div
-          className="shrink-0"
-          style={{
-            width: 240,
-            borderRight: '1px solid var(--border)',
-          }}
-        >
-          {/* Assignment tabs */}
-          <Tabs
-            tabs={[...ASSIGNMENT_TABS]}
-            activeTab={activeTab}
-            onChange={handleTabChange}
+      {/* Assignment tabs across the top, filters + table beneath */}
+      <Tabs
+        tabs={[...ASSIGNMENT_TABS]}
+        activeTab={activeTab}
+        onChange={handleTabChange}
+      >
+        <div className="pt-4 space-y-4">
+          {/* ── Filter bar (horizontal, wraps on small screens) ── */}
+          <div
+            className="flex flex-wrap items-end gap-3 p-4 rounded-xl"
+            style={{
+              backgroundColor: 'var(--bg-surface)',
+              border: '1px solid var(--border)',
+            }}
           >
-            <div className="p-4 space-y-4">
-              {/* Filter header */}
-              <div className="flex items-center gap-2">
-                <Filter
-                  size={14}
-                  style={{ color: 'var(--text-muted)' }}
-                />
-                <span
-                  className="text-xs uppercase tracking-wider font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Filters
-                </span>
-              </div>
-
-              {/* Process definition key */}
-              <div>
-                <label
-                  className="block text-xs mb-1.5 font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Process Definition Key
-                </label>
-                <input
-                  type="text"
-                  value={processKey}
-                  onChange={(e) => setProcessKey(e.target.value)}
-                  placeholder="e.g. invoice-process"
-                  className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Priority */}
-              <div>
-                <label
-                  className="block text-xs mb-1.5 font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Priority
-                </label>
-                <select
-                  value={priorityRange}
-                  onChange={(e) => setPriorityRange(e.target.value)}
-                  className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                  style={inputStyle}
-                >
-                  {PRIORITY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Due date: after */}
-              <div>
-                <label
-                  className="block text-xs mb-1.5 font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Due After
-                </label>
-                <input
-                  type="date"
-                  value={dueAfter}
-                  onChange={(e) => setDueAfter(e.target.value)}
-                  className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Due date: before */}
-              <div>
-                <label
-                  className="block text-xs mb-1.5 font-medium"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  Due Before
-                </label>
-                <input
-                  type="date"
-                  value={dueBefore}
-                  onChange={(e) => setDueBefore(e.target.value)}
-                  className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                  style={inputStyle}
-                />
-              </div>
-
-              {/* Buttons */}
-              <div className="space-y-2 pt-2">
-                <Button
-                  variant="primary"
-                  size="sm"
-                  className="w-full"
-                  onClick={applyFilters}
-                >
-                  Apply Filters
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="w-full"
-                  onClick={clearFilters}
-                  disabled={!hasFilters && !processKey && !priorityRange && !dueBefore && !dueAfter}
-                >
-                  Clear Filters
-                </Button>
-              </div>
+            <div className="flex items-center gap-2 self-center mr-1 shrink-0">
+              <Filter size={14} style={{ color: 'var(--text-muted)' }} />
+              <span
+                className="text-xs uppercase tracking-wider font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Filters
+              </span>
             </div>
-          </Tabs>
-        </div>
 
-        {/* ── Main area ──────────────────────────────────── */}
-        <div className="flex-1 min-w-0">
-          {!tasksQuery.isLoading &&
-          !tasksQuery.isError &&
-          tasksQuery.data?.length === 0 ? (
-            <EmptyState
-              icon={<CheckSquare size={40} />}
-              title="No tasks found"
-              description={
-                hasFilters
-                  ? 'No tasks match the current filters. Try adjusting your criteria.'
-                  : activeTab === 'mine'
-                    ? 'You have no tasks assigned to you.'
-                    : activeTab === 'unassigned'
-                      ? 'There are no unassigned tasks.'
-                      : 'There are no tasks in the system.'
-              }
-              action={
-                hasFilters
-                  ? { label: 'Clear Filters', onClick: clearFilters }
-                  : undefined
-              }
-            />
-          ) : (
-            <DataTable<Task>
-              data={tasksQuery.data ?? []}
-              columns={columns}
-              isLoading={tasksQuery.isLoading}
-              onRowClick={(row) => navigate(`/tasks/${row.id}`)}
-              pageSize={PAGE_SIZE}
-              pageIndex={page}
-              total={countQuery.data?.count}
-              onPageChange={handlePageChange}
-              emptyMessage="No tasks found."
-            />
-          )}
+            {/* Process definition key */}
+            <div className="flex flex-col gap-1.5 w-full sm:w-auto sm:flex-1 sm:min-w-[200px] sm:max-w-[300px]">
+              <label
+                className="text-xs font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Process Definition Key
+              </label>
+              <input
+                type="text"
+                value={processKey}
+                onChange={(e) => setProcessKey(e.target.value)}
+                placeholder="e.g. invoice-process"
+                className="w-full h-8 px-2 text-sm rounded-md outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Priority */}
+            <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+              <label
+                className="text-xs font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Priority
+              </label>
+              <select
+                value={priorityRange}
+                onChange={(e) => setPriorityRange(e.target.value)}
+                className="w-full sm:w-[170px] h-8 px-2 text-sm rounded-md outline-none"
+                style={inputStyle}
+              >
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Due date: after */}
+            <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+              <label
+                className="text-xs font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Due After
+              </label>
+              <input
+                type="date"
+                value={dueAfter}
+                onChange={(e) => setDueAfter(e.target.value)}
+                className="w-full sm:w-[150px] h-8 px-2 text-sm rounded-md outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Due date: before */}
+            <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+              <label
+                className="text-xs font-medium"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                Due Before
+              </label>
+              <input
+                type="date"
+                value={dueBefore}
+                onChange={(e) => setDueBefore(e.target.value)}
+                className="w-full sm:w-[150px] h-8 px-2 text-sm rounded-md outline-none"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-2 w-full sm:w-auto sm:ml-auto">
+              <Button
+                variant="primary"
+                size="sm"
+                className="flex-1 sm:flex-none"
+                onClick={applyFilters}
+              >
+                Apply Filters
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex-1 sm:flex-none"
+                onClick={clearFilters}
+                disabled={!hasFilters && !processKey && !priorityRange && !dueBefore && !dueAfter}
+              >
+                Clear Filters
+              </Button>
+            </div>
+          </div>
+
+          {/* ── Table / empty state ─────────────────────────── */}
+          <div className="min-w-0">
+            {!tasksQuery.isLoading &&
+            !tasksQuery.isError &&
+            tasksQuery.data?.length === 0 ? (
+              <EmptyState
+                icon={<CheckSquare size={40} />}
+                title="No tasks found"
+                description={
+                  hasFilters
+                    ? 'No tasks match the current filters. Try adjusting your criteria.'
+                    : activeTab === 'mine'
+                      ? 'You have no tasks assigned to you.'
+                      : activeTab === 'unassigned'
+                        ? 'There are no unassigned tasks.'
+                        : 'There are no tasks in the system.'
+                }
+                action={
+                  hasFilters
+                    ? { label: 'Clear Filters', onClick: clearFilters }
+                    : undefined
+                }
+              />
+            ) : (
+              <DataTable<Task>
+                data={tasksQuery.data ?? []}
+                columns={columns}
+                isLoading={tasksQuery.isLoading}
+                onRowClick={(row) => navigate(`/tasks/${row.id}`)}
+                pageSize={PAGE_SIZE}
+                pageIndex={page}
+                total={countQuery.data?.count}
+                onPageChange={handlePageChange}
+                emptyMessage="No tasks found."
+              />
+            )}
+          </div>
         </div>
-      </div>
+      </Tabs>
     </div>
   );
 }
