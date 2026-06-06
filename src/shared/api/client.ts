@@ -6,7 +6,14 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/engine-rest`
   : '/engine-rest';
 
-const api = axios.create({ baseURL });
+const api = axios.create({
+  baseURL,
+  // CIBSeven engine-rest emits ETags, so conditional GETs (e.g. the /engine
+  // login probe) can come back 304 Not Modified. A 304 means the request was
+  // authorized and the cached body is still valid — treat it as success instead
+  // of letting axios' default (200–299 only) throw and fail login.
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+});
 
 // Paths that should NOT get tenant filtering (auth, tenant listing, identity)
 const TENANT_EXCLUDE_PATHS = ['/engine', '/tenant', '/user', '/group', '/identity'];

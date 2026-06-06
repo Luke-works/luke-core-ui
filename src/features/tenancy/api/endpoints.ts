@@ -17,7 +17,12 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
   ? `${import.meta.env.VITE_API_BASE_URL}/engine-rest`
   : '/engine-rest';
 
-const metricsApi = axios.create({ baseURL });
+const metricsApi = axios.create({
+  baseURL,
+  // Match the shared client: a 304 (ETag revalidation) is a successful,
+  // authorized response, not an error.
+  validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
+});
 
 metricsApi.interceptors.request.use((config) => {
   const { username, password } = useAuthStore.getState();
