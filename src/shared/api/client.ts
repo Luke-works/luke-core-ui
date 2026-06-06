@@ -43,6 +43,15 @@ api.interceptors.request.use((config) => {
     }
   }
 
+  // Cache-bust GETs so CIBSeven's ETag revalidation can't return a bodyless
+  // 304 Not Modified. Without this, a 304 hands callers an empty body and any
+  // code that treats the result as an array (.some/.map) throws. With a unique
+  // param the browser never sends If-None-Match, so the engine always returns
+  // 200 + full body. (This supersedes the 304-tolerant validateStatus above.)
+  if (config.method === 'get') {
+    config.params = { ...config.params, _dc: Date.now() };
+  }
+
   return config;
 });
 

@@ -59,9 +59,9 @@ async function fetchMySubscriptions(): Promise<CapabilitySubscription[]> {
   }
   const { data } = await axios.get<CapabilitySubscription[]>(
     `${subscriptionBaseUrl}/my-subscriptions`,
-    { headers },
+    { headers, params: { _dc: Date.now() } }, // cache-bust → never a bodyless 304
   );
-  return data;
+  return Array.isArray(data) ? data : [];
 }
 
 /* ── Nav types & static sections ──────────────────────────── */
@@ -171,7 +171,7 @@ export default function Sidebar() {
   });
 
   const hasActiveCalendar = useMemo(() => {
-    if (!subscriptions) return false;
+    if (!Array.isArray(subscriptions)) return false;
     return subscriptions.some(
       (s) => s.code === 'CALENDAR' && s.status === 'ACTIVE',
     );
