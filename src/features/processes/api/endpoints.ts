@@ -95,7 +95,13 @@ export async function getProcessInstanceById(
 export async function getProcessInstanceVariables(
   id: string,
 ): Promise<VariablesMap> {
-  const { data } = await api.get(`/process-instance/${id}/variables`);
+  // deserializeValues=false → JSON/Spin variables come back as their serialized
+  // JSON string (e.g. {"name":"…"}), not the engine's deserialized SpinJsonNode
+  // object ({"array":false,"nodeType":"OBJECT",…}). The inspect modal then shows
+  // the real JSON in both the Serialized and Deserialized tabs.
+  const { data } = await api.get(`/process-instance/${id}/variables`, {
+    params: { deserializeValues: false },
+  });
   return data;
 }
 
