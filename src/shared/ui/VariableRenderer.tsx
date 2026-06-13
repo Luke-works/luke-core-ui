@@ -107,6 +107,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
           <InspectVariableModal
             name={name}
             value={value}
+            type={normalizedType}
             valueInfo={variable.valueInfo}
             instanceId={instanceId}
             onClose={() => setShowModal(false)}
@@ -161,12 +162,14 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
 function InspectVariableModal({
   name,
   value,
+  type,
   valueInfo,
   instanceId,
   onClose,
 }: {
   name?: string;
   value: unknown;
+  type?: string;
   valueInfo?: Record<string, any>;
   instanceId?: string;
   onClose: () => void;
@@ -175,7 +178,9 @@ function InspectVariableModal({
 
   const objectTypeName = valueInfo?.objectTypeName ?? null;
   const serializationDataFormat = valueInfo?.serializationDataFormat ?? null;
-  const isJson = serializationDataFormat === 'application/json';
+  // JSON if the engine says so by type OR by serialization format. Anything else
+  // (e.g. application/x-java-serialized-object) is treated as an Object.
+  const isJson = type === 'json' || serializationDataFormat === 'application/json';
 
   // Raw serialized value as a string.
   const serialized = typeof value === 'string' ? value : JSON.stringify(value);
