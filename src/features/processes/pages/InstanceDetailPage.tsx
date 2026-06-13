@@ -964,6 +964,7 @@ function VariablesPanel({
 }
 
 function VariableRow({ name, variable, onSave, onDelete }: { name: string; variable: CamundaVariable; onSave: (value: any, type: string) => void; onDelete: () => void }) {
+  const { id: instanceId } = useParams<{ id: string }>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editType, setEditType] = useState(variable.type || 'String');
@@ -994,7 +995,7 @@ function VariableRow({ name, variable, onSave, onDelete }: { name: string; varia
         <td className="py-2.5 px-3"><Badge variant="muted">{variable.type || 'Unknown'}</Badge></td>
         <td className="py-2.5 px-3">
           <div className="min-h-[1.25rem]">
-            <VariableRenderer variable={variable} name={name} />
+            <VariableRenderer variable={variable} name={name} instanceId={instanceId} />
           </div>
         </td>
         <td className="py-2.5 px-3">

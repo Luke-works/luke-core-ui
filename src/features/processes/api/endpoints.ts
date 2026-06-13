@@ -105,6 +105,19 @@ export async function getProcessInstanceVariables(
   return data;
 }
 
+/** Fetch a single variable with the engine DESERIALIZING it (for the Object
+ *  "Deserialized" view — Java-serialized objects can't be parsed client-side). */
+export async function getProcessVariableDeserialized(
+  instanceId: string,
+  varName: string,
+): Promise<{ type: string; value: unknown; valueInfo?: Record<string, any> }> {
+  const { data } = await api.get(
+    `/process-instance/${instanceId}/variables/${varName}`,
+    { params: { deserializeValues: true } },
+  );
+  return data;
+}
+
 export async function updateProcessVariable(
   instanceId: string,
   varName: string,

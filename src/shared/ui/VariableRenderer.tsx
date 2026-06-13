@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import Badge from './Badge';
 import Tooltip from './Tooltip';
 import Tabs from './Tabs';
 import { relativeTime, absoluteTime } from '@/shared/utils/date';
+import { getProcessVariableDeserialized } from '@/features/processes/api/endpoints';
 
 interface VariableRendererProps {
   variable: {
@@ -13,9 +14,11 @@ interface VariableRendererProps {
   };
   /** Variable name — used in the inspect modal title */
   name?: string;
+  /** Process instance id — enables on-demand deserialization of Object variables. */
+  instanceId?: string;
 }
 
-export default function VariableRenderer({ variable, name }: VariableRendererProps) {
+export default function VariableRenderer({ variable, name, instanceId }: VariableRendererProps) {
   const { value, type } = variable;
   const normalizedType = type?.toLowerCase() ?? '';
   const [showModal, setShowModal] = useState(false);
@@ -105,6 +108,7 @@ export default function VariableRenderer({ variable, name }: VariableRendererPro
             name={name}
             value={value}
             valueInfo={variable.valueInfo}
+            instanceId={instanceId}
             onClose={() => setShowModal(false)}
           />
         )}
@@ -158,28 +162,49 @@ function InspectVariableModal({
   name,
   value,
   valueInfo,
+  instanceId,
   onClose,
 }: {
   name?: string;
   value: unknown;
   valueInfo?: Record<string, any>;
+  instanceId?: string;
   onClose: () => void;
 }) {
   const [activeTab, setActiveTab] = useState('serialized');
 
   const objectTypeName = valueInfo?.objectTypeName ?? null;
   const serializationDataFormat = valueInfo?.serializationDataFormat ?? null;
+  const isJson = serializationDataFormat === 'application/json';
 
-  // Serialized: the raw value as a string
-  const serialized =
-    typeof value === 'string' ? value : JSON.stringify(value);
+  // Raw serialized value as a string.
+  const serialized = typeof value === 'string' ? value : JSON.stringify(value);
 
-  // Deserialized: try to parse JSON from the raw value
-  const deserialized = typeof value === 'string' ? tryParseJson(value) : value;
-  const deserializedStr =
-    typeof deserialized === 'object' && deserialized !== null
-      ? JSON.stringify(deserialized, null, 2)
-      : String(deserialized);
+  // JSON: pretty-print the JSON string directly (a single view — no tabs).
+  const jsonPretty = (() => {
+    const parsed = typeof value === 'string' ? tryParseJson(value) : value;
+    return typeof parsed === 'object' && parsed !== null ? JSON.stringify(parsed, null, 2) : serialized;
+  })();
+
+  // Object: the deserialized form must come from the engine (a Java-serialized
+  // object can't be parsed in the browser). Fetched on demand when the
+  // Deserialized tab is opened.
+  const [deser, setDeser] = useState<unknown>(undefined);
+  const [deserLoading, setDeserLoading] = useState(false);
+  const [deserErr, setDeserErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isJson || activeTab !== 'deserialized' || !instanceId || !name || deser !== undefined || deserLoading) return;
+    setDeserLoading(true);
+    setDeserErr(null);
+    getProcessVariableDeserialized(instanceId, name)
+      .then((r) => setDeser(r.value ?? null))
+      .catch((e: any) => setDeserErr(e?.message ?? 'Could not deserialize this variable.'))
+      .finally(() => setDeserLoading(false));
+  }, [isJson, activeTab, instanceId, name, deser, deserLoading]);
+
+  const objectDeserStr =
+    deser === undefined ? null : typeof deser === 'object' && deser !== null ? JSON.stringify(deser, null, 2) : String(deser);
 
   const tabs = [
     { id: 'serialized', label: 'Serialized' },
@@ -246,40 +271,45 @@ function InspectVariableModal({
           </div>
         </div>
 
-        {/* Tabs + Content */}
+        {/* Content */}
         <div className="flex-1 overflow-hidden flex flex-col">
-          <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
-            <div
-              className="p-4 overflow-auto"
-              style={{ maxHeight: 'calc(80vh - 180px)' }}
-            >
-              {activeTab === 'serialized' && (
-                <pre
-                  className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {serialized}
-                </pre>
-              )}
-
-              {activeTab === 'deserialized' && (
-                <pre
-                  className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-                  style={{
-                    backgroundColor: 'var(--bg-elevated)',
-                    border: '1px solid var(--border)',
-                    color: 'var(--text-primary)',
-                  }}
-                >
-                  {deserializedStr}
-                </pre>
-              )}
+          {isJson ? (
+            // JSON → a single view of the JSON (no Serialized/Deserialized split).
+            <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 180px)' }}>
+              <pre
+                className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
+                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+              >
+                {jsonPretty}
+              </pre>
             </div>
-          </Tabs>
+          ) : (
+            // Object → raw serialized blob + the engine-deserialized form.
+            <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
+              <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 180px)' }}>
+                {activeTab === 'serialized' && (
+                  <pre
+                    className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
+                    style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  >
+                    {serialized}
+                  </pre>
+                )}
+                {activeTab === 'deserialized' && (
+                  <pre
+                    className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
+                    style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+                  >
+                    {deserLoading
+                      ? 'Deserializing…'
+                      : deserErr
+                        ? deserErr
+                        : objectDeserStr ?? (instanceId ? '' : 'Open from a process instance to deserialize.')}
+                  </pre>
+                )}
+              </div>
+            </Tabs>
+          )}
         </div>
       </div>
     </div>
