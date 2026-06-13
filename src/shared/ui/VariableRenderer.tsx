@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Clipboard, Check } from 'lucide-react';
 import Badge from './Badge';
 import Tooltip from './Tooltip';
 import Tabs from './Tabs';
@@ -281,37 +281,21 @@ function InspectVariableModal({
           {isJson ? (
             // JSON → a single view of the JSON (no Serialized/Deserialized split).
             <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 180px)' }}>
-              <pre
-                className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-                style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-              >
-                {jsonPretty}
-              </pre>
+              <ValuePane content={jsonPretty} />
             </div>
           ) : (
             // Object → raw serialized blob + the engine-deserialized form.
             <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
               <div className="p-4 overflow-auto" style={{ maxHeight: 'calc(80vh - 180px)' }}>
-                {activeTab === 'serialized' && (
-                  <pre
-                    className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-                    style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                  >
-                    {serialized}
-                  </pre>
-                )}
-                {activeTab === 'deserialized' && (
-                  <pre
-                    className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-                    style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-                  >
-                    {deserLoading
-                      ? 'Deserializing…'
-                      : deserErr
-                        ? deserErr
-                        : objectDeserStr ?? (instanceId ? '' : 'Open from a process instance to deserialize.')}
-                  </pre>
-                )}
+                {activeTab === 'serialized' && <ValuePane content={serialized} />}
+                {activeTab === 'deserialized' &&
+                  (deserLoading ? (
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Deserializing…</p>
+                  ) : deserErr ? (
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{deserErr}</p>
+                  ) : (
+                    <ValuePane content={objectDeserStr ?? (instanceId ? '' : 'Open from a process instance to deserialize.')} />
+                  ))}
               </div>
             </Tabs>
           )}
@@ -327,4 +311,50 @@ function tryParseJson(str: string): unknown {
   } catch {
     return str;
   }
+}
+
+/* Copy-to-clipboard: click → turns into a tick → reverts after a moment. */
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const onCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* clipboard unavailable */
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      title={copied ? 'Copied' : 'Copy value'}
+      aria-label="Copy value"
+      className="rounded p-1 transition-colors cursor-pointer bg-transparent border-none"
+      style={{ color: copied ? '#22c55e' : 'var(--text-secondary)' }}
+    >
+      {copied ? <Check size={16} /> : <Clipboard size={16} />}
+    </button>
+  );
+}
+
+/* A value box with a "Value" label and a copy button above it. */
+function ValuePane({ content }: { content: string }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+          Value
+        </span>
+        <CopyButton text={content} />
+      </div>
+      <pre
+        className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
+        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
+      >
+        {content}
+      </pre>
+    </div>
+  );
 }
