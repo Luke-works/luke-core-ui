@@ -34,6 +34,7 @@ import yaml from 'js-yaml';
 
 import Button from '@/shared/ui/Button';
 import Tabs from '@/shared/ui/Tabs';
+import { validateOutboundUrl } from '@/shared/utils/validateOutboundUrl';
 
 /* ── Types ────────────────────────────────────────────────── */
 
@@ -193,6 +194,15 @@ function StepConfigPanel({
                   <Field label="URL">
                     <input type="text" value={data.config.url ?? ''} onChange={(e) => updateConfig('url', e.target.value)}
                       placeholder="https://api.example.com/endpoint" style={inputStyle} />
+                    {(() => {
+                      // Defense-in-depth (#32): warn on non-http(s) / internal SSRF targets.
+                      // Skip templated URLs ({{env.X}}) — those resolve server-side.
+                      const u = String(data.config.url ?? '');
+                      const err = u && !u.includes('{{') ? validateOutboundUrl(u) : null;
+                      return err ? (
+                        <p style={{ marginTop: 4, fontSize: '0.7rem', color: 'var(--accent-red, #ef4444)' }}>{err}</p>
+                      ) : null;
+                    })()}
                   </Field>
                   <Field label="Headers (JSON)">
                     <textarea value={typeof data.config.headers === 'string' ? data.config.headers : JSON.stringify(data.config.headers ?? {}, null, 2)}
