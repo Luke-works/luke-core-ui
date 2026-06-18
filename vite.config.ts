@@ -47,6 +47,9 @@ export default defineConfig(({ mode }) => {
       // jsdom lets component tests mount; pure-util suites run fine here too.
       environment: 'jsdom',
       setupFiles: ['./src/test/setup.ts'],
+      // Vitest owns unit/component tests under src/. Playwright E2E specs live in
+      // ./e2e and must NOT be picked up here (they use @playwright/test).
+      include: ['src/**/*.{test,spec}.{ts,tsx}'],
     },
   };
 });
