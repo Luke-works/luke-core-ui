@@ -50,8 +50,8 @@ export default function SetupPage() {
     dbHost: 'localhost',
     dbPort: '5432',
     dbName: 'luke_camunda',
-    dbUsername: 'luke',
-    dbPassword: 'luke',
+    dbUsername: '',
+    dbPassword: '',
     // Services
     engineName: 'Luke Core',
     taskEngineEnabled: true,
@@ -66,7 +66,15 @@ export default function SetupPage() {
     switch (step) {
       case 0: return true; // Welcome
       case 1: return form.adminUsername.length >= 3 && form.adminPassword.length >= 4 && form.adminPassword === form.adminPasswordConfirm;
-      case 2: return true; // DB always has defaults
+      case 2:
+        // H2 (embedded) needs no credentials. PostgreSQL must have host/name/
+        // username and an operator-chosen password — there is no shipped default
+        // secret, so the operator cannot proceed on a guessable credential.
+        if (form.dbType === 'h2') return true;
+        return form.dbHost.trim().length > 0
+          && form.dbName.trim().length > 0
+          && form.dbUsername.trim().length > 0
+          && form.dbPassword.length >= 8;
       case 3: return true;
       case 4: return true;
       default: return true;
@@ -85,9 +93,12 @@ export default function SetupPage() {
         body: JSON.stringify(form),
       });
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: 'Setup failed' }));
-        throw new Error(err.error || 'Setup failed');
+      // A 404 means this engine build simply doesn't expose /api/setup yet — a
+      // supported "nothing to persist here" mode, so treat it as done. Any OTHER
+      // non-OK status is a real backend failure and must not be hidden.
+      if (!res.ok && res.status !== 404) {
+        const err = await res.json().catch(() => ({ error: `Setup failed (HTTP ${res.status})` }));
+        throw new Error(err.error || `Setup failed (HTTP ${res.status})`);
       }
 
       // Mark setup as complete in localStorage
@@ -96,10 +107,10 @@ export default function SetupPage() {
       toast.success('Setup complete! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1500);
     } catch (err: any) {
-      // If backend doesn't have /api/setup yet, just mark as complete
-      localStorage.setItem('luke-setup-complete', 'true');
-      toast.success('Setup complete!');
-      setTimeout(() => navigate('/login'), 1000);
+      // Genuine failure (network error or backend error). Surface it and keep the
+      // operator on the wizard — do NOT set luke-setup-complete, or the system
+      // would look configured forever while nothing was actually persisted.
+      toast.error(err?.message || 'Setup failed. Check the engine connection and try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -258,11 +269,13 @@ export default function SetupPage() {
                       <input type="text" value={form.dbName} onChange={(e) => set('dbName', e.target.value)} style={inputStyle} />
                     </Field>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <Field label="Username">
-                        <input type="text" value={form.dbUsername} onChange={(e) => set('dbUsername', e.target.value)} style={inputStyle} />
+                      <Field label="Username *">
+                        <input type="text" value={form.dbUsername} onChange={(e) => set('dbUsername', e.target.value)}
+                          placeholder="Database user" style={inputStyle} />
                       </Field>
-                      <Field label="Password">
-                        <input type="password" value={form.dbPassword} onChange={(e) => set('dbPassword', e.target.value)} style={inputStyle} />
+                      <Field label="Password *">
+                        <input type="password" value={form.dbPassword} onChange={(e) => set('dbPassword', e.target.value)}
+                          placeholder="At least 8 characters" style={inputStyle} />
                       </Field>
                     </div>
                   </>
