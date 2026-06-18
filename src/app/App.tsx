@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import AppShell from '@/shared/layout/AppShell';
+import ErrorBoundary from '@/shared/ui/ErrorBoundary';
 import AuthGuard from '@/features/auth/components/AuthGuard';
 import RequireOperator from '@/features/auth/components/RequireOperator';
 import { lazyWithReload as lazy } from '@/shared/utils/lazyWithReload';
@@ -36,16 +37,21 @@ const LoginPage = lazy(() => import('@/features/auth/pages/LoginPage'));
 const SetupPage = lazy(() => import('@/features/setup/pages/SetupPage'));
 
 function SuspenseWrapper({ children }: { children: ReactNode }) {
+  // Per-route error boundary: a render throw in one page degrades to a recoverable
+  // fallback while the shell/nav survive. Keyed by path so navigating away resets it.
+  const { pathname } = useLocation();
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
+    <ErrorBoundary resetKeys={[pathname]} label={pathname}>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
+          </div>
+        }
+      >
+        {children}
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
