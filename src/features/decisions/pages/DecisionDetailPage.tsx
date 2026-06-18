@@ -31,10 +31,13 @@ import 'dmn-js/dist/assets/dmn-font/css/dmn.css';
 function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<any>(null);
+  const [importError, setImportError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     if (!containerRef.current || !xml) return;
 
+    setImportError(null);
     let cancelled = false;
 
     (async () => {
@@ -67,7 +70,10 @@ function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | strin
           }
         }
       } catch (err) {
-        console.error('[DmnViewer] Failed to import DMN XML:', err);
+        if (!cancelled) {
+          console.error('[DmnViewer] Failed to import DMN XML:', err);
+          setImportError(err instanceof Error ? err.message : 'The decision table could not be rendered.');
+        }
       }
     })();
 
@@ -78,7 +84,7 @@ function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | strin
         viewerRef.current = null;
       }
     };
-  }, [xml]);
+  }, [xml, reloadKey]);
 
   // Auto-fit on resize
   useEffect(() => {
@@ -96,16 +102,52 @@ function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | strin
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        width: '100%',
-        height,
-        backgroundColor: 'var(--bg-surface)',
-        borderRadius: 8,
-        overflow: 'auto',
-      }}
-    />
+    <div style={{ position: 'relative', width: '100%', height }}>
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 8,
+          overflow: 'auto',
+        }}
+      />
+      {importError && (
+        <div
+          role="alert"
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            padding: 24,
+            textAlign: 'center',
+            backgroundColor: 'var(--bg-surface)',
+            borderRadius: 8,
+          }}
+        >
+          <p style={{ color: 'var(--text-primary)', fontSize: 14, fontWeight: 600 }}>
+            Couldn't render this decision
+          </p>
+          <p style={{ color: 'var(--text-secondary)', fontSize: 13, maxWidth: 360 }}>{importError}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setImportError(null);
+              setReloadKey((k) => k + 1);
+            }}
+            className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium"
+            style={{ backgroundColor: 'var(--accent-blue)', color: '#fff' }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

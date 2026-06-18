@@ -198,6 +198,9 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
     const containerRef = useRef<HTMLDivElement>(null);
     const viewerRef = useRef<InstanceType<typeof BpmnJS> | null>(null);
     const [zoomLevel, setZoomLevel] = useState(1);
+    // Import failures must show an explicit error state, not a blank canvas.
+    const [importError, setImportError] = useState<string | null>(null);
+    const [reloadKey, setReloadKey] = useState(0);
 
     /* ── Zoom helpers ───────────────────────────────────────── */
 
@@ -262,6 +265,8 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
     useEffect(() => {
       if (!containerRef.current || !xml) return;
 
+      setImportError(null);
+
       if (viewerRef.current) {
         viewerRef.current.destroy();
         viewerRef.current = null;
@@ -277,8 +282,14 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
 
       (async () => {
         try {
-          await viewer.importXML(xml);
+          const { warnings } = await viewer.importXML(xml);
           if (cancelled) return;
+
+          // bpmn-js tolerates some malformed/unknown content but reports it —
+          // surface the count so a partial render isn't mistaken for a clean one.
+          if (warnings && warnings.length > 0) {
+            console.warn(`[BpmnViewer] imported with ${warnings.length} warning(s):`, warnings);
+          }
 
           // Center and fit the diagram in the viewport
           const canvas = viewer.get('canvas') as {
@@ -298,6 +309,7 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
         } catch (err) {
           if (!cancelled) {
             console.error('[BpmnViewer] Failed to import XML:', err);
+            setImportError(err instanceof Error ? err.message : 'The diagram could not be rendered.');
           }
         }
       })();
@@ -307,7 +319,7 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
         viewer.destroy();
         viewerRef.current = null;
       };
-    }, [xml]);
+    }, [xml, reloadKey]);
 
     /* Update overlays + states when props change */
     useEffect(() => {
@@ -344,6 +356,44 @@ const BpmnViewer = forwardRef<BpmnViewerHandle, BpmnViewerProps>(
             overflow: 'hidden',
           }}
         />
+
+        {/* Import error overlay — explicit failure state instead of a blank canvas */}
+        {importError && (
+          <div
+            role="alert"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              zIndex: 20,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 12,
+              padding: 24,
+              textAlign: 'center',
+              backgroundColor: 'var(--bg-surface, #1e1e2e)',
+            }}
+          >
+            <p style={{ color: 'var(--text-primary, #e5e7eb)', fontSize: 14, fontWeight: 600 }}>
+              Couldn't render this diagram
+            </p>
+            <p style={{ color: 'var(--text-secondary, #9ca3af)', fontSize: 13, maxWidth: 360 }}>
+              {importError}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setImportError(null);
+                setReloadKey((k) => k + 1);
+              }}
+              className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium"
+              style={{ backgroundColor: 'var(--accent-blue, #3b7bf4)', color: '#fff' }}
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Controls — right side */}
         <div
