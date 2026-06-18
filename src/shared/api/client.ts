@@ -15,12 +15,19 @@ const api = axios.create({
   validateStatus: (status) => (status >= 200 && status < 300) || status === 304,
 });
 
-// Paths that should NOT get tenant filtering (auth, tenant listing, identity)
-const TENANT_EXCLUDE_PATHS = ['/engine', '/tenant', '/user', '/group', '/identity'];
+// Engine-rest endpoints that are global by design (engine probe, tenant +
+// identity management) and must NOT be tenant-scoped. Matched by exact path or
+// as a path *segment* (prefix + '/') — never as a loose string prefix, so
+// '/user' no longer silently swallows '/user-operation' and friends.
+const TENANT_GLOBAL_PREFIXES = ['/engine', '/tenant', '/user', '/group', '/identity'];
 
-function shouldExcludeTenant(url: string | undefined): boolean {
-  if (!url) return true;
-  return TENANT_EXCLUDE_PATHS.some((p) => url.startsWith(p));
+// Exported for unit testing.
+export function shouldExcludeTenant(url: string | undefined): boolean {
+  // Unknown URL → tenant-SCOPE it (fail-closed). We only opt a path out of
+  // scoping when it is a recognized global endpoint, never by default.
+  if (!url) return false;
+  const path = (url.startsWith('/') ? url : `/${url}`).split('?')[0];
+  return TENANT_GLOBAL_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
 api.interceptors.request.use((config) => {
