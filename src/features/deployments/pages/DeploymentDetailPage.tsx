@@ -16,7 +16,7 @@ import {
   getDeploymentResourceData,
   deleteDeployment,
 } from '@/features/deployments/api/endpoints';
-import { useAuthStore } from '@/features/auth/stores/authStore';
+import { api } from '@/shared/api/client';
 import { absoluteTime } from '@/shared/utils/date';
 
 export default function DeploymentDetailPage() {
@@ -65,16 +65,12 @@ export default function DeploymentDetailPage() {
   const handleDownload = async () => {
     if (!activeResource || !id) return;
     try {
-      const { username, password } = useAuthStore.getState();
-      const baseURL = import.meta.env.VITE_API_BASE_URL || '';
-      const url = `${baseURL}/engine-rest/deployment/${id}/resources/${activeResource.id}/data`;
-      const res = await fetch(url, {
-        headers: {
-          'Authorization': `Basic ${btoa(`${username}:${password}`)}`,
-        },
-      });
-      if (!res.ok) throw new Error('Download failed');
-      const blob = await res.blob();
+      // Use the shared client so the download inherits Basic auth + the shared 401
+      // logout/redirect flow instead of re-encoding credentials by hand (#31).
+      const { data: blob } = await api.get<Blob>(
+        `/deployment/${id}/resources/${activeResource.id}/data`,
+        { responseType: 'blob' },
+      );
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = blobUrl;

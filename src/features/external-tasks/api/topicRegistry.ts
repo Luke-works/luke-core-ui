@@ -1,6 +1,6 @@
 import axios from 'axios';
-import { useAuthStore } from '@/features/auth/stores/authStore';
 import { useTenantStore } from '@/shared/stores/tenantStore';
+import { injectBasicAuth, handleAuthError } from '@/shared/api/client';
 
 export type RegisteredTopic = {
   id: string;
@@ -33,16 +33,17 @@ const baseURL = import.meta.env.VITE_API_BASE_URL
 const topicApi = axios.create({ baseURL });
 
 topicApi.interceptors.request.use((config) => {
-  const { username, password } = useAuthStore.getState();
-  if (username && password) {
-    config.headers.set('Authorization', `Basic ${btoa(`${username}:${password}`)}`);
-  }
+  injectBasicAuth(config); // shared credential encoding (#31)
   const tenantId = useTenantStore.getState().activeTenantId;
   if (tenantId) {
     config.headers.set('X-Tenant-Id', tenantId);
   }
   return config;
 });
+
+// Same auth-failure flow as the shared client: an expired session signs out +
+// redirects instead of leaving the user half-authenticated on the registry pages (#31).
+topicApi.interceptors.response.use((response) => response, handleAuthError);
 
 export async function getRegisteredTopics(): Promise<RegisteredTopic[]> {
   const { data } = await topicApi.get('/');

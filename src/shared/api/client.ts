@@ -30,13 +30,29 @@ export function shouldExcludeTenant(url: string | undefined): boolean {
   return TENANT_GLOBAL_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
 }
 
-api.interceptors.request.use((config) => {
-  // Inject Basic auth
+/** Inject HTTP Basic auth from the auth store. The single place credentials are
+ *  encoded (#31) so feature clients don't each re-encode them. */
+export function injectBasicAuth(config: { headers: { set: (k: string, v: string) => void } }): void {
   const { username, password } = useAuthStore.getState();
   if (username && password) {
-    const encoded = btoa(`${username}:${password}`);
-    config.headers.set('Authorization', `Basic ${encoded}`);
+    config.headers.set('Authorization', `Basic ${btoa(`${username}:${password}`)}`);
   }
+}
+
+/** Shared 401 handler: sign out, clear tenant, redirect to /login, then rethrow —
+ *  so every axios instance treats an expired session identically (#31). */
+export function handleAuthError(error: unknown): never {
+  const status = (error as { response?: { status?: number } })?.response?.status;
+  if (status === 401) {
+    useAuthStore.getState().logout();
+    useTenantStore.getState().clear();
+    window.location.href = '/login';
+  }
+  throw error;
+}
+
+api.interceptors.request.use((config) => {
+  injectBasicAuth(config);
 
   // Inject tenant as header on all requests + query param on GETs.
   // STRICT tenant scoping (#48): tenantIdIn matches only the active tenant, so
@@ -56,28 +72,19 @@ api.interceptors.request.use((config) => {
     }
   }
 
-  // Cache-bust GETs so CIBSeven's ETag revalidation can't return a bodyless
-  // 304 Not Modified. Without this, a 304 hands callers an empty body and any
-  // code that treats the result as an array (.some/.map) throws. With a unique
-  // param the browser never sends If-None-Match, so the engine always returns
-  // 200 + full body. (This supersedes the 304-tolerant validateStatus above.)
-  if (config.method === 'get') {
+  // Cache-busting is scoped to the login/engine probe ONLY (#26). A blanket _dc on
+  // every GET defeated all ETag/304 revalidation — on a polling ops console that
+  // forced full-body responses on every poll and navigation. The probe needs a
+  // guaranteed-fresh 200 (a bodyless 304 there breaks the auth check); everywhere
+  // else conditional GETs now let the engine return a cheap 304 and the browser
+  // serves the cached body transparently (callers still see 200 + body).
+  if (config.method === 'get' && config.url?.split('?')[0].startsWith('/engine')) {
     config.params = { ...config.params, _dc: Date.now() };
   }
 
   return config;
 });
 
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout();
-      useTenantStore.getState().clear();
-      window.location.href = '/login';
-    }
-    throw error;
-  },
-);
+api.interceptors.response.use((response) => response, handleAuthError);
 
 export { api };
