@@ -37,6 +37,11 @@ function SortIcon({ direction }: { direction: false | 'asc' | 'desc' }) {
   return <ArrowUpDown size={ICON_SIZE} className="text-gray-400" />;
 }
 
+/** Map a TanStack sort state to the WCAG aria-sort token (#35). */
+function ariaSort(direction: false | 'asc' | 'desc'): 'ascending' | 'descending' | 'none' {
+  return direction === 'asc' ? 'ascending' : direction === 'desc' ? 'descending' : 'none';
+}
+
 /**
  * DataTable — TanStack Table powered with TailAdmin's table look:
  *  rounded-2xl shell, gray-50 header row, divide-y body, hover gray-50/700.
@@ -127,28 +132,25 @@ export default function DataTable<T>({
                   return (
                     <th
                       key={header.id}
-                      className={`px-5 py-3 text-left text-theme-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 select-none ${
-                        canSort
-                          ? 'cursor-pointer hover:text-gray-700 dark:hover:text-white/80'
-                          : ''
-                      }`}
-                      onClick={
-                        canSort
-                          ? header.column.getToggleSortingHandler()
-                          : undefined
-                      }
+                      // aria-sort lets AT announce asc/desc/none (#35).
+                      aria-sort={canSort ? ariaSort(header.column.getIsSorted()) : undefined}
+                      className="px-5 py-3 text-left text-theme-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400 select-none"
                     >
-                      <span className="inline-flex items-center gap-1.5">
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                        {canSort && (
+                      {header.isPlaceholder ? null : canSort ? (
+                        // Real <button> → focusable + Enter/Space activation for free.
+                        <button
+                          type="button"
+                          onClick={header.column.getToggleSortingHandler()}
+                          className="inline-flex items-center gap-1.5 uppercase tracking-wider hover:text-gray-700 dark:hover:text-white/80"
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
                           <SortIcon direction={header.column.getIsSorted()} />
-                        )}
-                      </span>
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5">
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                        </span>
+                      )}
                     </th>
                   );
                 })}
@@ -163,8 +165,19 @@ export default function DataTable<T>({
                 className={`transition-colors hover:bg-gray-50 dark:hover:bg-white/[0.03] ${
                   onRowClick ? 'cursor-pointer' : ''
                 }`}
-                onClick={
-                  onRowClick ? () => onRowClick(row.original) : undefined
+                onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                // Keyboard-operable when the row is clickable (#35).
+                role={onRowClick ? 'button' : undefined}
+                tabIndex={onRowClick ? 0 : undefined}
+                onKeyDown={
+                  onRowClick
+                    ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          onRowClick(row.original);
+                        }
+                      }
+                    : undefined
                 }
               >
                 {row.getVisibleCells().map((cell) => (
