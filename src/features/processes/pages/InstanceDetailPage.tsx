@@ -13,6 +13,8 @@ import StackTraceModal from '@/shared/ui/StackTraceModal';
 
 
 import CopyId from '@/shared/ui/CopyId';
+import { useTenantStore } from '@/shared/stores/tenantStore';
+import { isForeignTenant } from '@/shared/utils/tenantGuard';
 import Skeleton from '@/shared/ui/Skeleton';
 import VariableRenderer from '@/shared/ui/VariableRenderer';
 import {
@@ -51,6 +53,7 @@ const VARIABLE_TYPES = [
 
 export default function InstanceDetailPage() {
   const { id: instanceId } = useParams<{ id: string }>();
+  const activeTenantId = useTenantStore((s) => s.activeTenantId);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('variables');
@@ -372,6 +375,21 @@ export default function InstanceDetailPage() {
         <Skeleton width="60%" height="1.5rem" />
         <Skeleton height="44px" className="mt-2" />
         <Skeleton height="420px" className="mt-2" />
+      </div>
+    );
+  }
+
+  // #47: a by-id read can return an instance from another tenant (admin auth sees
+  // all). Refuse to display it under the wrong active tenant.
+  if (isForeignTenant(instance.tenantId, activeTenantId)) {
+    return (
+      <div className="p-10 text-center" style={{ color: 'var(--text-secondary)' }}>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Not in this tenant
+        </h2>
+        <p className="mt-2 text-sm">
+          This process instance belongs to a different tenant. Switch tenants to view it.
+        </p>
       </div>
     );
   }

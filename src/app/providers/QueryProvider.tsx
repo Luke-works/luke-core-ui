@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, hashKey } from '@tanstack/react-query';
 import { useTenantStore } from '@/shared/stores/tenantStore';
 
 const queryClient = new QueryClient({
@@ -7,6 +7,12 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 30_000,
       retry: 1,
+      // Namespace EVERY cache entry by the active tenant: the same queryKey under a
+      // different tenant hashes to a different entry, so React Query can never serve
+      // one tenant's data to another — tenant isolation that doesn't depend on the
+      // clear-on-switch below (defense-in-depth, #46). Switching tenant routes reads
+      // to a fresh entry → automatic refetch with the new tenant header.
+      queryKeyHashFn: (key) => `${useTenantStore.getState().activeTenantId ?? 'none'}::${hashKey(key)}`,
     },
   },
 });

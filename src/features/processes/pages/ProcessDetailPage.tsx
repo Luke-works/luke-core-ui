@@ -16,6 +16,8 @@ import Button from '@/shared/ui/Button';
 import StatusBadge from '@/shared/ui/StatusBadge';
 import CopyId from '@/shared/ui/CopyId';
 import Skeleton from '@/shared/ui/Skeleton';
+import { useTenantStore } from '@/shared/stores/tenantStore';
+import { isForeignTenant } from '@/shared/utils/tenantGuard';
 import StartInstanceModal from '@/features/processes/components/StartInstanceModal';
 import type { DetailItem } from '@/shared/ui/DetailPanel';
 import {
@@ -59,6 +61,7 @@ const inputStyle: React.CSSProperties = {
 
 export default function ProcessDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const activeTenantId = useTenantStore((s) => s.activeTenantId);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('instances');
@@ -445,6 +448,21 @@ export default function ProcessDetailPage() {
         <div className="mt-2">
           <Skeleton height="420px" />
         </div>
+      </div>
+    );
+  }
+
+  // #47: a by-id read can return a definition from another tenant (admin auth sees
+  // all). Refuse to display it under the wrong active tenant.
+  if (isForeignTenant(definition.tenantId, activeTenantId)) {
+    return (
+      <div className="p-10 text-center" style={{ color: 'var(--text-secondary)' }}>
+        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+          Not in this tenant
+        </h2>
+        <p className="mt-2 text-sm">
+          This process definition belongs to a different tenant. Switch tenants to view it.
+        </p>
       </div>
     );
   }

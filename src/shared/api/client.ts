@@ -38,7 +38,13 @@ api.interceptors.request.use((config) => {
     config.headers.set('Authorization', `Basic ${encoded}`);
   }
 
-  // Inject tenant as header on all requests + query param on GETs
+  // Inject tenant as header on all requests + query param on GETs.
+  // STRICT tenant scoping (#48): tenantIdIn matches only the active tenant, so
+  // shared / no-tenant (tenantId=null) artifacts are intentionally NOT shown while a
+  // tenant is selected. (Decision: each tenant sees only its own artifacts; we do not
+  // add withoutTenantId.) NOTE: endpoints without a tenantIdIn filter (e.g.
+  // /process-definition/statistics) must be scoped at the call site instead — the
+  // param is silently ignored there (see processes/api filterStatisticsByTenant).
   const tenantId = useTenantStore.getState().activeTenantId;
   if (tenantId && !shouldExcludeTenant(config.url)) {
     config.headers.set('X-Tenant-Id', tenantId);
