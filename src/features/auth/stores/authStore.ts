@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+import { setObservabilityUser } from '@/shared/utils/observability';
 
 // One-time cleanup: this store used to persist credentials to localStorage, where
 // the operator's password survived a browser restart in plaintext. We now use
@@ -28,10 +29,12 @@ export const useAuthStore = create<AuthState>()(
 
       login: (username: string, password: string) => {
         set({ isAuthenticated: true, username, password });
+        setObservabilityUser(username); // tag error reports with the operator (#25)
       },
 
       logout: () => {
         set({ isAuthenticated: false, username: null, password: null });
+        setObservabilityUser(null);
       },
     }),
     {
