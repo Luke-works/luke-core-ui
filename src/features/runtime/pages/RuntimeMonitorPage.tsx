@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { RefreshCw, Play, Square } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,7 +24,7 @@ export default function RuntimeMonitorPage() {
   const runtimeQuery = useQuery({
     queryKey: ['runtime', 'status'],
     queryFn: getRuntimeStatus,
-    refetchInterval: 5000,
+    refetchInterval: pollWithBackoff(5000),
   });
 
   const invalidate = () =>

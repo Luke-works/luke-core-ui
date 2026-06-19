@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import {
   CalendarDays,
   MapPin,
@@ -90,7 +91,7 @@ function CalendarCard({ calendar, onDelete, isDeleting }: CalendarCardProps) {
   const openStatusQuery = useQuery({
     queryKey: ['calendar-open-status', calendar.calendarCode],
     queryFn: () => isCalendarOpen(calendar.calendarCode),
-    refetchInterval: 30_000,
+    refetchInterval: pollWithBackoff(30_000),
   });
 
   const locationCount = locationsQuery.data?.length ?? 0;

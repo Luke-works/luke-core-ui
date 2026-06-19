@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { Activity, FileWarning, HeartPulse, PlugZap } from 'lucide-react';
 
 import PageHeader from '@/shared/layout/PageHeader';
@@ -50,12 +51,12 @@ export default function HealthDashboardPage() {
   const summaryQuery = useQuery({
     queryKey: ['runtime', 'summary'],
     queryFn: getSystemSummary,
-    refetchInterval: 10000,
+    refetchInterval: pollWithBackoff(10000),
   });
   const runtimeQuery = useQuery({
     queryKey: ['runtime', 'status'],
     queryFn: getRuntimeStatus,
-    refetchInterval: 5000,
+    refetchInterval: pollWithBackoff(5000),
   });
 
   const summary = summaryQuery.data;

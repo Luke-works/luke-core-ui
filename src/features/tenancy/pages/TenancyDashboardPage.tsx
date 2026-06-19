@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import {
   BarChart,
   Bar,
@@ -102,7 +103,7 @@ export default function TenancyDashboardPage() {
     queryKey: ['tenancy-metrics'],
     queryFn: getTenancyMetrics,
     staleTime: 30000,
-    refetchInterval: 60000,
+    refetchInterval: pollWithBackoff(60000),
   });
 
   const tenantName = (m: TenantMetrics) => m.tenant.name || m.tenant.id;

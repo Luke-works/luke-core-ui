@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { AlertTriangle, RefreshCw, Trash2, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -69,13 +70,13 @@ export default function IncidentListPage() {
         maxResults: pageSize,
         firstResult: page * pageSize,
       }),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const countQuery = useQuery({
     queryKey: ['incidents', 'count'],
     queryFn: () => getIncidentCount(),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   // ---- Mutations -----------------------------------------------------------

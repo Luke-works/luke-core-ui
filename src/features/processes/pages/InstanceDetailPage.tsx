@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { Pause, Play, Trash2, RotateCcw, X, RefreshCw, AlertTriangle, Route, Pencil, Workflow, Hash, Key, GitBranch, FileText, Type, Building2, GitMerge, CircleDot, ChevronDown, ChevronRight, Braces, ClipboardList, BoltIcon, Settings2, ScrollText, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -111,7 +112,7 @@ export default function InstanceDetailPage() {
     queryKey: ['historicProcessInstance', instanceId],
     queryFn: () => getHistoricProcessInstanceById(instanceId!),
     enabled: !!instanceId,
-    refetchInterval: autoRefresh ? 5000 : false,
+    refetchInterval: autoRefresh ? pollWithBackoff(5000) : false,
   });
 
   // Runtime instance — only for running instances (suspend/terminate ops)
@@ -160,7 +161,7 @@ export default function InstanceDetailPage() {
     queryKey: ['processInstanceVariables', instanceId],
     queryFn: () => getProcessInstanceVariables(instanceId!),
     enabled: !!instanceId && isRunning,
-    refetchInterval: autoRefresh ? 5000 : false,
+    refetchInterval: autoRefresh ? pollWithBackoff(5000) : false,
   });
 
   const { data: historicVars, isLoading: historicVarsLoading } = useQuery({

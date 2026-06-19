@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import { RefreshCw, Eye, Play, Pause, FileCode } from 'lucide-react';
 import { toast } from 'sonner';
@@ -63,7 +64,7 @@ function FailedJobsTab({
         sortBy: 'jobId',
         sortOrder: 'desc',
       }),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const { can } = useAuthz();
@@ -205,7 +206,7 @@ function AllJobsTab() {
   const allJobsQuery = useQuery({
     queryKey: ['jobs', 'all'],
     queryFn: () => getJobs({ maxResults: 50 }),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const { can } = useAuthz();
@@ -327,7 +328,7 @@ function JobDefinitionsTab() {
   const definitionsQuery = useQuery({
     queryKey: ['jobDefinitions'],
     queryFn: () => getJobDefinitions({ maxResults: 50 }),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const { can } = useAuthz();

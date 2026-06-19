@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import {
   AreaChart,
   Area,
@@ -221,7 +222,7 @@ export default function DashboardPage() {
         sortBy: 'incidentTimestamp',
         sortOrder: 'desc',
       }),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   // ---- Render -------------------------------------------------------------

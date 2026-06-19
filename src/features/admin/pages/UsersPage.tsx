@@ -1053,12 +1053,19 @@ function ManageMembersPanel({
     queryFn: () => getUsers({ memberOfGroup: group.id, maxResults: 200 }),
   });
 
+  // A membership change also moves the group's displayed member count, so refresh
+  // ['groups'] alongside the member list — otherwise the count goes stale (#42).
+  const invalidateMembers = () => {
+    queryClient.invalidateQueries({ queryKey: membersQueryKey });
+    queryClient.invalidateQueries({ queryKey: ['groups'] });
+  };
+
   const addMutation = useMutation({
     mutationFn: (userId: string) => addGroupMember(group.id, userId),
     onSuccess: () => {
       toast.success('Member added');
       setSelectedUserId('');
-      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+      invalidateMembers();
     },
     onError: () => toast.error('Failed to add member'),
   });
@@ -1067,7 +1074,7 @@ function ManageMembersPanel({
     mutationFn: (userId: string) => removeGroupMember(group.id, userId),
     onSuccess: () => {
       toast.success('Member removed');
-      queryClient.invalidateQueries({ queryKey: membersQueryKey });
+      invalidateMembers();
     },
     onError: () => toast.error('Failed to remove member'),
   });

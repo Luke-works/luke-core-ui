@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sun, Moon, Server, Cpu, CheckCircle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import Button from '@/shared/ui/Button';
 import Card from '@/shared/ui/Card';
 import Badge from '@/shared/ui/Badge';
@@ -62,13 +63,13 @@ export default function SettingsPage() {
   const engineHealth = useQuery({
     queryKey: ['health', 'engine'],
     queryFn: () => checkHealth(`${engineUrl}/actuator/health`),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const taskEngineHealth = useQuery({
     queryKey: ['health', 'taskEngine'],
     queryFn: () => checkHealth(`${taskEngineUrl}/actuator/health`),
-    refetchInterval: 30000,
+    refetchInterval: pollWithBackoff(30000),
   });
 
   const engineInfo = useQuery({

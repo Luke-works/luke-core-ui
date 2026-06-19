@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 
 import PageHeader from '@/shared/layout/PageHeader';
 import Card from '@/shared/ui/Card';
@@ -54,7 +55,7 @@ export default function LogsPage() {
   const logsQuery = useQuery({
     queryKey: ['runtime', 'logs', filters],
     queryFn: () => getRuntimeLogs(filters),
-    refetchInterval: 5000,
+    refetchInterval: pollWithBackoff(5000),
   });
 
   const setField = (key: keyof RuntimeLogFilters) => (value: string) =>

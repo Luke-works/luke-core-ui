@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import {
   Play, Pause, Flame, ChevronDown, ChevronRight, Workflow, BoltIcon,
   FileText, GitBranch, Tag, Hash, Key, Type, Clock, Building2, Rocket, Activity,
@@ -137,7 +138,7 @@ export default function ProcessDetailPage() {
     queryKey: ['activityStatistics', id],
     queryFn: () => getActivityStatistics(id!),
     enabled: !!id,
-    refetchInterval: 10000,
+    refetchInterval: pollWithBackoff(10000),
   });
 
   const tokenCounts = useMemo(() => {

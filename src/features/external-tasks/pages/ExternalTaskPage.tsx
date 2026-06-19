@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import {
   Cpu,
   Lock,
@@ -123,13 +124,13 @@ export default function ExternalTaskPage() {
   const { data: allTasks, isLoading: tasksLoading } = useQuery({
     queryKey: ['externalTasks'],
     queryFn: () => getExternalTasks({ maxResults: 500 }),
-    refetchInterval: 10000,
+    refetchInterval: pollWithBackoff(10000),
   });
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
     queryKey: ['externalTaskTopics'],
     queryFn: getExternalTaskTopics,
-    refetchInterval: 10000,
+    refetchInterval: pollWithBackoff(10000),
   });
 
   const counts = useMemo(() => {

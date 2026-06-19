@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 import { toast } from 'sonner';
 import {
   CalendarDays, MapPin, Clock, Sun, Calculator, BarChart3,
@@ -160,7 +161,7 @@ export default function CalendarDetailPage() {
     queryKey: ['calendarOpen', calendarCode],
     queryFn: () => isCalendarOpen(calendarCode!),
     enabled: !!calendarCode,
-    refetchInterval: 60_000,
+    refetchInterval: pollWithBackoff(60_000),
   });
 
   const hoursQuery = useQuery({

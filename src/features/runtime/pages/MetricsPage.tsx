@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
 
 import PageHeader from '@/shared/layout/PageHeader';
 import Card from '@/shared/ui/Card';
@@ -8,7 +9,7 @@ export default function MetricsPage() {
   const runtimeQuery = useQuery({
     queryKey: ['runtime', 'status'],
     queryFn: getRuntimeStatus,
-    refetchInterval: 5000,
+    refetchInterval: pollWithBackoff(5000),
   });
 
   const totals = (runtimeQuery.data?.workers ?? []).reduce(
