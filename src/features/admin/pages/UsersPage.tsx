@@ -12,6 +12,7 @@ import Badge from '@/shared/ui/Badge';
 import Modal from '@/shared/ui/Modal';
 import EmptyState from '@/shared/ui/EmptyState';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
+import TruncationNotice from '@/shared/ui/TruncationNotice';
 import CopyId from '@/shared/ui/CopyId';
 import {
   getUsers,
@@ -34,6 +35,10 @@ import {
   type Tenant,
 } from '@/features/admin/api/tenant';
 import { onboardUser } from '@/features/admin/api/onboarding';
+
+/** Hard cap on the admin tables (no server pagination UI yet) — when a result fills
+ *  it, TruncationNotice tells the operator more may exist (#33). */
+const ADMIN_PAGE = 50;
 
 /* ── Shared input style ──────────────────────────────────── */
 
@@ -129,7 +134,7 @@ export default function UsersPage() {
     isLoading: usersLoading,
   } = useQuery({
     queryKey: ['users'],
-    queryFn: () => getUsers({ maxResults: 50 }),
+    queryFn: () => getUsers({ maxResults: ADMIN_PAGE }),
   });
 
   const {
@@ -137,7 +142,7 @@ export default function UsersPage() {
     isLoading: groupsLoading,
   } = useQuery({
     queryKey: ['groups'],
-    queryFn: () => getGroups({ maxResults: 50 }),
+    queryFn: () => getGroups({ maxResults: ADMIN_PAGE }),
   });
 
   const {
@@ -145,7 +150,7 @@ export default function UsersPage() {
     isLoading: tenantsLoading,
   } = useQuery({
     queryKey: ['tenants'],
-    queryFn: () => getTenants({ maxResults: 50 }),
+    queryFn: () => getTenants({ maxResults: ADMIN_PAGE }),
   });
 
   /* ── Mutations ───────────────────────────────────────── */
@@ -436,12 +441,15 @@ export default function UsersPage() {
               }}
             />
           ) : (
-            <DataTable
-              data={users}
-              columns={userColumns}
-              isLoading={usersLoading}
-              emptyMessage="No users found."
-            />
+            <>
+              <TruncationNotice shown={users.length} cap={ADMIN_PAGE} noun="users" />
+              <DataTable
+                data={users}
+                columns={userColumns}
+                isLoading={usersLoading}
+                emptyMessage="No users found."
+              />
+            </>
           )}
         </Card>
 
@@ -472,12 +480,15 @@ export default function UsersPage() {
               }}
             />
           ) : (
-            <DataTable
-              data={groups}
-              columns={groupColumns}
-              isLoading={groupsLoading}
-              emptyMessage="No groups found."
-            />
+            <>
+              <TruncationNotice shown={groups.length} cap={ADMIN_PAGE} noun="groups" />
+              <DataTable
+                data={groups}
+                columns={groupColumns}
+                isLoading={groupsLoading}
+                emptyMessage="No groups found."
+              />
+            </>
           )}
         </Card>
 
@@ -508,12 +519,15 @@ export default function UsersPage() {
               }}
             />
           ) : (
-            <DataTable
-              data={tenants}
-              columns={tenantColumns}
-              isLoading={tenantsLoading}
-              emptyMessage="No tenants found."
-            />
+            <>
+              <TruncationNotice shown={tenants.length} cap={ADMIN_PAGE} noun="tenants" />
+              <DataTable
+                data={tenants}
+                columns={tenantColumns}
+                isLoading={tenantsLoading}
+                emptyMessage="No tenants found."
+              />
+            </>
           )}
         </Card>
       </div>
