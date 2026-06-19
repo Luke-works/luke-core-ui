@@ -23,6 +23,11 @@ function TenantCacheReset() {
   useEffect(() => {
     if (previous.current !== activeTenantId) {
       previous.current = activeTenantId;
+      // Cancel in-flight fetches FIRST: a request issued for the previous tenant can
+      // otherwise resolve AFTER the clear and repopulate the (tenant-agnostic) cache,
+      // rendering the old tenant's rows under the new tenant. React Query discards a
+      // cancelled query's result, so cancel-then-clear closes that race.
+      void queryClient.cancelQueries();
       queryClient.clear();
     }
   }, [activeTenantId]);

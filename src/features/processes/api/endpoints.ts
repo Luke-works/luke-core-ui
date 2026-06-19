@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/client';
+import { useTenantStore } from '@/shared/stores/tenantStore';
 import type { CountResult, VariablesMap } from '@/shared/api/types';
 import type {
   ProcessDefinition,
@@ -31,13 +32,25 @@ export async function getProcessDefinitionXml(
   return data;
 }
 
+/** Keep only the statistics whose definition belongs to the active tenant. */
+export function filterStatisticsByTenant(
+  stats: ProcessDefinitionStatistics[],
+  tenantId: string | null,
+): ProcessDefinitionStatistics[] {
+  if (!tenantId) return stats; // no active tenant → global/operator view
+  return stats.filter((s) => s.definition?.tenantId === tenantId);
+}
+
 export async function getProcessDefinitionStatistics(): Promise<
   ProcessDefinitionStatistics[]
 > {
   const { data } = await api.get('/process-definition/statistics', {
     params: { incidents: true, failedJobs: true },
   });
-  return data;
+  // Camunda's /process-definition/statistics has NO tenant filter param, so the
+  // interceptor's tenantIdIn is ignored and the response is cross-tenant. Scope it
+  // to the active tenant here (each entry's definition carries its tenantId).
+  return filterStatisticsByTenant(data, useTenantStore.getState().activeTenantId);
 }
 
 /**
