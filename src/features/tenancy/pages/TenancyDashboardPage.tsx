@@ -101,6 +101,7 @@ export default function TenancyDashboardPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['tenancy-metrics'],
     queryFn: getTenancyMetrics,
+    staleTime: 30000,
     refetchInterval: 60000,
   });
 
