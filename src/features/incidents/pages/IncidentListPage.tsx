@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Card from '@/shared/ui/Card';
 import Button from '@/shared/ui/Button';
+import ConfirmButton from '@/shared/ui/ConfirmButton';
 import Badge from '@/shared/ui/Badge';
 import CopyId from '@/shared/ui/CopyId';
 import Tooltip from '@/shared/ui/Tooltip';
@@ -247,17 +248,17 @@ export default function IncidentListPage() {
               )}
               {canOperate && (
                 <Tooltip content="Resolve incident">
-                  <Button
+                  <ConfirmButton
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteMutation.mutate(incident.id);
-                    }}
                     disabled={deleteMutation.isPending}
+                    confirmTitle="Resolve incident"
+                    confirmMessage="Resolve this incident? This deletes it and cannot be undone."
+                    confirmLabel="Resolve"
+                    onConfirm={() => deleteMutation.mutate(incident.id)}
                   >
                     <Trash2 size={14} />
-                  </Button>
+                  </ConfirmButton>
                 </Tooltip>
               )}
               {incident.configuration && (

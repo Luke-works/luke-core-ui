@@ -10,6 +10,8 @@ import BpmnViewer, { type ActivityState } from '@/shared/bpmn/BpmnViewer';
 import Tabs from '@/shared/ui/Tabs';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
+import ConfirmButton from '@/shared/ui/ConfirmButton';
+import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import StackTraceModal from '@/shared/ui/StackTraceModal';
 
 
@@ -54,6 +56,8 @@ const VARIABLE_TYPES = [
 
 export default function InstanceDetailPage() {
   const { id: instanceId } = useParams<{ id: string }>();
+  const { can } = useAuthz();
+  const canOperate = can('operate'); // gate (hide) destructive controls for read-only ops (#34)
   const activeTenantId = useTenantStore((s) => s.activeTenantId);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -348,11 +352,6 @@ export default function InstanceDetailPage() {
     onError: () => toast.error('Failed to modify process instance'),
   });
 
-  const handleTerminate = useCallback(() => {
-    if (window.confirm('Are you sure you want to terminate this process instance? This action cannot be undone.')) {
-      terminateMutation.mutate();
-    }
-  }, [terminateMutation]);
 
   /* ── Tab config ────────────────────────────────────────────── */
 
@@ -475,24 +474,37 @@ export default function InstanceDetailPage() {
               ? <span className="inline-flex items-center gap-1"><Play size={13} /> Activate</span>
               : <span className="inline-flex items-center gap-1"><Pause size={13} /> Suspend</span>}
           </Button>
-          <Button variant="danger" size="sm"
-            onClick={handleTerminate}
-            disabled={terminateMutation.isPending || instance.ended}>
-            <span className="inline-flex items-center gap-1"><Trash2 size={13} /> Cancel Instance</span>
-          </Button>
-          {hasFailedJobs && (
-            <Button variant="secondary" size="sm"
-              onClick={() => retryAllJobsMutation.mutate()}
-              disabled={retryAllJobsMutation.isPending}>
-              <span className="inline-flex items-center gap-1"><RotateCcw size={13} /> Retry Jobs ({failedJobCount})</span>
-            </Button>
+          {canOperate && (
+            <ConfirmButton variant="danger" size="sm"
+              disabled={terminateMutation.isPending || instance.ended}
+              confirmTitle="Cancel instance"
+              confirmMessage="Terminate this process instance? This action cannot be undone."
+              confirmLabel="Cancel instance"
+              onConfirm={() => terminateMutation.mutate()}>
+              <span className="inline-flex items-center gap-1"><Trash2 size={13} /> Cancel Instance</span>
+            </ConfirmButton>
           )}
-          {hasIncidents && (
-            <Button variant="secondary" size="sm"
-              onClick={() => retryAllIncidentsMutation.mutate()}
-              disabled={retryAllIncidentsMutation.isPending}>
+          {canOperate && hasFailedJobs && (
+            <ConfirmButton variant="secondary" size="sm"
+              disabled={retryAllJobsMutation.isPending}
+              confirmTitle="Retry all jobs"
+              confirmMessage={`Retry all ${failedJobCount} failed job(s) on this instance?`}
+              confirmLabel="Retry jobs"
+              confirmVariant="primary"
+              onConfirm={() => retryAllJobsMutation.mutate()}>
+              <span className="inline-flex items-center gap-1"><RotateCcw size={13} /> Retry Jobs ({failedJobCount})</span>
+            </ConfirmButton>
+          )}
+          {canOperate && hasIncidents && (
+            <ConfirmButton variant="secondary" size="sm"
+              disabled={retryAllIncidentsMutation.isPending}
+              confirmTitle="Retry all incidents"
+              confirmMessage={`Retry all ${(incidents ?? []).length} incident(s) on this instance?`}
+              confirmLabel="Retry incidents"
+              confirmVariant="primary"
+              onConfirm={() => retryAllIncidentsMutation.mutate()}>
               <span className="inline-flex items-center gap-1"><RotateCcw size={13} /> Retry Incidents ({(incidents ?? []).length})</span>
-            </Button>
+            </ConfirmButton>
           )}
           {isRunning && (
             <Button variant="secondary" size="sm" onClick={() => setShowAddVarModal(true)}>
