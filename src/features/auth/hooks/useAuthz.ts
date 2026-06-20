@@ -39,17 +39,15 @@ const ROLE_VIEW_AREAS: Record<string, ViewArea[]> = {
   'deployer': ['deployments', 'decisions', 'history'],
 };
 
-export function useAuthz() {
-  const username = useAuthStore((s) => s.username);
+type MeGroup = { id: string; type: string };
+type MeData = { groups?: MeGroup[]; operator?: boolean } | undefined;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['me', username],
-    queryFn: getMe,
-    enabled: !!username,
-    staleTime: 60_000,
-    retry: 1,
-  });
-
+/**
+ * Pure capability/view derivation from the /api/me payload — extracted from the hook
+ * so the security-critical RBAC logic is unit-testable without React (#28). The engine
+ * remains the real enforcer; this gates UI affordances only.
+ */
+export function deriveAuthz(data: MeData) {
   const groups = data?.groups ?? [];
   const isOperator = data?.operator ?? false;
   const roleGroups = groups.filter((g) => g.type === 'ROLE');
@@ -72,7 +70,6 @@ export function useAuthz() {
   roles.forEach((r) => (ROLE_VIEW_AREAS[r] ?? []).forEach((a) => viewAreas.add(a)));
 
   return {
-    isLoading,
     isOperator,
     isReadOnly,
     roles,
@@ -83,4 +80,18 @@ export function useAuthz() {
     /** Operator-only (identity/admin management). */
     canAdmin: isOperator,
   };
+}
+
+export function useAuthz() {
+  const username = useAuthStore((s) => s.username);
+
+  const { data, isLoading } = useQuery({
+    queryKey: ['me', username],
+    queryFn: getMe,
+    enabled: !!username,
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  return { isLoading, ...deriveAuthz(data) };
 }
