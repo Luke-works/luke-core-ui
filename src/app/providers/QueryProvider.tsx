@@ -18,7 +18,7 @@ const queryClient = new QueryClient({
 });
 
 /**
- * Drops all cached query data whenever the active tenant changes. Query keys
+ * Resets all cached query data whenever the active tenant changes. Query keys
  * don't include the tenant — the tenant is carried on the X-Tenant-Id header —
  * so without this, switching org would serve the previous tenant's cached
  * processes/tasks/etc. until staleTime expired (cross-tenant data leak).
@@ -29,12 +29,14 @@ function TenantCacheReset() {
   useEffect(() => {
     if (previous.current !== activeTenantId) {
       previous.current = activeTenantId;
-      // Cancel in-flight fetches FIRST: a request issued for the previous tenant can
-      // otherwise resolve AFTER the clear and repopulate the (tenant-agnostic) cache,
-      // rendering the old tenant's rows under the new tenant. React Query discards a
-      // cancelled query's result, so cancel-then-clear closes that race.
-      void queryClient.cancelQueries();
-      queryClient.clear();
+      // resetQueries (rather than clear) cancels every in-flight request, drops the
+      // cached data, AND immediately refetches any query that is currently mounted —
+      // with the new tenant's X-Tenant-Id header. clear() wiped the cache but left
+      // the page observing a removed entry, so the active page kept showing the old
+      // tenant's rows/counts until a full page reload remounted it. Cancelling first
+      // also closes the race where a previous-tenant response resolves after the reset
+      // and repopulates the (tenant-agnostic) cache.
+      void queryClient.resetQueries();
     }
   }, [activeTenantId]);
   return null;

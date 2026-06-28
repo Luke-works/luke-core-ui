@@ -10,37 +10,35 @@ describe('QueryProvider tenant cache reset', () => {
     useTenantStore.setState({ activeTenantId: 'tenant-a' });
   });
 
-  it('cancels in-flight queries and clears the cache when the active tenant changes', () => {
-    const clearSpy = vi.spyOn(QueryClient.prototype, 'clear');
-    const cancelSpy = vi.spyOn(QueryClient.prototype, 'cancelQueries').mockResolvedValue();
+  it('resets queries (cancel + drop + refetch mounted) when the active tenant changes', () => {
+    const resetSpy = vi.spyOn(QueryClient.prototype, 'resetQueries').mockResolvedValue();
     render(
       <QueryProvider>
         <div>app</div>
       </QueryProvider>,
     );
-    clearSpy.mockClear();
-    cancelSpy.mockClear(); // ignore anything during initial mount
+    resetSpy.mockClear(); // ignore anything during initial mount
 
     act(() => {
       useTenantStore.setState({ activeTenantId: 'tenant-b' });
     });
-    // Cancel must run so a previous-tenant response can't repopulate the cache.
-    expect(cancelSpy).toHaveBeenCalled();
-    expect(clearSpy).toHaveBeenCalled();
+    // resetQueries cancels in-flight requests AND refetches mounted queries with the
+    // new tenant header, so the active page updates without a full page reload.
+    expect(resetSpy).toHaveBeenCalled();
   });
 
-  it('does NOT clear the cache when the tenant is unchanged', () => {
-    const clearSpy = vi.spyOn(QueryClient.prototype, 'clear');
+  it('does NOT reset queries when the tenant is unchanged', () => {
+    const resetSpy = vi.spyOn(QueryClient.prototype, 'resetQueries').mockResolvedValue();
     render(
       <QueryProvider>
         <div>app</div>
       </QueryProvider>,
     );
-    clearSpy.mockClear();
+    resetSpy.mockClear();
 
     act(() => {
       useTenantStore.setState({ activeTenantId: 'tenant-a' }); // same value
     });
-    expect(clearSpy).not.toHaveBeenCalled();
+    expect(resetSpy).not.toHaveBeenCalled();
   });
 });
