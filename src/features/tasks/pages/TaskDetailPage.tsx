@@ -22,6 +22,7 @@ import Skeleton from '@/shared/ui/Skeleton';
 import Tabs from '@/shared/ui/Tabs';
 import Tooltip from '@/shared/ui/Tooltip';
 import BpmnViewer, { type ActivityState } from '@/shared/bpmn/BpmnViewer';
+import AttachmentsTab from '@/features/tasks/components/AttachmentsTab';
 
 import {
   getTaskById,
@@ -332,12 +333,8 @@ export default function TaskDetailPage() {
                   />
                 )}
 
-                {activeTab === 'attachments' && (
-                  <EmptyState
-                    icon={<Paperclip size={28} />}
-                    title="No attachments"
-                    description="This task has no attachments. Uploading and managing attachments is coming soon."
-                  />
+                {activeTab === 'attachments' && taskId && (
+                  <AttachmentsTab taskId={taskId} />
                 )}
 
                 {activeTab === 'diagram' && (

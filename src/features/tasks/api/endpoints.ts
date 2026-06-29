@@ -1,6 +1,6 @@
 import { api } from '@/shared/api/client';
 import type { CountResult, VariablesMap } from '@/shared/api/types';
-import type { Task } from '@/features/tasks/api/types';
+import type { Attachment, Task } from '@/features/tasks/api/types';
 
 export async function getTasks(
   params?: Record<string, any>,
@@ -62,5 +62,12 @@ export async function getTaskCount(
   params?: Record<string, any>,
 ): Promise<CountResult> {
   const { data } = await api.get('/task/count', { params });
+  return data;
+}
+
+/** The task's attachments (Camunda ACT_HI_ATTACHMENT). Luke documents mirrored here carry their
+ *  TASK/PROCESS classification in `type`; `url` is the engine content-stream reference. */
+export async function getTaskAttachments(id: string): Promise<Attachment[]> {
+  const { data } = await api.get(`/task/${id}/attachment`);
   return data;
 }
