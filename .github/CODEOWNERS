@@ -1,0 +1,5 @@
+# Default reviewer for everything (enforced once branch protection requires CODEOWNERS).
+* @lukeadministrator
+
+/.github/            @lukeadministrator
+/package.json        @lukeadministrator

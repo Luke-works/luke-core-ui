@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { Toaster } from 'sonner';
 import './index.css';
-import 'swiper/swiper-bundle.css';
 import 'flatpickr/dist/flatpickr.css';
 import App from './app/App';
 import QueryProvider from './app/providers/QueryProvider';
