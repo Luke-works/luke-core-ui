@@ -14,14 +14,11 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@monaco-editor/react": "^4.7.0",
-    "@react-jvectormap/core": "^1.0.4",
-    "@react-jvectormap/world": "^1.1.2",
     "@sentry/react": "^10.59.0",
     "@tanstack/react-query": "^5.96.0",
     "@tanstack/react-table": "^8.21.3",
     "@types/js-yaml": "^4.0.9",
     "@xyflow/react": "^12.10.2",
-    "apexcharts": "^4.1.0",
     "axios": "^1.14.0",
     "bpmn-js": "^18.14.0",
     "clsx": "^2.1.1",
@@ -31,9 +28,7 @@
     "js-yaml": "^4.1.1",
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",
-    "react-apexcharts": "^1.7.0",
     "react-dom": "^19.2.4",
-    "react-dropzone": "^14.3.5",
     "react-helmet-async": "^2.0.5",
     "react-hook-form": "^7.72.0",
     "react-router-dom": "^6.30.3",
@@ -69,14 +64,6 @@
   "overrides": {
     "react-helmet-async": {
       "react": "^16.8.0 || ^17 || ^18 || ^19"
-    },
-    "@react-jvectormap/core": {
-      "react": "^16.8.0 || ^17 || ^18 || ^19",
-      "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
-    },
-    "@react-jvectormap/world": {
-      "react": "^16.8.0 || ^17 || ^18 || ^19",
-      "react-dom": "^16.8.0 || ^17 || ^18 || ^19"
     }
   }
 }
