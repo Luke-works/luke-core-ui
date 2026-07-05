@@ -8,6 +8,7 @@ import PageHeader from '@/shared/layout/PageHeader';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
+import ConfirmButton from '@/shared/ui/ConfirmButton';
 import Card from '@/shared/ui/Card';
 import Tabs from '@/shared/ui/Tabs';
 import {
@@ -381,16 +382,17 @@ export default function TopicRegistryPage() {
     { accessorKey: 'retryBackoff', header: 'Backoff', size: 100, cell: ({ row }) => <Badge variant="muted">{row.original.retryBackoff ?? 'FIXED'}</Badge> },
     { id: 'actions', header: '', size: 160, enableSorting: false, cell: ({ row }) => (
       <div className="flex items-center gap-1">
-        <Button variant="ghost" size="sm" title="View details" onClick={(e) => { e.stopPropagation(); setViewingTopic(row.original); }}><Eye size={13} /></Button>
-        <Button variant="ghost" size="sm" title="Edit" onClick={(e) => { e.stopPropagation(); setEditingTopic(row.original); }}><Pencil size={13} /></Button>
-        <Button variant="secondary" size="sm" title={row.original.active ? 'Deactivate' : 'Activate'}
+        <Button variant="ghost" size="sm" title="View details" aria-label={`View topic ${row.original.topicName}`} onClick={(e) => { e.stopPropagation(); setViewingTopic(row.original); }}><Eye size={13} /></Button>
+        <Button variant="ghost" size="sm" title="Edit" aria-label={`Edit topic ${row.original.topicName}`} onClick={(e) => { e.stopPropagation(); setEditingTopic(row.original); }}><Pencil size={13} /></Button>
+        <Button variant="secondary" size="sm" title={row.original.active ? 'Deactivate' : 'Activate'} aria-label={`${row.original.active ? 'Deactivate' : 'Activate'} topic ${row.original.topicName}`}
           onClick={(e) => { e.stopPropagation(); toggleMutation.mutate({ id: row.original.id, active: !row.original.active }); }}>
           {row.original.active ? <PowerOff size={13} /> : <Power size={13} />}
         </Button>
-        <Button variant="ghost" size="sm" title="Delete" onClick={(e) => {
-          e.stopPropagation();
-          if (window.confirm(`Delete "${row.original.topicName}"?`)) deleteMutation.mutate(row.original.id);
-        }}><Trash2 size={13} style={{ color: 'var(--accent-red)' }} /></Button>
+        <ConfirmButton variant="ghost" size="sm" title="Delete" aria-label={`Delete topic ${row.original.topicName}`}
+          confirmTitle="Delete topic" confirmMessage={`Delete "${row.original.topicName}"? Deployments using this topic may be rejected.`} confirmLabel="Delete"
+          onConfirm={() => deleteMutation.mutate(row.original.id)}>
+          <Trash2 size={13} style={{ color: 'var(--accent-red)' }} />
+        </ConfirmButton>
       </div>
     )},
   ], [toggleMutation, deleteMutation]);

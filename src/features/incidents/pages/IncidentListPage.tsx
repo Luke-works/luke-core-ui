@@ -85,10 +85,16 @@ export default function IncidentListPage() {
   const { can } = useAuthz();
   const canOperate = can('operate');
 
+  // Resolving/retrying an incident changes both the current page AND the total,
+  // so invalidate the whole ['incidents'] subtree (list pages keyed by page/group
+  // + the count) — narrow enough to not touch unrelated features (#42).
+  const invalidateIncidents = () =>
+    queryClient.invalidateQueries({ queryKey: ['incidents'] });
+
   const retryMutation = useMutation({
     mutationFn: (jobId: string) => retryJob(jobId, 1),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      invalidateIncidents();
       toast.success('Job retry triggered');
     },
     onError: () => {
@@ -99,7 +105,7 @@ export default function IncidentListPage() {
   const deleteMutation = useMutation({
     mutationFn: (incidentId: string) => deleteIncident(incidentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      invalidateIncidents();
       toast.success('Incident resolved');
     },
     onError: () => {
@@ -110,6 +116,13 @@ export default function IncidentListPage() {
   // ---- Bulk retry ----------------------------------------------------------
 
   const handleBulkRetry = useCallback(() => {
+    // Bulk actions must re-check the same capability the single-item action does
+    // (#34) — the toolbar is already gated, but guard the handler too so it can't
+    // fire on a stale-token race.
+    if (!canOperate) {
+      toast.error('You do not have permission to retry incidents');
+      return;
+    }
     const incidents = incidentsQuery.data ?? [];
     const selected = incidents.filter((inc) => selectedIds.has(inc.id));
     const retryable = selected.filter((inc) => inc.jobDefinitionId);
@@ -121,7 +134,7 @@ export default function IncidentListPage() {
 
     retryable.forEach((inc) => retryMutation.mutate(inc.configuration));
     setSelectedIds(new Set());
-  }, [incidentsQuery.data, selectedIds, retryMutation]);
+  }, [incidentsQuery.data, selectedIds, retryMutation, canOperate]);
 
   // ---- Selection helpers ---------------------------------------------------
 
@@ -233,17 +246,19 @@ export default function IncidentListPage() {
             <div className="flex items-center gap-1">
               {canOperate && incident.jobDefinitionId && (
                 <Tooltip content="Retry job">
-                  <Button
+                  <ConfirmButton
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      retryMutation.mutate(incident.configuration);
-                    }}
+                    aria-label="Retry incident job"
                     disabled={retryMutation.isPending}
+                    confirmVariant="primary"
+                    confirmTitle="Retry job"
+                    confirmMessage="Retry the job behind this incident?"
+                    confirmLabel="Retry"
+                    onConfirm={() => retryMutation.mutate(incident.configuration)}
                   >
                     <RefreshCw size={14} />
-                  </Button>
+                  </ConfirmButton>
                 </Tooltip>
               )}
               {canOperate && (
@@ -251,6 +266,7 @@ export default function IncidentListPage() {
                   <ConfirmButton
                     variant="ghost"
                     size="sm"
+                    aria-label="Resolve incident"
                     disabled={deleteMutation.isPending}
                     confirmTitle="Resolve incident"
                     confirmMessage="Resolve this incident? This deletes it and cannot be undone."
@@ -266,6 +282,7 @@ export default function IncidentListPage() {
                   <Button
                     variant="ghost"
                     size="sm"
+                    aria-label="View stack trace"
                     onClick={(e) => {
                       e.stopPropagation();
                       openStacktrace(incident.configuration);
@@ -331,10 +348,18 @@ export default function IncidentListPage() {
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
               {selectedIds.size} selected
             </span>
-            <Button variant="primary" size="sm" onClick={handleBulkRetry}>
+            <ConfirmButton
+              variant="primary"
+              size="sm"
+              confirmVariant="primary"
+              confirmTitle="Retry selected incidents"
+              confirmMessage={`Retry the jobs behind the ${selectedIds.size} selected incident(s)?`}
+              confirmLabel="Retry all"
+              onConfirm={handleBulkRetry}
+            >
               <RefreshCw size={14} className="mr-1.5" />
               Retry All
-            </Button>
+            </ConfirmButton>
           </div>
         )}
 

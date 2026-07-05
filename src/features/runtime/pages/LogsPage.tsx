@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useId, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { RefreshCw } from 'lucide-react';
 import { pollWithBackoff } from '@/shared/hooks/pollingBackoff';
@@ -35,17 +35,24 @@ function FilterField({
   value: string;
   onChange: (value: string) => void;
 }) {
+  // Explicit htmlFor/id association so the label programmatically names the
+  // input for screen readers (#35).
+  const id = useId();
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-theme-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400">
+    <div className="block">
+      <label
+        htmlFor={id}
+        className="mb-1.5 block text-theme-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+      >
         {label}
-      </span>
+      </label>
       <input
+        id={id}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="h-10 w-full rounded-lg border border-gray-200 bg-transparent px-3 text-theme-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
       />
-    </label>
+    </div>
   );
 }
 

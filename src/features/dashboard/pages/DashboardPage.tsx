@@ -12,7 +12,7 @@ import {
   BarChart,
   Bar,
 } from 'recharts';
-import { format, subHours, parseISO } from 'date-fns';
+import { format, subHours } from 'date-fns';
 import { Activity, CheckSquare, AlertTriangle, Cog, TrendingUp } from 'lucide-react';
 
 import Card from '@/shared/ui/Card';
@@ -25,10 +25,9 @@ import { getProcessInstanceCount, getProcessDefinitionStatistics } from '@/featu
 import { getTaskCount } from '@/features/tasks/api/endpoints';
 import { getIncidentCount, getIncidents } from '@/features/incidents/api/endpoints';
 import { getJobCount } from '@/features/jobs/api/endpoints';
-import { getHistoricProcessInstances } from '@/features/history/api/endpoints';
+import { getHistoricProcessInstanceCount } from '@/features/history/api/endpoints';
 import { relativeTime, toCamundaDate } from '@/shared/utils/date';
 
-import type { HistoricProcessInstance } from '@/features/history/api/types';
 import type { ProcessDefinitionStatistics } from '@/features/processes/api/types';
 import type { Incident } from '@/features/incidents/api/types';
 
@@ -113,25 +112,15 @@ function ChartTooltipContent({ active, payload, label }: any) {
 // Helpers
 // ---------------------------------------------------------------------------
 
-function groupByHour(instances: HistoricProcessInstance[]) {
-  const buckets: Record<string, number> = {};
-
-  // Pre-fill 24 hour buckets so the chart has a continuous x-axis
-  const now = new Date();
+/** The 24 one-hour windows ending "now", oldest first — the x-axis buckets. */
+function hourWindows(now: Date) {
+  const windows: { label: string; start: Date; end: Date }[] = [];
   for (let i = 23; i >= 0; i--) {
-    const hour = subHours(now, i);
-    const key = format(hour, 'HH:00');
-    buckets[key] = 0;
+    const start = subHours(now, i + 1);
+    const end = subHours(now, i);
+    windows.push({ label: format(end, 'HH:00'), start, end });
   }
-
-  for (const inst of instances) {
-    const key = format(parseISO(inst.startTime), 'HH:00');
-    if (key in buckets) {
-      buckets[key]++;
-    }
-  }
-
-  return Object.entries(buckets).map(([hour, count]) => ({ hour, count }));
+  return windows;
 }
 
 function topProcesses(stats: ProcessDefinitionStatistics[], limit = 5) {
@@ -182,23 +171,29 @@ export default function DashboardPage() {
 
   // ---- Area chart query ---------------------------------------------------
 
-  const startedAfter = useMemo(() => toCamundaDate(subHours(new Date(), 24)), []);
+  // Per-hour buckets computed via server COUNT (startedAfter/startedBefore per
+  // window) instead of fetching a capped 200-instance page and bucketing it
+  // client-side — the old approach undercounted busy windows (#33). Pin "now" to
+  // a stable value so the 24 count keys don't churn on every render.
+  const chartNow = useMemo(() => new Date(), []);
+  const windows = useMemo(() => hourWindows(chartNow), [chartNow]);
 
-  const historicInstances = useQuery({
-    queryKey: ['dashboard', 'historicInstances', startedAfter],
-    queryFn: () =>
-      getHistoricProcessInstances({
-        startedAfter,
-        maxResults: 200,
-        sortBy: 'startTime',
-        sortOrder: 'asc',
-      }),
+  const activityChart = useQuery({
+    queryKey: ['dashboard', 'historicInstanceHourly', chartNow.toISOString()],
+    queryFn: async () => {
+      const results = await Promise.all(
+        windows.map((w) =>
+          getHistoricProcessInstanceCount({
+            startedAfter: toCamundaDate(w.start),
+            startedBefore: toCamundaDate(w.end),
+          }),
+        ),
+      );
+      return windows.map((w, i) => ({ hour: w.label, count: results[i].count }));
+    },
   });
 
-  const activityData = useMemo(
-    () => groupByHour(historicInstances.data ?? []),
-    [historicInstances.data],
-  );
+  const activityData = activityChart.data ?? windows.map((w) => ({ hour: w.label, count: 0 }));
 
   // ---- Process definition statistics --------------------------------------
 
@@ -279,9 +274,9 @@ export default function DashboardPage() {
             <TrendingUp size={16} style={{ color: 'var(--text-muted)' }} />
           }
         >
-          {historicInstances.isLoading ? (
+          {activityChart.isLoading ? (
             <Skeleton height={250} />
-          ) : historicInstances.isError ? (
+          ) : activityChart.isError ? (
             <div
               className="flex items-center justify-center text-sm"
               style={{ height: 250, color: 'var(--text-muted)' }}

@@ -11,7 +11,6 @@ import {
   RotateCcw,
   ArrowRight,
   Eye,
-  X,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -21,17 +20,26 @@ import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
 import Tabs from '@/shared/ui/Tabs';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
+import ConfirmButton from '@/shared/ui/ConfirmButton';
+import Modal from '@/shared/ui/Modal';
 import CopyId from '@/shared/ui/CopyId';
 import Skeleton from '@/shared/ui/Skeleton';
+import TruncationNotice from '@/shared/ui/TruncationNotice';
 import {
   getExternalTasks,
   getExternalTaskTopics,
+  getExternalTaskLifecycleCounts,
   setExternalTaskRetries,
   unlockExternalTask,
   type ExternalTask,
   type ExternalTaskTopic,
 } from '@/features/external-tasks/api/endpoints';
+import { qk } from '@/shared/api/queryKeys';
 import { relativeTime } from '@/shared/utils/date';
+
+/** Hard cap on the task list fetch — the KPI/tab counts come from server count
+ *  endpoints, but this list is still capped, so a banner flags truncation (#33). */
+const TASK_LIST_CAP = 500;
 
 /* ── Lifecycle KPI Card ──────────────────────────────────────── */
 
@@ -84,29 +92,23 @@ function LifecycleFlow({ available, locked, failed }: { available: number; locke
 /* ── Error Detail Modal ──────────────────────────────────────── */
 
 function ErrorDetailModal({ task, onClose }: { task: ExternalTask; onClose: () => void }) {
+  // Shared accessible Modal (focus-trap + Esc + focus restore) instead of a
+  // hand-rolled overlay (#35).
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div className="relative rounded-lg border shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col"
-        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }} onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Error Details</h2>
-          <button className="rounded p-1 hover:bg-white/10 cursor-pointer bg-transparent border-none" style={{ color: 'var(--text-secondary)' }} onClick={onClose}><X size={18} /></button>
-        </div>
-        <div className="p-5 overflow-auto space-y-3">
-          <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Task ID:</span><div className="mt-0.5"><CopyId id={task.id} /></div></div>
-          <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Topic:</span><div className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>{task.topicName}</div></div>
-          <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Worker:</span><div className="text-sm mt-0.5 font-mono-id" style={{ color: 'var(--text-secondary)' }}>{task.workerId ?? '—'}</div></div>
-          <div>
-            <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Error Message:</span>
-            <pre className="mt-1 text-xs font-mono-id p-3 rounded whitespace-pre-wrap break-all"
-              style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--accent-red)' }}>
-              {task.errorMessage ?? 'No error message'}
-            </pre>
-          </div>
+    <Modal open onClose={onClose} title="Error Details" width={720}>
+      <div className="space-y-3">
+        <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Task ID:</span><div className="mt-0.5"><CopyId id={task.id} /></div></div>
+        <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Topic:</span><div className="text-sm mt-0.5" style={{ color: 'var(--text-secondary)' }}>{task.topicName}</div></div>
+        <div><span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Worker:</span><div className="text-sm mt-0.5 font-mono-id" style={{ color: 'var(--text-secondary)' }}>{task.workerId ?? '—'}</div></div>
+        <div>
+          <span className="text-xs font-bold" style={{ color: 'var(--text-primary)' }}>Error Message:</span>
+          <pre className="mt-1 text-xs font-mono-id p-3 rounded whitespace-pre-wrap break-all"
+            style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--accent-red)' }}>
+            {task.errorMessage ?? 'No error message'}
+          </pre>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -122,18 +124,28 @@ export default function ExternalTaskPage() {
   const [errorTask, setErrorTask] = useState<ExternalTask | null>(null);
 
   const { data: allTasks, isLoading: tasksLoading } = useQuery({
-    queryKey: ['externalTasks'],
-    queryFn: () => getExternalTasks({ maxResults: 500 }),
+    queryKey: qk.externalTasks.all,
+    queryFn: () => getExternalTasks({ maxResults: TASK_LIST_CAP }),
     refetchInterval: pollWithBackoff(10000),
   });
 
   const { data: topics, isLoading: topicsLoading } = useQuery({
-    queryKey: ['externalTaskTopics'],
+    queryKey: qk.externalTasks.topics,
     queryFn: getExternalTaskTopics,
     refetchInterval: pollWithBackoff(10000),
   });
 
+  // KPI/tab counts come from server count endpoints (exact, uncapped) — not from
+  // counting the capped task list (#33). Falls back to the list-derived counts
+  // only until the count query resolves.
+  const { data: serverCounts } = useQuery({
+    queryKey: [...qk.externalTasks.all, 'lifecycleCounts'],
+    queryFn: getExternalTaskLifecycleCounts,
+    refetchInterval: pollWithBackoff(10000),
+  });
+
   const counts = useMemo(() => {
+    if (serverCounts) return serverCounts;
     const tasks = allTasks ?? [];
     const now = new Date();
     let available = 0, locked = 0, failed = 0;
@@ -143,7 +155,9 @@ export default function ExternalTaskPage() {
       else available++;
     }
     return { total: tasks.length, available, locked, failed };
-  }, [allTasks]);
+  }, [serverCounts, allTasks]);
+
+  const listTruncated = (allTasks?.length ?? 0) >= TASK_LIST_CAP;
 
   const filteredTasks = useMemo(() => {
     let tasks = allTasks ?? [];
@@ -157,21 +171,28 @@ export default function ExternalTaskPage() {
     }
   }, [allTasks, activeTab, filterTopic]);
 
+  // Any external-task mutation moves both the task list and the topic/lifecycle
+  // aggregates, so invalidate the whole feature subtree (#42).
+  const invalidateExternalTasks = () => {
+    queryClient.invalidateQueries({ queryKey: qk.externalTasks.all });
+    queryClient.invalidateQueries({ queryKey: qk.externalTasks.topics });
+  };
+
   const retryMutation = useMutation({
     mutationFn: (id: string) => setExternalTaskRetries(id, 3),
-    onSuccess: () => { toast.success('Retries set'); queryClient.invalidateQueries({ queryKey: ['externalTasks'] }); queryClient.invalidateQueries({ queryKey: ['externalTaskTopics'] }); },
+    onSuccess: () => { toast.success('Retries set'); invalidateExternalTasks(); },
     onError: () => toast.error('Failed to set retries'),
   });
 
   const unlockMutation = useMutation({
     mutationFn: (id: string) => unlockExternalTask(id),
-    onSuccess: () => { toast.success('Task unlocked'); queryClient.invalidateQueries({ queryKey: ['externalTasks'] }); queryClient.invalidateQueries({ queryKey: ['externalTaskTopics'] }); },
+    onSuccess: () => { toast.success('Task unlocked'); invalidateExternalTasks(); },
     onError: () => toast.error('Failed to unlock task'),
   });
 
   const retryAllMutation = useMutation({
     mutationFn: async () => { await Promise.all((allTasks ?? []).filter((t) => t.errorMessage).map((t) => setExternalTaskRetries(t.id, 3))); },
-    onSuccess: () => { toast.success('All failed tasks retried'); queryClient.invalidateQueries({ queryKey: ['externalTasks'] }); queryClient.invalidateQueries({ queryKey: ['externalTaskTopics'] }); },
+    onSuccess: () => { toast.success('All failed tasks retried'); invalidateExternalTasks(); },
     onError: () => toast.error('Failed to retry tasks'),
   });
 
@@ -212,10 +233,10 @@ export default function ExternalTaskPage() {
       return (
         <div className="flex items-center gap-1">
           {t.errorMessage && (<>
-            <Button variant="ghost" size="sm" title="View error" onClick={(e) => { e.stopPropagation(); setErrorTask(t); }}><Eye size={13} /></Button>
-            <Button variant="secondary" size="sm" title="Retry" onClick={(e) => { e.stopPropagation(); retryMutation.mutate(t.id); }}><RotateCcw size={13} /></Button>
+            <Button variant="ghost" size="sm" title="View error" aria-label="View error details" onClick={(e) => { e.stopPropagation(); setErrorTask(t); }}><Eye size={13} /></Button>
+            <ConfirmButton variant="secondary" size="sm" title="Retry" aria-label="Retry external task" confirmVariant="primary" confirmTitle="Retry task" confirmMessage="Reset retries on this external task so a worker can pick it up again?" confirmLabel="Retry" onConfirm={() => retryMutation.mutate(t.id)}><RotateCcw size={13} /></ConfirmButton>
           </>)}
-          {isLocked && <Button variant="secondary" size="sm" title="Unlock" onClick={(e) => { e.stopPropagation(); unlockMutation.mutate(t.id); }}><Unlock size={13} /></Button>}
+          {isLocked && <ConfirmButton variant="secondary" size="sm" title="Unlock" aria-label="Unlock external task" confirmVariant="primary" confirmTitle="Unlock task" confirmMessage="Unlock this external task? Its current worker lock will be released." confirmLabel="Unlock" onConfirm={() => unlockMutation.mutate(t.id)}><Unlock size={13} /></ConfirmButton>}
         </div>
       );
     }},
@@ -236,9 +257,18 @@ export default function ExternalTaskPage() {
     <div>
       <PageHeader title="External Task Management" subtitle="Monitor and manage external task lifecycle"
         actions={counts.failed > 0 ? (
-          <Button variant="danger" size="sm" onClick={() => retryAllMutation.mutate()} disabled={retryAllMutation.isPending}>
+          <ConfirmButton
+            variant="danger"
+            size="sm"
+            disabled={retryAllMutation.isPending}
+            confirmVariant="primary"
+            confirmTitle="Retry all failed tasks"
+            confirmMessage={`Reset retries on all ${counts.failed} failed external task(s)? Note: bulk retry only affects the ${Math.min(counts.failed, TASK_LIST_CAP)} tasks currently loaded.`}
+            confirmLabel="Retry all"
+            onConfirm={() => retryAllMutation.mutate()}
+          >
             <RotateCcw size={14} className="mr-1.5" />{retryAllMutation.isPending ? 'Retrying...' : `Retry All Failed (${counts.failed})`}
-          </Button>
+          </ConfirmButton>
         ) : undefined} />
 
       {/* KPI Row */}
@@ -258,6 +288,9 @@ export default function ExternalTaskPage() {
       {topics && topics.length > 0 && (
         <div className="mb-6">
           <Card title="Topics Overview">
+            {/* Topic aggregation samples a capped task list (engine has no topic-count
+                endpoint) — flag when the sample fills, so counts aren't trusted blindly. */}
+            <TruncationNotice shown={counts.total} cap={TASK_LIST_CAP} noun="tasks (topic counts sampled)" />
             <DataTable data={topics} columns={topicColumns} isLoading={topicsLoading} emptyMessage="No topics found." />
           </Card>
         </div>
@@ -273,6 +306,9 @@ export default function ExternalTaskPage() {
       )}
 
       {/* Task List */}
+      {listTruncated && (
+        <TruncationNotice shown={allTasks?.length ?? 0} cap={TASK_LIST_CAP} noun="tasks" />
+      )}
       <div style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
           <DataTable data={filteredTasks} columns={columns} isLoading={tasksLoading}

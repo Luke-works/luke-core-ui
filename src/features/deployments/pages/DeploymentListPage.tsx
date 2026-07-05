@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 
 import PageHeader from '@/shared/layout/PageHeader';
 import DataTable, { type ColumnDef } from '@/shared/ui/DataTable';
-import Button from '@/shared/ui/Button';
+import ConfirmButton from '@/shared/ui/ConfirmButton';
 import IdLink from '@/shared/ui/IdLink';
 import Tooltip from '@/shared/ui/Tooltip';
 import EmptyState from '@/shared/ui/EmptyState';
@@ -73,14 +73,7 @@ export default function DeploymentListPage() {
     },
   });
 
-  function handleDelete(id: string) {
-    const confirmed = window.confirm(
-      'Are you sure you want to delete this deployment? This will cascade-delete all related resources.',
-    );
-    if (confirmed) {
-      deleteMutation.mutate(id);
-    }
-  }
+  // Confirmation now lives in the shared ConfirmButton (#34) instead of window.confirm.
 
   /* ── Columns ───────────────────────────────────────────────── */
 
@@ -156,18 +149,19 @@ export default function DeploymentListPage() {
         cell: ({ row }) =>
           canDeploy ? (
             <div className="flex items-center justify-end">
-              <Button
+              <ConfirmButton
                 variant="ghost"
                 size="sm"
                 title="Delete deployment"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(row.original.id);
-                }}
+                aria-label="Delete deployment"
                 disabled={deleteMutation.isPending}
+                confirmTitle="Delete deployment"
+                confirmMessage="Delete this deployment? This will cascade-delete all related resources and cannot be undone."
+                confirmLabel="Delete"
+                onConfirm={() => deleteMutation.mutate(row.original.id)}
               >
                 <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
-              </Button>
+              </ConfirmButton>
             </div>
           ) : null,
       },

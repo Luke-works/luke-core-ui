@@ -20,6 +20,8 @@ interface ConfirmButtonProps {
   className?: string;
   disabled?: boolean;
   title?: string; // native tooltip on the trigger
+  /** Accessible name for icon-only triggers (#35). */
+  'aria-label'?: string;
 }
 
 /**
@@ -39,6 +41,7 @@ export default function ConfirmButton({
   className,
   disabled,
   title,
+  'aria-label': ariaLabel,
 }: ConfirmButtonProps) {
   const [open, setOpen] = useState(false);
 
@@ -50,6 +53,7 @@ export default function ConfirmButton({
         className={className}
         disabled={disabled}
         title={title}
+        aria-label={ariaLabel}
         onClick={(e) => {
           e.stopPropagation();
           setOpen(true);

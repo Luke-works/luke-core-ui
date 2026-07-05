@@ -43,6 +43,38 @@ export async function getExternalTaskCount(
   return data;
 }
 
+export interface ExternalTaskLifecycleCounts {
+  total: number;
+  available: number;
+  locked: number;
+  failed: number;
+}
+
+/**
+ * Server-side lifecycle counts via `/external-task/count` filters — no capped
+ * client fetch, so counts stay correct past 500/1000 tasks (#33):
+ *  - failed    = withException
+ *  - locked    = locked (a live lock)
+ *  - available = notLocked minus the failed ones (a failed task is also notLocked)
+ * `total` is the unfiltered count. All four are independent count requests, so
+ * they're exact regardless of volume.
+ */
+export async function getExternalTaskLifecycleCounts(): Promise<ExternalTaskLifecycleCounts> {
+  const [total, locked, failed, notLocked] = await Promise.all([
+    getExternalTaskCount(),
+    getExternalTaskCount({ locked: true }),
+    getExternalTaskCount({ withException: true }),
+    getExternalTaskCount({ notLocked: true }),
+  ]);
+  return {
+    total: total.count,
+    locked: locked.count,
+    failed: failed.count,
+    // notLocked includes failed tasks; "available" excludes them.
+    available: Math.max(0, notLocked.count - failed.count),
+  };
+}
+
 export async function getExternalTaskById(id: string): Promise<ExternalTask> {
   const { data } = await api.get(`/external-task/${id}`);
   return data;
@@ -73,11 +105,22 @@ export async function setExternalTaskPriority(
   await api.put(`/external-task/${id}/priority`, { priority });
 }
 
+/** How many tasks the topic aggregation samples. See getExternalTaskTopics. */
+export const TOPIC_SAMPLE_CAP = 1000;
+
 /**
  * Aggregate external tasks into topic-level summaries.
+ *
+ * GAP (#33): the engine REST surface has no "distinct topic names" or
+ * per-topic count endpoint, so the only way to enumerate topics is to list
+ * tasks and group them client-side. That means this sample is capped at
+ * TOPIC_SAMPLE_CAP; past that, per-topic counts undercount. The page-level
+ * lifecycle KPIs (total/available/locked/failed) do NOT use this — they use
+ * getExternalTaskLifecycleCounts (exact /external-task/count). This is
+ * enumeration-only, and the UI shows a truncation banner when it fills the cap.
  */
 export async function getExternalTaskTopics(): Promise<ExternalTaskTopic[]> {
-  const tasks = await getExternalTasks({ maxResults: 1000 });
+  const tasks = await getExternalTasks({ maxResults: TOPIC_SAMPLE_CAP });
   const topicMap: Record<string, ExternalTaskTopic> = {};
 
   for (const task of tasks) {

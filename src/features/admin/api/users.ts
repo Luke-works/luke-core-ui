@@ -1,4 +1,5 @@
 import { api } from '@/shared/api/client';
+import type { CountResult } from '@/shared/api/types';
 
 export type User = {
   id: string;
@@ -21,6 +22,15 @@ export async function getUsers(
   return data;
 }
 
+/** Server-side total for the users table so pagination can page the full set
+ *  instead of a capped client slice (#33). Camunda REST: GET /user/count. */
+export async function getUserCount(
+  params?: Record<string, unknown>,
+): Promise<CountResult> {
+  const { data } = await api.get('/user/count', { params });
+  return data;
+}
+
 export async function createUser(body: {
   profile: { id: string; firstName: string; lastName: string; email: string };
   credentials: { password: string };
@@ -38,6 +48,14 @@ export async function getGroups(
   params?: Record<string, any>,
 ): Promise<Group[]> {
   const { data } = await api.get('/group', { params });
+  return data;
+}
+
+/** Server-side total for the groups table (#33). Camunda REST: GET /group/count. */
+export async function getGroupCount(
+  params?: Record<string, unknown>,
+): Promise<CountResult> {
+  const { data } = await api.get('/group/count', { params });
   return data;
 }
 

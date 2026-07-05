@@ -31,6 +31,7 @@ import {
   claimTask,
   unclaimTask,
 } from '@/features/tasks/api/endpoints';
+import type { Task } from '@/features/tasks/api/types';
 import { getProcessDefinitionXml } from '@/features/processes/api/endpoints';
 import { useAuthStore } from '@/features/auth/stores/authStore';
 import { relativeTime, absoluteTime } from '@/shared/utils/date';
@@ -113,24 +114,52 @@ export default function TaskDetailPage() {
 
   /* ── Mutations ───────────────────────────────────────────── */
 
+  const taskKey = ['task', taskId];
+
+  /**
+   * Optimistic-update pattern (#42) for the high-frequency claim/unclaim actions:
+   *  1. cancel in-flight ['task', id] fetches so they don't clobber our patch,
+   *  2. snapshot the current task, patch `assignee` immediately for zero-lag UI,
+   *  3. on error, roll the snapshot back (the toast alone left stale state),
+   *  4. always invalidate on settle so the server value wins.
+   * Task LISTS still use plain invalidation (a claim can move a task between many
+   * list views; patching each is not worth it).
+   */
+  const optimisticAssignee = async (assignee: string | null) => {
+    await queryClient.cancelQueries({ queryKey: taskKey });
+    const previous = queryClient.getQueryData<Task>(taskKey);
+    queryClient.setQueryData<Task | undefined>(taskKey, (old) =>
+      old ? { ...old, assignee } : old,
+    );
+    return { previous };
+  };
+
   const claimMutation = useMutation({
     mutationFn: () => claimTask(taskId!, username!),
-    onSuccess: () => {
-      toast.success('Task claimed');
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+    onMutate: () => optimisticAssignee(username ?? null),
+    onError: (_e, _v, ctx) => {
+      if (ctx) queryClient.setQueryData(taskKey, ctx.previous);
+      toast.error('Failed to claim task');
+    },
+    onSuccess: () => toast.success('Task claimed'),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKey });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
-    onError: () => toast.error('Failed to claim task'),
   });
 
   const unclaimMutation = useMutation({
     mutationFn: () => unclaimTask(taskId!),
-    onSuccess: () => {
-      toast.success('Task unclaimed');
-      queryClient.invalidateQueries({ queryKey: ['task', taskId] });
+    onMutate: () => optimisticAssignee(null),
+    onError: (_e, _v, ctx) => {
+      if (ctx) queryClient.setQueryData(taskKey, ctx.previous);
+      toast.error('Failed to unclaim task');
+    },
+    onSuccess: () => toast.success('Task unclaimed'),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: taskKey });
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
     },
-    onError: () => toast.error('Failed to unclaim task'),
   });
 
   const completeMutation = useMutation({

@@ -11,6 +11,7 @@ import Tabs from '@/shared/ui/Tabs';
 import Badge from '@/shared/ui/Badge';
 import Button from '@/shared/ui/Button';
 import ConfirmButton from '@/shared/ui/ConfirmButton';
+import Modal from '@/shared/ui/Modal';
 import { useAuthz } from '@/features/auth/hooks/useAuthz';
 import StackTraceModal from '@/shared/ui/StackTraceModal';
 
@@ -270,6 +271,13 @@ export default function InstanceDetailPage() {
     onError: () => toast.error('Failed to terminate instance'),
   });
 
+  // Instance-scoped query keys used by this page — mutations invalidate only
+  // these, not the global ['incidents']/['jobs']/['tasks'] lists other pages own
+  // (#42). Each carries the {processInstanceId} discriminator its query does.
+  const instanceIncidentsKey = ['incidents', { processInstanceId: instanceId }];
+  const instanceJobsKey = ['jobs', { processInstanceId: instanceId }];
+  const instanceVarsKey = ['processInstanceVariables', instanceId];
+
   const suspendMutation = useMutation({
     mutationFn: (suspended: boolean) => suspendProcessInstance(instanceId!, suspended),
     onSuccess: (_, suspended) => {
@@ -282,31 +290,37 @@ export default function InstanceDetailPage() {
   const updateVarMutation = useMutation({
     mutationFn: ({ name, value, type }: { name: string; value: any; type: string }) =>
       updateProcessVariable(instanceId!, name, { value, type }),
-    onSuccess: () => { toast.success('Variable updated'); queryClient.invalidateQueries({ queryKey: ['processInstanceVariables', instanceId] }); },
+    onSuccess: () => { toast.success('Variable updated'); queryClient.invalidateQueries({ queryKey: instanceVarsKey }); },
     onError: () => toast.error('Failed to update variable'),
   });
 
   const deleteVarMutation = useMutation({
     mutationFn: (name: string) => deleteProcessVariable(instanceId!, name),
-    onSuccess: () => { toast.success('Variable deleted'); queryClient.invalidateQueries({ queryKey: ['processInstanceVariables', instanceId] }); },
+    onSuccess: () => { toast.success('Variable deleted'); queryClient.invalidateQueries({ queryKey: instanceVarsKey }); },
     onError: () => toast.error('Failed to delete variable'),
   });
 
   const retryJobMutation = useMutation({
     mutationFn: (jobId: string) => retryJob(jobId),
-    onSuccess: () => { toast.success('Job retry triggered'); queryClient.invalidateQueries({ queryKey: ['incidents'] }); },
+    onSuccess: () => {
+      toast.success('Job retry triggered');
+      // A retry can clear the incident AND flip the job's state, so refresh both
+      // instance-scoped lists (#42).
+      queryClient.invalidateQueries({ queryKey: instanceIncidentsKey });
+      queryClient.invalidateQueries({ queryKey: instanceJobsKey });
+    },
     onError: () => toast.error('Failed to retry job'),
   });
 
   const updateJobDueDateMutation = useMutation({
     mutationFn: ({ jobId, duedate }: { jobId: string; duedate: string | null }) => setJobDueDate(jobId, duedate),
-    onSuccess: () => { toast.success('Job due date updated'); queryClient.invalidateQueries({ queryKey: ['jobs'] }); },
+    onSuccess: () => { toast.success('Job due date updated'); queryClient.invalidateQueries({ queryKey: instanceJobsKey }); },
     onError: () => toast.error('Failed to update job due date'),
   });
 
   const resolveIncidentMutation = useMutation({
     mutationFn: (incidentId: string) => deleteIncident(incidentId),
-    onSuccess: () => { toast.success('Incident resolved'); queryClient.invalidateQueries({ queryKey: ['incidents'] }); },
+    onSuccess: () => { toast.success('Incident resolved'); queryClient.invalidateQueries({ queryKey: instanceIncidentsKey }); },
     onError: () => toast.error('Failed to resolve incident'),
   });
 
@@ -317,8 +331,8 @@ export default function InstanceDetailPage() {
     },
     onSuccess: () => {
       toast.success('All failed jobs retried');
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
+      queryClient.invalidateQueries({ queryKey: instanceJobsKey });
+      queryClient.invalidateQueries({ queryKey: instanceIncidentsKey });
     },
     onError: () => toast.error('Failed to retry jobs'),
   });
@@ -334,8 +348,8 @@ export default function InstanceDetailPage() {
     },
     onSuccess: () => {
       toast.success('All incident jobs retried');
-      queryClient.invalidateQueries({ queryKey: ['incidents'] });
-      queryClient.invalidateQueries({ queryKey: ['jobs'] });
+      queryClient.invalidateQueries({ queryKey: instanceIncidentsKey });
+      queryClient.invalidateQueries({ queryKey: instanceJobsKey });
     },
     onError: () => toast.error('Failed to retry incident jobs'),
   });
@@ -506,7 +520,7 @@ export default function InstanceDetailPage() {
               <span className="inline-flex items-center gap-1"><RotateCcw size={13} /> Retry Incidents ({(incidents ?? []).length})</span>
             </ConfirmButton>
           )}
-          {isRunning && (
+          {isRunning && canOperate && (
             <Button variant="secondary" size="sm" onClick={() => setShowAddVarModal(true)}>
               + Add Variable
             </Button>
@@ -660,6 +674,7 @@ export default function InstanceDetailPage() {
               <VariablesPanel
                 variables={variables}
                 isLoading={varsLoading}
+                canOperate={canOperate}
                 onUpdate={(name, value, type) => updateVarMutation.mutate({ name, value, type })}
                 onDelete={(name) => deleteVarMutation.mutate(name)}
                 search={varSearch} setSearch={setVarSearch}
@@ -671,6 +686,7 @@ export default function InstanceDetailPage() {
               <IncidentsPanel
                 incidents={incidents}
                 isLoading={incidentsLoading}
+                canOperate={canOperate}
                 onRetry={(inc) => { if (inc.configuration) retryJobMutation.mutate(inc.configuration); }}
                 onResolve={(inc) => resolveIncidentMutation.mutate(inc.id)}
                 onViewStacktrace={(inc) => { if (inc.configuration) setStacktraceJobId(inc.configuration); }}
@@ -688,6 +704,7 @@ export default function InstanceDetailPage() {
 
             {activeTab === 'jobs' && (
               <JobsPanel jobs={jobs} isLoading={jobsLoading}
+                canOperate={canOperate}
                 onRetry={(jobId) => retryJobMutation.mutate(jobId)}
                 onUpdateDueDate={(jobId, duedate) => updateJobDueDateMutation.mutate({ jobId, duedate })}
                 search={jobSearch} setSearch={setJobSearch}
@@ -772,25 +789,8 @@ function AddVariableModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div
-        className="relative rounded-lg border shadow-xl w-full max-w-md mx-4"
-        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Add Variable</h2>
-          <button
-            className="rounded p-1 hover:bg-white/10 transition-colors cursor-pointer bg-transparent border-none"
-            style={{ color: 'var(--text-secondary)' }}
-            onClick={onClose}
-          >
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+    <Modal open onClose={onClose} title="Add Variable" width={448}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="variableName" style={inputStyle} autoFocus />
@@ -822,8 +822,7 @@ function AddVariableModal({
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
 
@@ -926,9 +925,9 @@ function AuditLogPanel({ activities, isLoading, search, setSearch, page, setPage
 /* ================================================================== */
 
 function VariablesPanel({
-  variables, isLoading, onUpdate, onDelete, search, setSearch, page, setPage,
+  variables, isLoading, canOperate, onUpdate, onDelete, search, setSearch, page, setPage,
 }: {
-  variables: Record<string, CamundaVariable> | undefined; isLoading: boolean;
+  variables: Record<string, CamundaVariable> | undefined; isLoading: boolean; canOperate: boolean;
   onUpdate: (name: string, value: any, type: string) => void; onDelete: (name: string) => void;
   search: string; setSearch: (s: string) => void; page: number; setPage: (fn: number | ((p: number) => number)) => void;
 }) {
@@ -972,7 +971,7 @@ function VariablesPanel({
         </thead>
         <tbody>
           {paginated.map(([name, variable]) => (
-            <VariableRow key={name} name={name} variable={variable} onSave={(v, t) => onUpdate(name, v, t)} onDelete={() => onDelete(name)} />
+            <VariableRow key={name} name={name} variable={variable} canOperate={canOperate} onSave={(v, t) => onUpdate(name, v, t)} onDelete={() => onDelete(name)} />
           ))}
         </tbody>
       </table>
@@ -994,7 +993,7 @@ function VariablesPanel({
   );
 }
 
-function VariableRow({ name, variable, onSave, onDelete }: { name: string; variable: CamundaVariable; onSave: (value: any, type: string) => void; onDelete: () => void }) {
+function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: string; variable: CamundaVariable; canOperate: boolean; onSave: (value: any, type: string) => void; onDelete: () => void }) {
   const { id: instanceId } = useParams<{ id: string }>();
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -1030,44 +1029,33 @@ function VariableRow({ name, variable, onSave, onDelete }: { name: string; varia
           </div>
         </td>
         <td className="py-2.5 px-3">
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
-              style={{ color: 'var(--text-muted)' }} title="Edit variable"
-              onClick={handleOpenEdit}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
-              <Pencil size={13} />
-            </button>
-            <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
-              style={{ color: 'var(--text-muted)' }} title="Delete variable"
-              onClick={() => setShowDeleteModal(true)}
-              onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-red)'}
-              onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
-              <Trash2 size={13} />
-            </button>
-          </div>
+          {/* Variable edit/delete are hidden for read-only operators (#34). */}
+          {canOperate && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
+                style={{ color: 'var(--text-muted)' }} title="Edit variable" aria-label={`Edit variable ${name}`}
+                onClick={handleOpenEdit}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                <Pencil size={13} />
+              </button>
+              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
+                style={{ color: 'var(--text-muted)' }} title="Delete variable" aria-label={`Delete variable ${name}`}
+                onClick={() => setShowDeleteModal(true)}
+                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-red)'}
+                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+                <Trash2 size={13} />
+              </button>
+            </div>
+          )}
         </td>
       </tr>
 
-      {/* ── Edit Variable Modal ── */}
+      {/* ── Edit Variable Modal (shared accessible Modal, #35) ── */}
       {showEditModal && (
-        <tr><td colSpan={4} className="p-0">
-          <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowEditModal(false)}>
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <div className="relative w-full max-w-md mx-4 rounded-xl overflow-hidden"
-              style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
-              onClick={e => e.stopPropagation()}>
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
-                <div>
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Edit Variable</h3>
-                  <span className="text-xs font-mono-id" style={{ color: 'var(--text-muted)' }}>{name}</span>
-                </div>
-                <button className="p-1 rounded cursor-pointer bg-transparent border-none" style={{ color: 'var(--text-muted)' }}
-                  onClick={() => setShowEditModal(false)}><X size={18} /></button>
-              </div>
+        <Modal open onClose={() => setShowEditModal(false)} title={`Edit Variable — ${name}`} width={480}>
               {/* Body */}
-              <div className="px-5 py-4 space-y-4">
+              <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Type</label>
                   <select value={editType} onChange={e => setEditType(e.target.value)}
@@ -1134,46 +1122,32 @@ function VariableRow({ name, variable, onSave, onDelete }: { name: string; varia
                 </div>
               </div>
               {/* Footer */}
-              <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-elevated)' }}>
+              <div className="mt-5 flex items-center justify-end gap-2">
                 <Button variant="secondary" size="sm" onClick={() => setShowEditModal(false)}>Cancel</Button>
                 <Button variant="primary" size="sm" onClick={handleSave}>Save Changes</Button>
               </div>
-            </div>
-          </div>
-        </td></tr>
+        </Modal>
       )}
 
-      {/* ── Delete Confirmation Modal ── */}
+      {/* ── Delete Confirmation Modal (shared accessible Modal, #35) ── */}
       {showDeleteModal && (
-        <tr><td colSpan={4} className="p-0">
-          <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setShowDeleteModal(false)}>
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <div className="relative w-full max-w-sm mx-4 rounded-xl overflow-hidden"
-              style={{ backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', boxShadow: '0 8px 30px rgba(0,0,0,0.12)' }}
-              onClick={e => e.stopPropagation()}>
-              <div className="px-5 py-4">
-                <div className="flex items-center gap-3 mb-3">
-                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.1)' }}>
-                    <AlertTriangle size={18} style={{ color: 'var(--accent-red)' }} />
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>Delete Variable</h3>
-                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>This action cannot be undone</p>
-                  </div>
-                </div>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Are you sure you want to delete <strong className="font-mono-id" style={{ color: 'var(--text-primary)' }}>{name}</strong>?
-                </p>
-              </div>
-              <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--border)', backgroundColor: 'var(--bg-elevated)' }}>
-                <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
-                <Button variant="danger" size="sm" onClick={() => { setShowDeleteModal(false); onDelete(); }}>
-                  <Trash2 size={13} className="mr-1" /> Delete
-                </Button>
-              </div>
-            </div>
+        <Modal open onClose={() => setShowDeleteModal(false)} title="Delete Variable" width={400}>
+          <div className="flex items-center gap-3 mb-3">
+            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.1)' }}>
+              <AlertTriangle size={18} style={{ color: 'var(--accent-red)' }} />
+            </span>
+            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>This action cannot be undone</p>
           </div>
-        </td></tr>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            Are you sure you want to delete <strong className="font-mono-id" style={{ color: 'var(--text-primary)' }}>{name}</strong>?
+          </p>
+          <div className="mt-5 flex items-center justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
+            <Button variant="danger" size="sm" onClick={() => { setShowDeleteModal(false); onDelete(); }}>
+              <Trash2 size={13} className="mr-1" /> Delete
+            </Button>
+          </div>
+        </Modal>
       )}
     </>
   );
@@ -1221,8 +1195,8 @@ function parseValue(raw: string, type: string): any {
 /*  Incidents Panel                                                    */
 /* ================================================================== */
 
-function IncidentsPanel({ incidents, isLoading, onRetry, onResolve, onViewStacktrace, search, setSearch, page, setPage }: {
-  incidents: Incident[] | undefined; isLoading: boolean; onRetry: (i: Incident) => void; onResolve: (i: Incident) => void;
+function IncidentsPanel({ incidents, isLoading, canOperate, onRetry, onResolve, onViewStacktrace, search, setSearch, page, setPage }: {
+  incidents: Incident[] | undefined; isLoading: boolean; canOperate: boolean; onRetry: (i: Incident) => void; onResolve: (i: Incident) => void;
   onViewStacktrace: (i: Incident) => void;
   search: string; setSearch: (s: string) => void; page: number; setPage: (fn: number | ((p: number) => number)) => void;
 }) {
@@ -1266,18 +1240,26 @@ function IncidentsPanel({ incidents, isLoading, onRetry, onResolve, onViewStackt
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {incident.configuration && (
-                  <Button variant="secondary" size="sm" title="View stack trace" onClick={() => onViewStacktrace(incident)}>
+                  <Button variant="secondary" size="sm" title="View stack trace" aria-label="View stack trace" onClick={() => onViewStacktrace(incident)}>
                     <FileCode size={13} className="mr-1" />View
                   </Button>
                 )}
-                {incident.configuration && (
-                  <Button variant="secondary" size="sm" title="Retry job" onClick={() => onRetry(incident)}>
+                {/* Destructive/write controls are hidden — not just disabled — for
+                    read-only operators, and confirmed via the shared dialog (#34). */}
+                {canOperate && incident.configuration && (
+                  <ConfirmButton variant="secondary" size="sm" title="Retry job" aria-label="Retry incident job"
+                    confirmVariant="primary" confirmTitle="Retry job" confirmMessage="Retry the job behind this incident?" confirmLabel="Retry"
+                    onConfirm={() => onRetry(incident)}>
                     <RotateCcw size={13} className="mr-1" />Retry
-                  </Button>
+                  </ConfirmButton>
                 )}
-                <Button variant="ghost" size="sm" title="Resolve incident" onClick={() => { if (window.confirm('Resolve this incident?')) onResolve(incident); }}>
-                  <X size={14} />
-                </Button>
+                {canOperate && (
+                  <ConfirmButton variant="ghost" size="sm" title="Resolve incident" aria-label="Resolve incident"
+                    confirmTitle="Resolve incident" confirmMessage="Resolve this incident? This deletes it and cannot be undone." confirmLabel="Resolve"
+                    onConfirm={() => onResolve(incident)}>
+                    <X size={14} />
+                  </ConfirmButton>
+                )}
               </div>
             </div>
           </div>
@@ -1393,9 +1375,10 @@ function UserTasksPanel({ tasks, isLoading, onTaskClick, search, setSearch, page
 /*  Jobs Panel                                                         */
 /* ================================================================== */
 
-function JobsPanel({ jobs, isLoading, onRetry, onUpdateDueDate, search, setSearch, page, setPage }: {
+function JobsPanel({ jobs, isLoading, canOperate, onRetry, onUpdateDueDate, search, setSearch, page, setPage }: {
   jobs: Job[] | undefined;
   isLoading: boolean;
+  canOperate: boolean;
   onRetry: (jobId: string) => void;
   onUpdateDueDate: (jobId: string, duedate: string | null) => void;
   search: string; setSearch: (s: string) => void; page: number; setPage: (fn: number | ((p: number) => number)) => void;
@@ -1443,15 +1426,18 @@ function JobsPanel({ jobs, isLoading, onRetry, onUpdateDueDate, search, setSearc
               <td className="py-2 px-3 whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
                   <span style={{ color: 'var(--text-secondary)' }}>{job.dueDate ? absoluteTime(job.dueDate) : '—'}</span>
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); setEditingJob(job); }}
-                    className="p-0.5 rounded cursor-pointer bg-transparent border-none transition-colors hover:bg-elevated"
-                    style={{ color: 'var(--text-muted)' }}
-                    title="Edit due date"
-                  >
-                    <Pencil size={12} />
-                  </button>
+                  {canOperate && (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setEditingJob(job); }}
+                      className="p-0.5 rounded cursor-pointer bg-transparent border-none transition-colors hover:bg-elevated"
+                      style={{ color: 'var(--text-muted)' }}
+                      title="Edit due date"
+                      aria-label="Edit job due date"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
                 </div>
               </td>
               <td className="py-2 px-3">
@@ -1467,10 +1453,12 @@ function JobsPanel({ jobs, isLoading, onRetry, onUpdateDueDate, search, setSearc
                 )}
               </td>
               <td className="py-2 px-3">
-                {job.exceptionMessage && (
-                  <Button variant="secondary" size="sm" onClick={() => onRetry(job.id)} title="Retry job">
+                {canOperate && job.exceptionMessage && (
+                  <ConfirmButton variant="secondary" size="sm" title="Retry job" aria-label="Retry job"
+                    confirmVariant="primary" confirmTitle="Retry job" confirmMessage="Reset retries on this job so the engine executes it again?" confirmLabel="Retry"
+                    onConfirm={() => onRetry(job.id)}>
                     <RotateCcw size={13} className="mr-1" />Retry
-                  </Button>
+                  </ConfirmButton>
                 )}
               </td>
             </tr>
@@ -1548,21 +1536,8 @@ function EditDueDateModal({ job, onSave, onClose }: {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <div
-        className="relative rounded-lg border shadow-xl w-full max-w-sm mx-4"
-        style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'var(--border)' }}>
-          <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>Update Due Date</h2>
-          <button className="rounded p-1 hover:bg-white/10 transition-colors cursor-pointer bg-transparent border-none" style={{ color: 'var(--text-secondary)' }} onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+    <Modal open onClose={onClose} title="Update Due Date" width={400}>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Job ID</label>
             <div className="text-sm font-mono-id" style={{ color: 'var(--text-muted)' }}><CopyId id={job.id} /></div>
@@ -1584,8 +1559,7 @@ function EditDueDateModal({ job, onSave, onClose }: {
             <Button type="button" variant="ghost" onClick={onClose}>Cancel</Button>
           </div>
         </form>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

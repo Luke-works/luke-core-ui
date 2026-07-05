@@ -223,6 +223,7 @@ export default function ProcessListPage() {
               variant="ghost"
               size="sm"
               title="View"
+              aria-label={`View process ${row.original.key}`}
               onClick={(e) => {
                 e.stopPropagation();
                 navigate(`/processes/${row.original.id}`);
@@ -235,6 +236,7 @@ export default function ProcessListPage() {
                 variant="ghost"
                 size="sm"
                 title="Start instance"
+                aria-label={`Start instance of ${row.original.name ?? row.original.key}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   setStartTarget({

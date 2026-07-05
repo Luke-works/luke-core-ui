@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useId, useState, isValidElement, cloneElement, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Hexagon, ChevronRight, ChevronLeft, Check, User, Database, Cpu, Rocket } from 'lucide-react';
 import { toast } from 'sonner';
@@ -416,10 +416,25 @@ export default function SetupPage() {
 /* ── Helpers ─────────────────────────────────────────────── */
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  // Associate the label with its control via htmlFor/id (#35). When the single
+  // child is a form element we inject the id; when it's a group (e.g. the DB-type
+  // button pair) we fall back to a plain label with no target.
+  const id = useId();
+  const child = children as ReactElement<{ id?: string }>;
+  const isFormControl =
+    isValidElement(child) &&
+    (child.type === 'input' || child.type === 'select' || child.type === 'textarea');
+  const control = isFormControl ? cloneElement(child, { id }) : children;
   return (
     <div>
-      <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>{label}</label>
-      {children}
+      <label
+        htmlFor={isFormControl ? id : undefined}
+        className="block text-sm font-medium mb-1.5"
+        style={{ color: 'var(--text-secondary)' }}
+      >
+        {label}
+      </label>
+      {control}
     </div>
   );
 }
