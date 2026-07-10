@@ -64,13 +64,15 @@ export default function Topbar() {
     }
   };
 
+  // TailAdmin icon-button chrome — small, rounded, gray with a soft hover fill.
+  const iconBtn =
+    'flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-white transition-colors cursor-pointer';
+
   return (
     <header
-      className="fixed top-0 right-0 h-12 flex items-center justify-between px-4 z-30 border-b"
+      className="fixed top-0 right-0 h-12 flex items-center justify-between px-4 z-30 border-b border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
       style={{
         left: sidebarWidth,
-        backgroundColor: 'var(--bg-surface)',
-        borderColor: 'var(--border)',
         transition: 'left 200ms ease-in-out',
       }}
     >
@@ -78,18 +80,7 @@ export default function Topbar() {
       <div className="flex items-center gap-3">
       <button
         onClick={isMobile ? toggleMobileSidebar : toggleSidebar}
-        className="flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors duration-150"
-        style={{
-          color: 'var(--text-secondary)',
-          backgroundColor: 'transparent',
-          border: 'none',
-        }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = 'transparent')
-        }
+        className={iconBtn}
         title={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         aria-label="Toggle sidebar"
       >
@@ -100,76 +91,47 @@ export default function Topbar() {
           <>
             <button
               onClick={() => setTenantDropdownOpen((prev) => !prev)}
-              className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium cursor-pointer transition-colors duration-150"
-              style={{
-                color: 'var(--text-primary)',
-                backgroundColor: 'transparent',
-                border: '1px solid var(--border)',
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.borderColor = 'var(--border-strong)')
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.borderColor = 'var(--border)')
-              }
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-200 hover:bg-gray-50 hover:border-gray-300 dark:text-gray-300 dark:border-gray-800 dark:hover:bg-white/[0.03] dark:hover:border-gray-700 transition-colors cursor-pointer"
             >
-              <Building2 size={14} style={{ color: activeTenant ? 'var(--accent-blue)' : 'var(--accent-amber, #f59e0b)' }} />
+              <Building2
+                size={14}
+                className={activeTenant ? 'text-brand-500' : 'text-warning-500'}
+              />
               <span className="truncate max-w-[110px] sm:max-w-[180px]">
                 {activeTenant?.name ?? activeTenant?.id ?? 'Select tenant'}
               </span>
-              <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+              <ChevronDown size={14} className="text-gray-400" />
             </button>
 
             {tenantDropdownOpen && tenants.length > 0 && (
-              <div
-                className="absolute top-full left-0 mt-1 w-56 rounded-md py-1 shadow-lg"
-                style={{
-                  backgroundColor: 'var(--bg-elevated)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                <div
-                  className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider"
-                  style={{ color: 'var(--text-muted)' }}
-                >
+              <div className="absolute top-full left-0 mt-1.5 w-56 rounded-xl border border-gray-200 bg-white py-1.5 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900">
+                <div className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                   Tenants
                 </div>
-                {tenants.map((tenant) => (
-                  <button
-                    key={tenant.id}
-                    onClick={() => {
-                      setActiveTenant(tenant.id);
-                      setTenantDropdownOpen(false);
-                    }}
-                    className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors duration-150"
-                    style={{
-                      color:
-                        tenant.id === activeTenant?.id
-                          ? 'var(--accent-blue)'
-                          : 'var(--text-primary)',
-                      backgroundColor: 'transparent',
-                      border: 'none',
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor =
-                        'var(--bg-muted)')
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = 'transparent')
-                    }
-                  >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{
-                        backgroundColor:
-                          tenant.id === activeTenant?.id
-                            ? 'var(--accent-green)'
-                            : 'var(--text-muted)',
+                {tenants.map((tenant) => {
+                  const active = tenant.id === activeTenant?.id;
+                  return (
+                    <button
+                      key={tenant.id}
+                      onClick={() => {
+                        setActiveTenant(tenant.id);
+                        setTenantDropdownOpen(false);
                       }}
-                    />
-                    <span className="truncate">{tenant.name || tenant.id}</span>
-                  </button>
-                ))}
+                      className={`flex items-center gap-2 w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.03] ${
+                        active
+                          ? 'text-brand-500 dark:text-brand-400'
+                          : 'text-gray-700 dark:text-gray-300'
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full shrink-0 ${
+                          active ? 'bg-success-500' : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                      />
+                      <span className="truncate">{tenant.name || tenant.id}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </>
@@ -180,26 +142,14 @@ export default function Topbar() {
             onClick={handleRetryTenants}
             disabled={retryingTenants}
             title={tenantLoadError}
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer max-w-[70vw] sm:max-w-none"
-            style={{
-              color: 'var(--accent-red, #ef4444)',
-              backgroundColor: 'rgba(239, 68, 68, 0.08)',
-              border: '1px solid rgba(239, 68, 68, 0.28)',
-            }}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg cursor-pointer max-w-[70vw] sm:max-w-none text-error-600 bg-error-50 border border-error-200 hover:bg-error-100 dark:text-error-400 dark:bg-error-500/10 dark:border-error-500/25 transition-colors"
           >
             <Building2 size={14} className="shrink-0" />
             <span className="truncate">{retryingTenants ? 'Retrying…' : tenantLoadError}</span>
             {!retryingTenants && <RefreshCw size={13} className="shrink-0" />}
           </button>
         ) : (
-          <div
-            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md"
-            style={{
-              color: 'var(--accent-amber, #f59e0b)',
-              backgroundColor: 'rgba(245, 158, 11, 0.08)',
-              border: '1px solid rgba(245, 158, 11, 0.25)',
-            }}
-          >
+          <div className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg text-warning-600 bg-warning-50 border border-warning-200 dark:text-warning-400 dark:bg-warning-500/10 dark:border-warning-500/25">
             <Building2 size={14} />
             <span>No tenant selected</span>
           </div>
@@ -208,35 +158,18 @@ export default function Topbar() {
       </div>
 
       {/* Right side */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Theme toggle */}
         <button
           onClick={() => useUiStore.getState().toggleTheme()}
-          className="flex items-center justify-center w-8 h-8 rounded-md cursor-pointer transition-colors duration-150"
-          style={{
-            color: 'var(--text-secondary)',
-            backgroundColor: 'transparent',
-            border: 'none',
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = 'transparent')
-          }
+          className={iconBtn}
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
         {/* Refresh indicator */}
-        <div
-          className="flex items-center gap-1.5 px-2 py-1 rounded-md text-xs"
-          style={{
-            color: 'var(--text-muted)',
-            backgroundColor: 'var(--bg-elevated)',
-          }}
-        >
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs text-gray-400 bg-gray-100 dark:text-gray-500 dark:bg-white/[0.03]">
           <RefreshCw size={13} />
         </div>
 
@@ -244,48 +177,18 @@ export default function Topbar() {
         <div ref={userRef} className="relative">
           <button
             onClick={() => setUserMenuOpen((prev) => !prev)}
-            className="flex items-center gap-2 px-2 py-1.5 rounded-md text-sm cursor-pointer transition-colors duration-150"
-            style={{
-              color: 'var(--text-secondary)',
-              backgroundColor: 'transparent',
-              border: 'none',
-            }}
-            onMouseEnter={(e) =>
-              (e.currentTarget.style.backgroundColor =
-                'var(--bg-elevated)')
-            }
-            onMouseLeave={(e) =>
-              (e.currentTarget.style.backgroundColor = 'transparent')
-            }
+            className="flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-white transition-colors cursor-pointer"
           >
             <User size={16} />
             <span className="text-sm hidden sm:inline truncate max-w-[120px]">{username ?? 'Guest'}</span>
-            <ChevronDown size={14} style={{ color: 'var(--text-muted)' }} />
+            <ChevronDown size={14} className="text-gray-400" />
           </button>
 
           {userMenuOpen && (
-            <div
-              className="absolute top-full right-0 mt-1 w-44 rounded-md py-1 shadow-lg"
-              style={{
-                backgroundColor: 'var(--bg-elevated)',
-                border: '1px solid var(--border)',
-              }}
-            >
+            <div className="absolute top-full right-0 mt-1.5 w-44 rounded-xl border border-gray-200 bg-white py-1.5 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900">
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm cursor-pointer transition-colors duration-150"
-                style={{
-                  color: 'var(--accent-red)',
-                  backgroundColor: 'transparent',
-                  border: 'none',
-                }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor =
-                    'var(--bg-muted)')
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = 'transparent')
-                }
+                className="flex items-center gap-2 w-full text-left px-3 py-2 text-sm text-error-600 hover:bg-error-50 dark:text-error-400 dark:hover:bg-error-500/10 transition-colors cursor-pointer"
               >
                 <LogOut size={15} />
                 <span>Logout</span>
