@@ -219,11 +219,9 @@ export default function Sidebar() {
     <aside
       onMouseEnter={() => !isMobile && setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="fixed left-0 top-0 h-screen flex flex-col border-r"
+      className="fixed left-0 top-0 h-screen flex flex-col border-r border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
       style={{
         width: sidebarCollapsed ? 64 : 240,
-        backgroundColor: 'var(--bg-surface)',
-        borderColor: 'var(--border)',
         zIndex: isMobile ? 50 : 30,
         transform: isMobile && !mobileSidebarOpen ? 'translateX(-100%)' : 'translateX(0)',
         boxShadow: isHoverExpanded ? 'var(--shadow-theme-lg)' : undefined,
@@ -231,35 +229,26 @@ export default function Sidebar() {
       }}
     >
       {/* Logo */}
-      <div
-        className="flex items-center h-12 px-4 gap-2.5 shrink-0"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
-        <Hexagon size={22} style={{ color: 'var(--accent-blue)' }} className="shrink-0" />
+      <div className="flex items-center h-12 px-4 gap-2.5 shrink-0 border-b border-gray-200 dark:border-gray-800">
+        <Hexagon size={22} className="shrink-0 text-brand-500 dark:text-brand-400" />
         {!sidebarCollapsed && (
-          <span
-            className="font-heading text-base tracking-wider whitespace-nowrap overflow-hidden"
-            style={{ color: 'var(--accent-blue)' }}
-          >
+          <span className="font-heading text-base tracking-wider whitespace-nowrap overflow-hidden text-brand-500 dark:text-brand-400">
             LUKE CORE
           </span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto py-3">
+      <nav className="flex-1 overflow-y-auto py-3 custom-scrollbar">
         {navSections.map((section) => (
           <div key={section.title} className="mb-4">
             {!sidebarCollapsed && (
-              <div
-                className="px-4 mb-1 text-[11px] font-medium uppercase tracking-wider"
-                style={{ color: 'var(--text-muted)' }}
-              >
+              <div className="px-5 mb-1 text-[11px] font-medium uppercase tracking-wider text-gray-400 dark:text-gray-500">
                 {section.title}
               </div>
             )}
 
-            <ul className="space-y-0.5 px-2">
+            <ul className="space-y-0.5 px-3">
               {section.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = isItemActive(item.to);
@@ -268,29 +257,12 @@ export default function Sidebar() {
                     <NavLink
                       to={item.to}
                       onClick={() => isMobile && setMobileSidebarOpen(false)}
-                      className={[
-                          'flex items-center gap-3 rounded-md text-sm font-medium',
-                          'transition-colors duration-150',
-                          sidebarCollapsed
-                            ? 'justify-center px-2 py-2'
-                            : 'px-3 py-2',
-                        ].join(' ')
-                      }
-                      style={{
-                        backgroundColor: isActive
-                          ? 'var(--bg-elevated)'
-                          : 'transparent',
-                        color: isActive
-                          ? 'var(--accent-blue)'
-                          : 'var(--text-secondary)',
-                      }}
+                      className={`menu-item group ${sidebarCollapsed ? 'justify-center !px-2' : ''} ${isActive ? 'menu-item-active' : 'menu-item-inactive'}`}
                       title={sidebarCollapsed ? item.label : undefined}
                     >
-                      <Icon size={18} className="shrink-0" />
+                      <Icon size={20} className={`shrink-0 ${isActive ? 'menu-item-icon-active' : 'menu-item-icon-inactive'}`} />
                       {!sidebarCollapsed && (
-                        <span className="whitespace-nowrap overflow-hidden">
-                          {item.label}
-                        </span>
+                        <span className="whitespace-nowrap overflow-hidden">{item.label}</span>
                       )}
                     </NavLink>
                   </li>
@@ -303,42 +275,28 @@ export default function Sidebar() {
 
       {/* Collapse toggle — desktop only; on mobile the drawer is full-width */}
       {!isMobile && (
-      <div
-        className="shrink-0 px-2 py-3"
-        style={{ borderTop: '1px solid var(--border)' }}
-      >
-        <button
-          onClick={toggleSidebar}
-          className="flex items-center gap-3 w-full rounded-md text-sm font-medium px-3 py-2 cursor-pointer transition-colors duration-150"
-          style={{
-            color: 'var(--text-secondary)',
-            backgroundColor: 'transparent',
-            border: 'none',
-          }}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = 'var(--bg-elevated)')
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = 'transparent')
-          }
-          title={isCollapsedPersisted ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {sidebarCollapsed ? (
-            <PanelLeftOpen size={18} className="shrink-0 mx-auto" />
-          ) : (
-            <>
-              {isCollapsedPersisted ? (
-                <PanelLeftOpen size={18} className="shrink-0" />
-              ) : (
-                <PanelLeftClose size={18} className="shrink-0" />
-              )}
-              <span className="whitespace-nowrap overflow-hidden">
-                {isCollapsedPersisted ? 'Expand' : 'Collapse'}
-              </span>
-            </>
-          )}
-        </button>
-      </div>
+        <div className="shrink-0 px-3 py-3 border-t border-gray-200 dark:border-gray-800">
+          <button
+            onClick={toggleSidebar}
+            className={`menu-item menu-item-inactive group w-full cursor-pointer ${sidebarCollapsed ? 'justify-center !px-2' : ''}`}
+            title={isCollapsedPersisted ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen size={20} className="shrink-0 menu-item-icon-inactive" />
+            ) : (
+              <>
+                {isCollapsedPersisted ? (
+                  <PanelLeftOpen size={20} className="shrink-0 menu-item-icon-inactive" />
+                ) : (
+                  <PanelLeftClose size={20} className="shrink-0 menu-item-icon-inactive" />
+                )}
+                <span className="whitespace-nowrap overflow-hidden">
+                  {isCollapsedPersisted ? 'Expand' : 'Collapse'}
+                </span>
+              </>
+            )}
+          </button>
+        </div>
       )}
     </aside>
   );
