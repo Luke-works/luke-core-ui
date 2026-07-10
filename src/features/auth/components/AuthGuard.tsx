@@ -44,8 +44,8 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (!ready) {
     return (
-      <div className="flex items-center justify-center min-h-screen" style={{ backgroundColor: 'var(--bg-base)' }}>
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-950">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-500" />
       </div>
     );
   }

@@ -87,19 +87,18 @@ function KpiCard({ label, value, isLoading, isError, color, icon, href }: KpiCar
 // Chart tooltip (dark themed)
 // ---------------------------------------------------------------------------
 
-function ChartTooltipContent({ active, payload, label }: any) {
+interface ChartTooltipProps {
+  active?: boolean;
+  payload?: Array<{ color?: string; name?: string; value?: number | string }>;
+  label?: string | number;
+}
+
+function ChartTooltipContent({ active, payload, label }: ChartTooltipProps) {
   if (!active || !payload?.length) return null;
   return (
-    <div
-      className="rounded px-3 py-2 text-xs"
-      style={{
-        backgroundColor: 'var(--bg-elevated)',
-        border: '1px solid var(--border)',
-        color: 'var(--text-primary)',
-      }}
-    >
-      <p style={{ color: 'var(--text-secondary)' }}>{label}</p>
-      {payload.map((entry: any, i: number) => (
+    <div className="rounded-lg px-3 py-2 text-xs bg-white border border-gray-200 shadow-theme-sm text-gray-800 dark:bg-gray-800 dark:border-gray-700 dark:text-white/90">
+      <p className="text-gray-500 dark:text-gray-400">{label}</p>
+      {payload.map((entry, i) => (
         <p key={i} style={{ color: entry.color }}>
           {entry.name}: {entry.value}
         </p>
@@ -233,7 +232,7 @@ export default function DashboardPage() {
           value={runningInstances.data?.count}
           isLoading={runningInstances.isLoading}
           isError={runningInstances.isError}
-          color="var(--accent-green)"
+          color="var(--color-success-500)"
           icon={<Activity size={20} />}
           href="/processes"
         />
@@ -242,7 +241,7 @@ export default function DashboardPage() {
           value={openTasks.data?.count}
           isLoading={openTasks.isLoading}
           isError={openTasks.isError}
-          color="var(--accent-blue)"
+          color="var(--color-brand-500)"
           icon={<CheckSquare size={20} />}
           href="/tasks"
         />
@@ -251,7 +250,7 @@ export default function DashboardPage() {
           value={activeIncidents.data?.count}
           isLoading={activeIncidents.isLoading}
           isError={activeIncidents.isError}
-          color="var(--accent-red)"
+          color="var(--color-error-500)"
           icon={<AlertTriangle size={20} />}
           href="/incidents"
         />
@@ -260,7 +259,7 @@ export default function DashboardPage() {
           value={failedJobs.data?.count}
           isLoading={failedJobs.isLoading}
           isError={failedJobs.isError}
-          color="var(--accent-orange)"
+          color="var(--color-orange-500)"
           icon={<Cog size={20} />}
           href="/jobs"
         />
@@ -271,15 +270,15 @@ export default function DashboardPage() {
         <Card
           title="Instance Activity (24h)"
           action={
-            <TrendingUp size={16} style={{ color: 'var(--text-muted)' }} />
+            <TrendingUp size={16} className="text-gray-400 dark:text-gray-500" />
           }
         >
           {activityChart.isLoading ? (
             <Skeleton height={250} />
           ) : activityChart.isError ? (
             <div
-              className="flex items-center justify-center text-sm"
-              style={{ height: 250, color: 'var(--text-muted)' }}
+              className="flex items-center justify-center text-sm text-gray-400 dark:text-gray-500"
+              style={{ height: 250 }}
             >
               Failed to load activity data
             </div>
@@ -288,19 +287,19 @@ export default function DashboardPage() {
               <AreaChart data={activityData}>
                 <defs>
                   <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--accent-blue)" stopOpacity={0.2} />
-                    <stop offset="100%" stopColor="var(--accent-blue)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--color-brand-500)" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="var(--color-brand-500)" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis
                   dataKey="hour"
-                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  tick={{ fill: 'var(--color-gray-400)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   allowDecimals={false}
-                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  tick={{ fill: 'var(--color-gray-400)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                   width={32}
@@ -310,7 +309,7 @@ export default function DashboardPage() {
                   type="monotone"
                   dataKey="count"
                   name="Instances"
-                  stroke="var(--accent-blue)"
+                  stroke="var(--color-brand-500)"
                   fill="url(#areaFill)"
                   strokeWidth={2}
                 />
@@ -332,15 +331,15 @@ export default function DashboardPage() {
             </div>
           ) : processStats.isError ? (
             <div
-              className="flex items-center justify-center text-sm"
-              style={{ height: 200, color: 'var(--text-muted)' }}
+              className="flex items-center justify-center text-sm text-gray-400 dark:text-gray-500"
+              style={{ height: 200 }}
             >
               Failed to load process statistics
             </div>
           ) : topProcessData.length === 0 ? (
             <div
-              className="flex items-center justify-center text-sm"
-              style={{ height: 200, color: 'var(--text-muted)' }}
+              className="flex items-center justify-center text-sm text-gray-400 dark:text-gray-500"
+              style={{ height: 200 }}
             >
               No process data available
             </div>
@@ -350,14 +349,14 @@ export default function DashboardPage() {
                 <XAxis
                   type="number"
                   allowDecimals={false}
-                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
+                  tick={{ fill: 'var(--color-gray-400)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
                 />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fill: 'var(--text-secondary)', fontSize: 12 }}
+                  tick={{ fill: 'var(--color-gray-500)', fontSize: 12 }}
                   axisLine={false}
                   tickLine={false}
                   width={120}
@@ -366,7 +365,7 @@ export default function DashboardPage() {
                 <Bar
                   dataKey="instances"
                   name="Instances"
-                  fill="var(--accent-blue)"
+                  fill="var(--color-brand-500)"
                   radius={[0, 4, 4, 0]}
                   barSize={18}
                 />
@@ -385,15 +384,15 @@ export default function DashboardPage() {
             </div>
           ) : recentIncidents.isError ? (
             <div
-              className="flex items-center justify-center text-sm"
-              style={{ height: 200, color: 'var(--text-muted)' }}
+              className="flex items-center justify-center text-sm text-gray-400 dark:text-gray-500"
+              style={{ height: 200 }}
             >
               Failed to load incidents
             </div>
           ) : !recentIncidents.data?.length ? (
             <div
-              className="flex items-center justify-center text-sm"
-              style={{ height: 200, color: 'var(--text-muted)' }}
+              className="flex items-center justify-center text-sm text-gray-400 dark:text-gray-500"
+              style={{ height: 200 }}
             >
               No recent incidents
             </div>
@@ -402,26 +401,21 @@ export default function DashboardPage() {
               {recentIncidents.data.map((incident: Incident) => (
                 <li
                   key={incident.id}
-                  className="flex items-start gap-3 pb-3"
-                  style={{ borderBottom: '1px solid var(--border)' }}
+                  className="flex items-start gap-3 pb-3 border-b border-gray-200 dark:border-gray-800"
                 >
                   <div className="shrink-0 mt-0.5">
                     <StatusBadge status={incidentStatusType(incident.incidentType)} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <p
-                      className="text-sm truncate"
-                      style={{ color: 'var(--text-primary)' }}
+                      className="text-sm truncate text-gray-800 dark:text-white/90"
                       title={incident.incidentMessage ?? undefined}
                     >
                       {incident.incidentMessage ?? 'No message'}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <CopyId id={incident.processInstanceId} />
-                      <span
-                        className="text-xs"
-                        style={{ color: 'var(--text-muted)' }}
-                      >
+                      <span className="text-xs text-gray-400 dark:text-gray-500">
                         {relativeTime(incident.incidentTimestamp)}
                       </span>
                     </div>
