@@ -37,9 +37,8 @@ export default function IdLink({ id, to, className = '', maxWidth = '16ch' }: Id
       <Link
         to={to}
         onClick={(e) => e.stopPropagation()}
-        className="font-mono-id text-theme-xs hover:underline"
+        className="font-mono-id text-theme-xs text-brand-500 hover:underline dark:text-brand-400"
         style={{
-          color: 'var(--accent-blue)',
           display: 'inline-block',
           maxWidth,
           overflow: 'hidden',

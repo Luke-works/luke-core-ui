@@ -63,7 +63,7 @@ export default function ConfirmButton({
       </Button>
 
       <Modal open={open} onClose={() => setOpen(false)} title={confirmTitle} width={420}>
-        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{confirmMessage}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300">{confirmMessage}</p>
         <div className="mt-5 flex justify-end gap-2">
           <Button variant="secondary" size="sm" onClick={() => setOpen(false)}>
             Cancel

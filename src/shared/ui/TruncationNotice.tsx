@@ -16,12 +16,7 @@ export default function TruncationNotice({
   return (
     <div
       role="status"
-      className="mb-2 rounded-md px-3 py-2 text-xs"
-      style={{
-        backgroundColor: 'rgba(234,179,8,0.08)',
-        border: '1px solid rgba(234,179,8,0.25)',
-        color: 'var(--text-secondary)',
-      }}
+      className="mb-2 rounded-lg px-3 py-2 text-xs text-warning-700 bg-warning-50 border border-warning-200 dark:text-warning-400 dark:bg-warning-500/10 dark:border-warning-500/25"
     >
       Showing the first {cap} {noun} — more may exist. Refine your search to narrow the list.
     </div>

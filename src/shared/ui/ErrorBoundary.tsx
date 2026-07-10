@@ -62,18 +62,17 @@ function DefaultFallback({ error, onReset }: { error: Error; onReset: () => void
       className="flex flex-col items-center justify-center gap-3 p-10 text-center"
       style={{ minHeight: '60vh' }}
     >
-      <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
         Something went wrong
       </h2>
-      <p className="max-w-md text-sm" style={{ color: 'var(--text-secondary)' }}>
+      <p className="max-w-md text-sm text-gray-600 dark:text-gray-300">
         {getErrorMessage(error)}
       </p>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={onReset}
-          className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium text-white"
-          style={{ backgroundColor: 'var(--accent-blue)' }}
+          className="cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-white bg-brand-500 shadow-theme-xs hover:bg-brand-600 transition-colors"
         >
           Try again
         </button>
@@ -82,8 +81,7 @@ function DefaultFallback({ error, onReset }: { error: Error; onReset: () => void
           onClick={() => {
             window.location.href = '/dashboard';
           }}
-          className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium"
-          style={{ border: '1px solid var(--border)', color: 'var(--text-secondary)' }}
+          className="cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium border border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-white/[0.03] transition-colors"
         >
           Go to dashboard
         </button>

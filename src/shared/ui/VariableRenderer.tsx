@@ -26,10 +26,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
   // Null
   if (value === null || value === undefined || normalizedType === 'null') {
     return (
-      <span
-        className="text-sm italic"
-        style={{ color: 'var(--text-muted)' }}
-      >
+      <span className="text-sm italic text-gray-400 dark:text-gray-500">
         null
       </span>
     );
@@ -53,10 +50,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
   ) {
     const num = typeof value === 'number' ? value : Number(value);
     return (
-      <span
-        className="font-mono-id text-sm"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <span className="font-mono-id text-sm text-gray-800 dark:text-white/90">
         {num.toLocaleString()}
       </span>
     );
@@ -68,20 +62,14 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
     if (str.length > 80) {
       return (
         <Tooltip content={str}>
-          <span
-            className="text-sm"
-            style={{ color: 'var(--text-primary)' }}
-          >
+          <span className="text-sm text-gray-800 dark:text-white/90">
             {str.slice(0, 80)}...
           </span>
         </Tooltip>
       );
     }
     return (
-      <span
-        className="text-sm"
-        style={{ color: 'var(--text-primary)' }}
-      >
+      <span className="text-sm text-gray-800 dark:text-white/90">
         {str}
       </span>
     );
@@ -98,8 +86,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
             e.preventDefault();
             setShowModal(true);
           }}
-          className="text-sm font-medium cursor-pointer bg-transparent border-none p-0 underline"
-          style={{ color: 'var(--accent-blue)' }}
+          className="text-sm font-medium cursor-pointer bg-transparent border-none p-0 underline text-brand-500 dark:text-brand-400"
         >
           View
         </button>
@@ -122,10 +109,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
     const dateStr = typeof value === 'string' ? value : String(value);
     return (
       <Tooltip content={absoluteTime(dateStr)}>
-        <span
-          className="text-sm"
-          style={{ color: 'var(--text-primary)' }}
-        >
+        <span className="text-sm text-gray-800 dark:text-white/90">
           {relativeTime(dateStr)}
         </span>
       </Tooltip>
@@ -135,10 +119,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
   // Bytes
   if (normalizedType === 'bytes' || normalizedType === 'file') {
     return (
-      <span
-        className="text-sm italic"
-        style={{ color: 'var(--text-muted)' }}
-      >
+      <span className="text-sm italic text-gray-400 dark:text-gray-500">
         (binary)
       </span>
     );
@@ -146,10 +127,7 @@ export default function VariableRenderer({ variable, name, instanceId }: Variabl
 
   // Fallback: render as string
   return (
-    <span
-      className="text-sm"
-      style={{ color: 'var(--text-primary)' }}
-    >
+    <span className="text-sm text-gray-800 dark:text-white/90">
       {String(value)}
     </span>
   );
@@ -221,31 +199,21 @@ function InspectVariableModal({
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-black/60" />
+      <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]" />
       <div
-        className="relative rounded-lg border shadow-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          borderColor: 'var(--border)',
-        }}
+        className="relative rounded-2xl border border-gray-200 bg-white shadow-theme-xl w-full max-w-2xl mx-4 max-h-[80vh] flex flex-col dark:border-gray-800 dark:bg-gray-900"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div
-          className="px-5 py-4 border-b shrink-0"
-          style={{ borderColor: 'var(--border)' }}
-        >
+        <div className="px-5 py-4 border-b border-gray-200 shrink-0 dark:border-gray-800">
           <div className="flex items-center justify-between mb-3">
-            <h2
-              className="text-lg font-semibold"
-              style={{ color: 'var(--text-primary)' }}
-            >
+            <h2 className="text-base font-medium text-gray-800 dark:text-white/90">
               Inspect {name ? `"${name}"` : ''} variable
             </h2>
             <button
-              className="rounded p-1 hover:bg-white/10 transition-colors cursor-pointer bg-transparent border-none"
-              style={{ color: 'var(--text-secondary)' }}
+              className="flex items-center justify-center w-9 h-9 rounded-lg cursor-pointer bg-transparent border-none text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white transition-colors"
               onClick={onClose}
+              aria-label="Close"
             >
               <X size={18} />
             </button>
@@ -255,20 +223,20 @@ function InspectVariableModal({
           <div className="space-y-2">
             {objectTypeName && (
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <span className="text-sm font-medium text-gray-800 dark:text-white/90">
                   Object Type Name:
                 </span>
-                <span className="text-sm font-mono-id" style={{ color: 'var(--text-secondary)' }}>
+                <span className="text-sm font-mono-id text-gray-600 dark:text-gray-300">
                   {objectTypeName}
                 </span>
               </div>
             )}
             {serializationDataFormat && (
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <span className="text-sm font-medium text-gray-800 dark:text-white/90">
                   Serialization Data Format:
                 </span>
-                <span className="text-sm font-mono-id" style={{ color: 'var(--text-secondary)' }}>
+                <span className="text-sm font-mono-id text-gray-600 dark:text-gray-300">
                   {serializationDataFormat}
                 </span>
               </div>
@@ -290,9 +258,9 @@ function InspectVariableModal({
                 {activeTab === 'serialized' && <ValuePane content={serialized} />}
                 {activeTab === 'deserialized' &&
                   (deserLoading ? (
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>Deserializing…</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">Deserializing…</p>
                   ) : deserErr ? (
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{deserErr}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-300">{deserErr}</p>
                   ) : (
                     <ValuePane content={objectDeserStr ?? (instanceId ? '' : 'Open from a process instance to deserialize.')} />
                   ))}
@@ -331,8 +299,9 @@ function CopyButton({ text }: { text: string }) {
       onClick={onCopy}
       title={copied ? 'Copied' : 'Copy value'}
       aria-label="Copy value"
-      className="rounded p-1 transition-colors cursor-pointer bg-transparent border-none"
-      style={{ color: copied ? '#22c55e' : 'var(--text-secondary)' }}
+      className={`rounded-lg p-1 transition-colors cursor-pointer bg-transparent border-none ${
+        copied ? 'text-success-500' : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+      }`}
     >
       {copied ? <Check size={16} /> : <Clipboard size={16} />}
     </button>
@@ -344,15 +313,12 @@ function ValuePane({ content }: { content: string }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-semibold uppercase tracking-wide" style={{ color: 'var(--text-secondary)' }}>
+        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
           Value
         </span>
         <CopyButton text={content} />
       </div>
-      <pre
-        className="font-mono-id text-xs rounded p-4 whitespace-pre-wrap break-all"
-        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}
-      >
+      <pre className="font-mono-id text-xs rounded-lg p-4 whitespace-pre-wrap break-all text-gray-800 bg-gray-50 border border-gray-200 dark:text-gray-200 dark:bg-gray-800 dark:border-gray-700">
         {content}
       </pre>
     </div>

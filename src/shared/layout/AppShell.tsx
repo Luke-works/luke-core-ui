@@ -1,4 +1,5 @@
 import { Outlet } from 'react-router-dom';
+import { X } from 'lucide-react';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
 import { useUiStore } from '@/shared/stores/uiStore';
@@ -39,10 +40,7 @@ export default function AppShell() {
   const { showShortcuts, setShowShortcuts } = useKeyboardShortcuts();
 
   return (
-    <div
-      className="min-h-screen"
-      style={{ backgroundColor: 'var(--bg-base)' }}
-    >
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
       <Sidebar />
       <Topbar />
 
@@ -77,51 +75,26 @@ export default function AppShell() {
 
           {/* Modal */}
           <div
-            className="relative rounded-lg border shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto"
-            style={{
-              backgroundColor: 'var(--bg-surface, #1e1e2e)',
-              borderColor: 'var(--border-default, #313244)',
-            }}
+            className="relative rounded-2xl border border-gray-200 bg-white shadow-theme-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto dark:border-gray-800 dark:bg-gray-900"
             onClick={(e) => e.stopPropagation()}
           >
-            <div
-              className="flex items-center justify-between px-5 py-4 border-b"
-              style={{ borderColor: 'var(--border-default, #313244)' }}
-            >
-              <h2
-                className="text-lg font-semibold"
-                style={{ color: 'var(--text-primary, #cdd6f4)' }}
-              >
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
+              <h2 className="text-base font-medium text-gray-800 dark:text-white/90">
                 Keyboard Shortcuts
               </h2>
               <button
-                className="rounded p-1 hover:bg-white/10 transition-colors"
-                style={{ color: 'var(--text-secondary, #a6adc8)' }}
+                className="flex items-center justify-center w-9 h-9 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white transition-colors"
                 onClick={() => setShowShortcuts(false)}
+                aria-label="Close"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <X size={18} />
               </button>
             </div>
 
             <div className="p-5 space-y-6">
               {SHORTCUT_GROUPS.map((group) => (
                 <div key={group.title}>
-                  <h3
-                    className="text-xs font-semibold uppercase tracking-wider mb-3"
-                    style={{ color: 'var(--text-secondary, #a6adc8)' }}
-                  >
+                  <h3 className="text-xs font-medium uppercase tracking-wider mb-3 text-gray-400 dark:text-gray-500">
                     {group.title}
                   </h3>
                   <div className="space-y-2">
@@ -130,22 +103,14 @@ export default function AppShell() {
                         key={item.keys}
                         className="flex items-center justify-between py-1"
                       >
-                        <span
-                          className="text-sm"
-                          style={{ color: 'var(--text-primary, #cdd6f4)' }}
-                        >
+                        <span className="text-sm text-gray-700 dark:text-gray-300">
                           {item.description}
                         </span>
                         <div className="flex gap-1">
                           {item.keys.split(' ').map((key, i) => (
                             <kbd
                               key={i}
-                              className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 text-xs font-mono rounded border"
-                              style={{
-                                backgroundColor: 'var(--bg-elevated, #313244)',
-                                borderColor: 'var(--border-default, #45475a)',
-                                color: 'var(--text-primary, #cdd6f4)',
-                              }}
+                              className="inline-flex items-center justify-center min-w-[24px] h-6 px-1.5 text-xs font-mono rounded-md border border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-white/[0.05] dark:text-gray-300"
                             >
                               {key}
                             </kbd>
@@ -158,20 +123,16 @@ export default function AppShell() {
               ))}
             </div>
 
-            <div
-              className="px-5 py-3 border-t text-xs text-center"
-              style={{
-                borderColor: 'var(--border-default, #313244)',
-                color: 'var(--text-secondary, #a6adc8)',
-              }}
-            >
-              Press <kbd className="font-mono px-1 py-0.5 rounded border" style={{
-                backgroundColor: 'var(--bg-elevated, #313244)',
-                borderColor: 'var(--border-default, #45475a)',
-              }}>?</kbd> or <kbd className="font-mono px-1 py-0.5 rounded border" style={{
-                backgroundColor: 'var(--bg-elevated, #313244)',
-                borderColor: 'var(--border-default, #45475a)',
-              }}>Esc</kbd> to close
+            <div className="px-5 py-3 border-t border-gray-200 text-xs text-center text-gray-400 dark:border-gray-800 dark:text-gray-500">
+              Press{' '}
+              <kbd className="font-mono px-1 py-0.5 rounded-md border border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-white/[0.05] dark:text-gray-300">
+                ?
+              </kbd>{' '}
+              or{' '}
+              <kbd className="font-mono px-1 py-0.5 rounded-md border border-gray-200 bg-gray-100 text-gray-600 dark:border-gray-700 dark:bg-white/[0.05] dark:text-gray-300">
+                Esc
+              </kbd>{' '}
+              to close
             </div>
           </div>
         </div>
