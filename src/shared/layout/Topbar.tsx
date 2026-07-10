@@ -4,6 +4,7 @@ import { useUiStore } from '@/shared/stores/uiStore';
 import { useIsMobile } from '@/shared/hooks/useMediaQuery';
 import { useTenantStore, useActiveTenant } from '@/shared/stores/tenantStore';
 import { useAuthStore } from '@/features/auth/stores/authStore';
+import { loadTenants } from '@/features/auth/loadTenants';
 
 export default function Topbar() {
   const isMobile = useIsMobile();
@@ -14,6 +15,8 @@ export default function Topbar() {
   const tenants = useTenantStore((s) => s.tenants);
   const activeTenant = useActiveTenant();
   const setActiveTenant = useTenantStore((s) => s.setActiveTenant);
+  const tenantLoadError = useTenantStore((s) => s.loadError);
+  const [retryingTenants, setRetryingTenants] = useState(false);
   const username = useAuthStore((s) => s.username);
   const logout = useAuthStore((s) => s.logout);
   const clearTenants = useTenantStore((s) => s.clear);
@@ -47,6 +50,18 @@ export default function Topbar() {
     logout();
     clearTenants();
     setUserMenuOpen(false);
+  };
+
+  const handleRetryTenants = async () => {
+    if (!username) return;
+    setRetryingTenants(true);
+    try {
+      await loadTenants(username);
+    } catch {
+      /* loadError is set on the store; the message stays visible */
+    } finally {
+      setRetryingTenants(false);
+    }
   };
 
   return (
@@ -158,6 +173,24 @@ export default function Topbar() {
               </div>
             )}
           </>
+        ) : tenantLoadError ? (
+          // The fetch FAILED (vs. genuinely zero memberships) — show it + a Retry so the
+          // operator isn't stuck at a silent dead-end (and can report the exact error).
+          <button
+            onClick={handleRetryTenants}
+            disabled={retryingTenants}
+            title={tenantLoadError}
+            className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md cursor-pointer max-w-[70vw] sm:max-w-none"
+            style={{
+              color: 'var(--accent-red, #ef4444)',
+              backgroundColor: 'rgba(239, 68, 68, 0.08)',
+              border: '1px solid rgba(239, 68, 68, 0.28)',
+            }}
+          >
+            <Building2 size={14} className="shrink-0" />
+            <span className="truncate">{retryingTenants ? 'Retrying…' : tenantLoadError}</span>
+            {!retryingTenants && <RefreshCw size={13} className="shrink-0" />}
+          </button>
         ) : (
           <div
             className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-md"

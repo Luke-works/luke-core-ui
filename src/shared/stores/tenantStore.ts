@@ -5,8 +5,13 @@ import type { Tenant } from '@/features/admin/api/tenant';
 interface TenantState {
   tenants: Tenant[];
   activeTenantId: string | null;
+  /** Non-null when the last tenant fetch FAILED (vs. genuinely having zero
+   *  memberships) — surfaced in the Topbar so "No tenant selected" isn't a silent
+   *  dead-end. Never persisted. */
+  loadError: string | null;
   setTenants: (tenants: Tenant[]) => void;
   setActiveTenant: (id: string) => void;
+  setLoadError: (err: string | null) => void;
   clear: () => void;
 }
 
@@ -15,6 +20,7 @@ export const useTenantStore = create<TenantState>()(
     (set, get) => ({
       tenants: [],
       activeTenantId: null,
+      loadError: null,
 
       setTenants: (tenants: Tenant[]) => {
         const current = get().activeTenantId;
@@ -29,8 +35,12 @@ export const useTenantStore = create<TenantState>()(
         set({ activeTenantId: id });
       },
 
+      setLoadError: (loadError: string | null) => {
+        set({ loadError });
+      },
+
       clear: () => {
-        set({ tenants: [], activeTenantId: null });
+        set({ tenants: [], activeTenantId: null, loadError: null });
       },
     }),
     {

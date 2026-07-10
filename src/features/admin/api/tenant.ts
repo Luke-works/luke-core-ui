@@ -7,10 +7,12 @@ export type Tenant = {
 };
 
 export async function getTenants(
-  params?: Record<string, any>,
+  params?: Record<string, unknown>,
 ): Promise<Tenant[]> {
   const { data } = await api.get('/tenant', { params });
-  return data;
+  // Guard against a non-array body (e.g. a 304 with an empty payload, which the
+  // client treats as success) so callers never crash on `.length`.
+  return Array.isArray(data) ? data : [];
 }
 
 /** Server-side total for the tenants table (#33). Camunda REST: GET /tenant/count. */
@@ -25,7 +27,7 @@ export async function getUserTenants(userId: string): Promise<Tenant[]> {
   const { data } = await api.get('/tenant', {
     params: { userMember: userId },
   });
-  return data;
+  return Array.isArray(data) ? data : [];
 }
 
 export async function createTenant(body: {
