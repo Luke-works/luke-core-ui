@@ -51,7 +51,7 @@ export default function Topbar() {
 
   return (
     <header
-      className="fixed top-0 right-0 h-12 flex items-center justify-between px-4 z-20 border-b"
+      className="fixed top-0 right-0 h-12 flex items-center justify-between px-4 z-30 border-b"
       style={{
         left: sidebarWidth,
         backgroundColor: 'var(--bg-surface)',
