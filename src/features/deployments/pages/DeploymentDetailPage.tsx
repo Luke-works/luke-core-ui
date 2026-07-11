@@ -96,12 +96,12 @@ export default function DeploymentDetailPage() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 68px)', overflow: 'hidden' }}>
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 text-sm shrink-0" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8, marginBottom: 0 }}>
-        <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/dashboard')}>Dashboard</button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
-        <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/deployments')}>Deployments</button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
-        <span style={{ color: 'var(--text-primary)' }}>{deployment.name}</span>
+      <div className="flex items-center gap-1.5 text-sm shrink-0 pb-2 border-b border-gray-200 dark:border-gray-800">
+        <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/dashboard')}>Dashboard</button>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
+        <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/deployments')}>Deployments</button>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
+        <span className="text-gray-800 dark:text-white/90">{deployment.name}</span>
       </div>
 
       {/* Deployment details */}
@@ -121,7 +121,7 @@ export default function DeploymentDetailPage() {
       {/* Resources list */}
       <Card className="mb-2 shrink-0">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+          <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
             Resources ({resources?.length ?? 0})
           </h3>
           <Button variant="danger" size="sm" onClick={() => setShowDeleteModal(true)}>
@@ -139,16 +139,16 @@ export default function DeploymentDetailPage() {
               return (
                 <div
                   key={res.id}
-                  className="flex items-center justify-between px-3 py-2 rounded-md cursor-pointer transition-colors"
-                  style={{
-                    backgroundColor: isActive ? 'var(--bg-elevated)' : 'transparent',
-                    border: isActive ? '1px solid var(--border)' : '1px solid transparent',
-                  }}
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg cursor-pointer transition-colors border ${
+                    isActive
+                      ? 'bg-gray-50 border-gray-200 dark:bg-white/[0.03] dark:border-gray-800'
+                      : 'border-transparent hover:bg-gray-50 dark:hover:bg-white/[0.03]'
+                  }`}
                   onClick={() => { setSelectedResource(res.id); setViewMode('diagram'); }}
                 >
                   <div className="flex items-center gap-2">
-                    <FileCode size={15} style={{ color: isBpmnFile ? 'var(--accent-blue)' : 'var(--text-muted)' }} />
-                    <span className="text-sm" style={{ color: isActive ? 'var(--accent-blue)' : 'var(--text-primary)' }}>
+                    <FileCode size={15} className={isBpmnFile ? 'text-brand-500 dark:text-brand-400' : 'text-gray-400 dark:text-gray-500'} />
+                    <span className={`text-sm ${isActive ? 'text-brand-500 dark:text-brand-400' : 'text-gray-800 dark:text-white/90'}`}>
                       {res.name}
                     </span>
                     {isBpmnFile && <Badge variant="info">BPMN</Badge>}
@@ -170,7 +170,7 @@ export default function DeploymentDetailPage() {
         <Card className="flex-1 min-h-0 flex flex-col">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
                 {activeResource.name}
               </h3>
               <Button variant="ghost" size="sm" onClick={handleDownload}>
@@ -178,23 +178,23 @@ export default function DeploymentDetailPage() {
               </Button>
             </div>
             {isBpmn && (
-              <div className="flex items-center gap-0" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+              <div className="flex items-center gap-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
                 <button
-                  className="px-3 py-1.5 text-xs font-medium cursor-pointer border-none"
-                  style={{
-                    backgroundColor: viewMode === 'diagram' ? 'var(--accent-blue)' : 'transparent',
-                    color: viewMode === 'diagram' ? '#fff' : 'var(--text-secondary)',
-                  }}
+                  className={`px-3 py-1.5 text-xs font-medium cursor-pointer border-none transition-colors ${
+                    viewMode === 'diagram'
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/[0.03]'
+                  }`}
                   onClick={() => setViewMode('diagram')}
                 >
                   <Eye size={12} className="inline mr-1" />Diagram
                 </button>
                 <button
-                  className="px-3 py-1.5 text-xs font-medium cursor-pointer border-none"
-                  style={{
-                    backgroundColor: viewMode === 'xml' ? 'var(--accent-blue)' : 'transparent',
-                    color: viewMode === 'xml' ? '#fff' : 'var(--text-secondary)',
-                  }}
+                  className={`px-3 py-1.5 text-xs font-medium cursor-pointer border-none transition-colors ${
+                    viewMode === 'xml'
+                      ? 'bg-brand-500 text-white'
+                      : 'bg-transparent text-gray-600 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/[0.03]'
+                  }`}
                   onClick={() => setViewMode('xml')}
                 >
                   <FileCode size={12} className="inline mr-1" />XML
@@ -204,19 +204,13 @@ export default function DeploymentDetailPage() {
           </div>
 
           {isBpmn && viewMode === 'diagram' ? (
-            <div className="flex-1 min-h-0" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+            <div className="flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
               <BpmnViewer xml={resourceData} height="100%" />
             </div>
           ) : (
             <pre
-              className="text-xs overflow-auto p-4 rounded-md flex-1 min-h-0"
-              style={{
-                backgroundColor: 'var(--bg-base)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--border)',
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
-              }}
+              className="text-xs overflow-auto p-4 rounded-lg flex-1 min-h-0 bg-gray-50 text-gray-800 border border-gray-200 dark:bg-gray-950 dark:text-gray-200 dark:border-gray-800"
+              style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}
             >
               {resourceData}
             </pre>
@@ -230,23 +224,21 @@ export default function DeploymentDetailPage() {
           className="fixed inset-0 z-50 flex items-center justify-center"
           onClick={() => setShowDeleteModal(false)}
         >
-          <div className="absolute inset-0 bg-black/60" />
+          <div className="absolute inset-0 bg-gray-900/50 backdrop-blur-[2px]" />
           <div
-            className="relative rounded-lg border shadow-xl w-full max-w-md mx-4"
-            style={{ backgroundColor: 'var(--bg-surface)', borderColor: 'var(--border)' }}
+            className="relative rounded-2xl border border-gray-200 bg-white shadow-theme-xl w-full max-w-md mx-4 dark:border-gray-800 dark:bg-gray-900"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-800">
               <div className="flex items-center gap-2">
-                <AlertTriangle size={18} style={{ color: 'var(--accent-red)' }} />
-                <h2 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+                <AlertTriangle size={18} className="text-error-500 dark:text-error-400" />
+                <h2 className="text-base font-semibold text-gray-800 dark:text-white/90">
                   Delete Deployment
                 </h2>
               </div>
               <button
-                className="rounded p-1 cursor-pointer bg-transparent border-none"
-                style={{ color: 'var(--text-secondary)' }}
+                className="flex items-center justify-center w-8 h-8 rounded-lg cursor-pointer bg-transparent border-none text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/[0.05] dark:hover:text-white transition-colors"
                 onClick={() => setShowDeleteModal(false)}
               >
                 <X size={18} />
@@ -255,8 +247,8 @@ export default function DeploymentDetailPage() {
 
             {/* Body */}
             <div className="px-5 py-4 space-y-4">
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Are you sure you want to delete deployment <strong style={{ color: 'var(--text-primary)' }}>{deployment.name}</strong>?
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                Are you sure you want to delete deployment <strong className="text-gray-800 dark:text-white/90">{deployment.name}</strong>?
               </p>
 
               {/* Cascade option */}
@@ -265,28 +257,20 @@ export default function DeploymentDetailPage() {
                   type="checkbox"
                   checked={cascade}
                   onChange={(e) => setCascade(e.target.checked)}
-                  className="mt-0.5"
-                  style={{ accentColor: 'var(--accent-red)' }}
+                  className="mt-0.5 accent-error-500"
                 />
                 <div>
-                  <span className="block text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                  <span className="block text-sm font-medium text-gray-800 dark:text-white/90">
                     Cascade delete
                   </span>
-                  <span className="block text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <span className="block text-xs text-gray-400 dark:text-gray-500">
                     Also delete all related process definitions, running instances, historic data, and jobs.
                   </span>
                 </div>
               </label>
 
               {!cascade && (
-                <div
-                  className="flex items-start gap-2 px-3 py-2 rounded-md text-xs"
-                  style={{
-                    backgroundColor: 'rgba(245, 158, 11, 0.08)',
-                    border: '1px solid rgba(245, 158, 11, 0.25)',
-                    color: 'var(--accent-amber, #f59e0b)',
-                  }}
-                >
+                <div className="flex items-start gap-2 px-3 py-2 rounded-lg text-xs text-warning-600 bg-warning-50 border border-warning-200 dark:text-warning-400 dark:bg-warning-500/10 dark:border-warning-500/25">
                   <AlertTriangle size={14} className="shrink-0 mt-0.5" />
                   <span>Without cascade, deletion will fail if running process instances exist for this deployment.</span>
                 </div>
@@ -294,7 +278,7 @@ export default function DeploymentDetailPage() {
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-2 px-5 py-3" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-200 dark:border-gray-800">
               <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(false)}>
                 Cancel
               </Button>

@@ -108,10 +108,10 @@ function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | strin
         style={{
           width: '100%',
           height: '100%',
-          backgroundColor: 'var(--bg-surface)',
           borderRadius: 8,
           overflow: 'auto',
         }}
+        className="bg-white dark:bg-gray-900"
       />
       {importError && (
         <div
@@ -126,22 +126,21 @@ function DmnViewer({ xml, height = 340 }: { xml: string; height?: number | strin
             gap: 10,
             padding: 24,
             textAlign: 'center',
-            backgroundColor: 'var(--bg-surface)',
             borderRadius: 8,
           }}
+          className="bg-white dark:bg-gray-900"
         >
-          <p style={{ color: 'var(--text-primary)', fontSize: 14, fontWeight: 600 }}>
+          <p className="text-gray-800 dark:text-white/90" style={{ fontSize: 14, fontWeight: 600 }}>
             Couldn't render this decision
           </p>
-          <p style={{ color: 'var(--text-secondary)', fontSize: 13, maxWidth: 360 }}>{importError}</p>
+          <p className="text-gray-600 dark:text-gray-300" style={{ fontSize: 13, maxWidth: 360 }}>{importError}</p>
           <button
             type="button"
             onClick={() => {
               setImportError(null);
               setReloadKey((k) => k + 1);
             }}
-            className="cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium"
-            style={{ backgroundColor: 'var(--accent-blue)', color: '#fff' }}
+            className="cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium text-white bg-brand-500 shadow-theme-xs hover:bg-brand-600 transition-colors"
           >
             Retry
           </button>
@@ -205,12 +204,12 @@ export default function DecisionDetailPage() {
   return (
     <div className="flex flex-col" style={{ height: 'calc(100vh - 68px)', overflow: 'hidden' }}>
       {/* Breadcrumb */}
-      <div className="flex items-center gap-1.5 mb-0 text-sm shrink-0" style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8 }}>
-        <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/dashboard')}>Dashboard</button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
-        <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/decisions')}>Decisions</button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
-        <span style={{ color: 'var(--text-primary)' }}>{displayName}</span>
+      <div className="flex items-center gap-1.5 mb-0 text-sm shrink-0 pb-2 border-b border-gray-200 dark:border-gray-800">
+        <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/dashboard')}>Dashboard</button>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
+        <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/decisions')}>Decisions</button>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
+        <span className="text-gray-800 dark:text-white/90">{displayName}</span>
       </div>
 
       {/* Collapsible definition details */}
@@ -233,7 +232,7 @@ export default function DecisionDetailPage() {
       />
 
       {/* DMN Diagram — fills remaining space */}
-      <div className="flex-1 min-h-0" style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: '0.5rem' }}>
+      <div className="flex-1 min-h-0 overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800" style={{ marginBottom: '0.5rem' }}>
         {xmlData?.dmnXml ? (
           <DmnViewer xml={xmlData.dmnXml} height="100%" />
         ) : (
@@ -242,9 +241,9 @@ export default function DecisionDetailPage() {
       </div>
 
       {/* Decision Instances — fixed bottom section */}
-      <div className="shrink-0" style={{ maxHeight: 220, border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', backgroundColor: 'var(--bg-surface)', display: 'flex', flexDirection: 'column' }}>
-        <div className="px-4 py-2 shrink-0" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
-          <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+      <div className="shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-white flex flex-col dark:border-gray-800 dark:bg-white/[0.03]" style={{ maxHeight: 220 }}>
+        <div className="px-4 py-2 shrink-0 bg-gray-50 border-b border-gray-200 dark:bg-white/[0.03] dark:border-gray-800">
+          <span className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-white/90">
             Decision Instances ({instances?.length ?? 0})
           </span>
         </div>
@@ -255,13 +254,13 @@ export default function DecisionDetailPage() {
               {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height="2rem" />)}
             </div>
           ) : !instances || instances.length === 0 ? (
-            <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No decision evaluations found.</p>
+            <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No decision evaluations found.</p>
           ) : (
             <table className="w-full border-collapse text-sm">
               <thead>
                 <tr>
                   {['ID', 'Evaluation Time', 'Process Instance', 'Activity'].map(h => (
-                    <th key={h} className="text-left text-xs font-bold py-2 px-3" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)', position: 'sticky', top: 0, backgroundColor: 'var(--bg-surface)' }}>
+                    <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 sticky top-0 bg-white dark:text-white/90 dark:border-gray-800 dark:bg-gray-900">
                       {h}
                     </th>
                   ))}
@@ -271,27 +270,24 @@ export default function DecisionDetailPage() {
                 {instances.map((inst) => (
                   <tr
                     key={inst.id}
-                    className="cursor-pointer transition-colors"
-                    style={{
-                      borderBottom: '1px solid var(--border)',
-                      backgroundColor: selectedInstance?.id === inst.id ? 'var(--bg-elevated)' : 'transparent',
-                    }}
-                    onMouseEnter={(e) => { if (selectedInstance?.id !== inst.id) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'; }}
-                    onMouseLeave={(e) => { if (selectedInstance?.id !== inst.id) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                    className={`cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-800 ${
+                      selectedInstance?.id === inst.id
+                        ? 'bg-gray-50 dark:bg-white/[0.03]'
+                        : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'
+                    }`}
                     onClick={() => { setSelectedInstance(inst); setActiveTab('inputs'); }}
                   >
                     <td className="py-2 px-3"><CopyId id={inst.id} /></td>
-                    <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{absoluteTime(inst.evaluationTime)}</td>
+                    <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{absoluteTime(inst.evaluationTime)}</td>
                     <td className="py-2 px-3">
                       {inst.processInstanceId ? (
-                        <button className="bg-transparent border-none cursor-pointer p-0 text-xs"
-                          style={{ color: 'var(--accent-blue)' }}
+                        <button className="bg-transparent border-none cursor-pointer p-0 text-xs text-brand-500 hover:underline dark:text-brand-400"
                           onClick={(e) => { e.stopPropagation(); navigate(`/processes/instance/${inst.processInstanceId}`); }}>
                           {inst.processInstanceId}
                         </button>
-                      ) : <span style={{ color: 'var(--text-muted)' }}>--</span>}
+                      ) : <span className="text-gray-400 dark:text-gray-500">--</span>}
                     </td>
-                    <td className="py-2 px-3 text-xs" style={{ color: 'var(--text-secondary)' }}>{inst.activityId ?? '--'}</td>
+                    <td className="py-2 px-3 text-xs text-gray-600 dark:text-gray-300">{inst.activityId ?? '--'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -302,9 +298,9 @@ export default function DecisionDetailPage() {
 
       {/* Selected instance detail */}
       {selectedInstance && (
-        <div style={{ border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginTop: '0.75rem', backgroundColor: 'var(--bg-surface)' }}>
-          <div className="px-4 py-2 flex items-center gap-2" style={{ backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)' }}>
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: 'var(--text-primary)' }}>
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]" style={{ marginTop: '0.75rem' }}>
+          <div className="px-4 py-2 flex items-center gap-2 bg-gray-50 border-b border-gray-200 dark:bg-white/[0.03] dark:border-gray-800">
+            <span className="text-xs font-bold uppercase tracking-wider text-gray-800 dark:text-white/90">
               Instance:
             </span>
             <CopyId id={selectedInstance.id} />
@@ -317,18 +313,18 @@ export default function DecisionDetailPage() {
                   <thead>
                     <tr>
                       {['Name', 'Type', 'Value'].map(h => (
-                        <th key={h} className="text-left text-xs font-bold py-2 px-3" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+                        <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {selectedInstance.inputs.length === 0 ? (
-                      <tr><td colSpan={3} className="py-4 text-center" style={{ color: 'var(--text-muted)' }}>No inputs</td></tr>
+                      <tr><td colSpan={3} className="py-4 text-center text-gray-400 dark:text-gray-500">No inputs</td></tr>
                     ) : selectedInstance.inputs.map((input) => (
-                      <tr key={input.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                        <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{input.clauseName ?? input.clauseId}</td>
+                      <tr key={input.id} className="border-b border-gray-200 dark:border-gray-800">
+                        <td className="py-2 px-3 text-gray-800 dark:text-white/90">{input.clauseName ?? input.clauseId}</td>
                         <td className="py-2 px-3"><Badge variant="muted">{input.type}</Badge></td>
-                        <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{formatValue(input.value)}</td>
+                        <td className="py-2 px-3 text-gray-800 dark:text-white/90">{formatValue(input.value)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -339,19 +335,19 @@ export default function DecisionDetailPage() {
                   <thead>
                     <tr>
                       {['Rule', 'Variable', 'Type', 'Value'].map(h => (
-                        <th key={h} className="text-left text-xs font-bold py-2 px-3" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+                        <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {selectedInstance.outputs.length === 0 ? (
-                      <tr><td colSpan={4} className="py-4 text-center" style={{ color: 'var(--text-muted)' }}>No outputs</td></tr>
+                      <tr><td colSpan={4} className="py-4 text-center text-gray-400 dark:text-gray-500">No outputs</td></tr>
                     ) : selectedInstance.outputs.map((output) => (
-                      <tr key={output.id} style={{ borderBottom: '1px solid var(--border)' }}>
+                      <tr key={output.id} className="border-b border-gray-200 dark:border-gray-800">
                         <td className="py-2 px-3"><Badge variant="muted">{output.ruleId} (#{output.ruleOrder + 1})</Badge></td>
-                        <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{output.variableName}</td>
+                        <td className="py-2 px-3 text-gray-800 dark:text-white/90">{output.variableName}</td>
                         <td className="py-2 px-3"><Badge variant="muted">{output.type}</Badge></td>
-                        <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{formatValue(output.value)}</td>
+                        <td className="py-2 px-3 text-gray-800 dark:text-white/90">{formatValue(output.value)}</td>
                       </tr>
                     ))}
                   </tbody>
