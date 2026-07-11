@@ -397,8 +397,8 @@ export default function InstanceDetailPage() {
   // all). Refuse to display it under the wrong active tenant.
   if (isForeignTenant(instance.tenantId, activeTenantId)) {
     return (
-      <div className="p-10 text-center" style={{ color: 'var(--text-secondary)' }}>
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="p-10 text-center text-gray-600 dark:text-gray-300">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Not in this tenant
         </h2>
         <p className="mt-2 text-sm">
@@ -434,46 +434,41 @@ export default function InstanceDetailPage() {
     <div className="flex flex-col" style={{ height: 'calc(100vh - 68px)', overflow: 'hidden' }}>
 
       {/* ── Toolbar ─────────────────────────────────────────────── */}
-      <div
-        className="flex items-center justify-between shrink-0 px-2 py-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
+      <div className="flex items-center justify-between shrink-0 px-2 py-2 border-b border-gray-200 dark:border-gray-800">
         {/* Left: breadcrumb */}
         <div className="flex items-center gap-1.5 text-[13px]">
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/dashboard')}>
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/dashboard')}>
             Dashboard
           </button>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/processes')}>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/processes')}>
             Processes
           </button>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate(`/processes/${instance.definitionId}`)}>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate(`/processes/${instance.definitionId}`)}>
             {defName}
           </button>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <span className="font-mono-id" style={{ color: 'var(--text-primary)' }} title={instance.id}>{shortId}</span>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <span className="font-mono-id text-gray-800 dark:text-white/90" title={instance.id}>{shortId}</span>
         </div>
 
         {/* Center: diagram controls */}
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setShowRoutes((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors"
-            style={{
-              backgroundColor: showRoutes ? 'rgba(34, 197, 94, 0.15)' : 'var(--bg-elevated)',
-              color: showRoutes ? 'var(--accent-green)' : 'var(--text-secondary)',
-              border: `1px solid ${showRoutes ? 'rgba(34, 197, 94, 0.3)' : 'var(--border)'}`,
-            }}>
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors border ${
+              showRoutes
+                ? 'bg-success-500/15 text-success-600 border-success-500/30 dark:text-success-400'
+                : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-white/[0.03] dark:text-gray-300 dark:border-gray-800'
+            }`}>
             <Route size={13} />
             Routes {showRoutes ? 'ON' : 'OFF'}
           </button>
           <button type="button" onClick={() => setAutoRefresh((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors"
-            style={{
-              backgroundColor: autoRefresh ? 'rgba(34, 197, 94, 0.15)' : 'var(--bg-elevated)',
-              color: autoRefresh ? 'var(--accent-green)' : 'var(--text-secondary)',
-              border: `1px solid ${autoRefresh ? 'rgba(34, 197, 94, 0.3)' : 'var(--border)'}`,
-            }}>
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors border ${
+              autoRefresh
+                ? 'bg-success-500/15 text-success-600 border-success-500/30 dark:text-success-400'
+                : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-white/[0.03] dark:text-gray-300 dark:border-gray-800'
+            }`}>
             <RefreshCw size={13} className={autoRefresh ? 'animate-spin' : ''} style={autoRefresh ? { animationDuration: '2s' } : undefined} />
             Auto-refresh {autoRefresh ? 'ON' : 'OFF'}
           </button>
@@ -577,17 +572,12 @@ export default function InstanceDetailPage() {
 
         {/* Floating metadata widget */}
         <div
+          className="absolute rounded-xl border border-gray-200 bg-white/95 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900/95"
           style={{
-            position: 'absolute',
             top: 12,
             left: 12,
             width: detailsOpen ? 300 : 'auto',
             zIndex: 20,
-            backgroundColor: 'var(--bg-surface)',
-            opacity: 0.97,
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: '0 4px 16px rgba(0,0,0,0.12)',
             maxHeight: 'calc(100% - 24px)',
             overflowY: 'auto',
           }}
@@ -596,15 +586,14 @@ export default function InstanceDetailPage() {
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
-            className="w-full flex items-center gap-2 px-3 py-2 bg-transparent border-none cursor-pointer text-left"
-            style={{ color: 'var(--text-primary)' }}
+            className="w-full flex items-center gap-2 px-3 py-2 bg-transparent border-none cursor-pointer text-left text-gray-800 dark:text-white/90"
           >
             {detailsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-            <Workflow size={14} style={{ color: 'var(--text-muted)' }} />
+            <Workflow size={14} className="text-gray-400 dark:text-gray-500" />
             <span className="text-xs font-semibold">Instance Details</span>
             {!detailsOpen && (
               <span className="ml-auto flex items-center gap-1.5">
-                <span className="font-mono-id text-xs" style={{ color: 'var(--text-muted)' }} title={instance.id}>{shortId}</span>
+                <span className="font-mono-id text-xs text-gray-400 dark:text-gray-500" title={instance.id}>{shortId}</span>
                 <Badge variant={stateLabel === 'ACTIVE' ? 'success' : stateLabel === 'SUSPENDED' ? 'warning' : 'muted'}>{stateLabel}</Badge>
               </span>
             )}
@@ -612,29 +601,27 @@ export default function InstanceDetailPage() {
 
           {/* Expanded detail items */}
           {detailsOpen && (
-            <div className="px-3 pb-3 space-y-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 dark:border-gray-800">
               {detailItems.map((item) => {
                 const Icon = item.icon;
                 const isMuted = item.muted;
-                const accentColor = item.accent === 'green' ? 'var(--accent-green)' : item.accent === 'amber' ? 'var(--accent-orange)' : undefined;
+                const accentClass = item.accent === 'green' ? 'text-success-500 dark:text-success-400' : item.accent === 'amber' ? 'text-orange-500 dark:text-orange-400' : '';
                 return (
                   <div key={item.label} className="flex items-start gap-2 pt-2">
-                    <Icon size={13} className="shrink-0 mt-0.5" style={{ color: 'var(--text-muted)' }} />
+                    <Icon size={13} className="shrink-0 mt-0.5 text-gray-400 dark:text-gray-500" />
                     <div className="min-w-0 flex-1">
-                      <div className="text-[10px] font-medium uppercase tracking-wide" style={{ color: 'var(--text-muted)' }}>{item.label}</div>
+                      <div className="text-[10px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">{item.label}</div>
                       {item.onClick ? (
                         <button
                           type="button"
                           onClick={item.onClick}
-                          className="bg-transparent border-none p-0 cursor-pointer text-xs font-mono-id break-all text-left"
-                          style={{ color: 'var(--accent-blue)' }}
+                          className="bg-transparent border-none p-0 cursor-pointer text-xs font-mono-id break-all text-left text-brand-500 dark:text-brand-400"
                         >
                           {item.value}
                         </button>
                       ) : (
                         <span
-                          className="text-xs font-mono-id break-all"
-                          style={{ color: accentColor ?? (isMuted ? 'var(--text-muted)' : 'var(--text-primary)'), fontStyle: isMuted ? 'italic' : undefined }}
+                          className={`text-xs font-mono-id break-all ${accentClass || (isMuted ? 'text-gray-400 italic dark:text-gray-500' : 'text-gray-800 dark:text-white/90')}`}
                         >
                           {item.value}
                         </span>
@@ -650,22 +637,12 @@ export default function InstanceDetailPage() {
 
       {/* ── Tab panel ───────────────────────────────────────────── */}
       <div
-        className="shrink-0"
-        style={{
-          height: panelHeight,
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderTop: 'none',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRadius: '0 0 var(--radius-lg) var(--radius-lg)',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        }}
+        className="shrink-0 flex flex-col overflow-hidden border border-t-0 border-gray-200 rounded-b-xl bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]"
+        style={{ height: panelHeight }}
       >
         {/* Drag handle */}
-        <div onMouseDown={startDrag} style={{ height: 8, backgroundColor: 'var(--bg-elevated)', borderBottom: '1px solid var(--border)', cursor: 'row-resize', display: 'flex', alignItems: 'center', justifyContent: 'center', userSelect: 'none' }} title="Drag to resize">
-          <div style={{width:40,height:4,borderRadius:2,backgroundColor:'var(--text-muted)',opacity:0.3}}></div>
+        <div onMouseDown={startDrag} className="flex items-center justify-center cursor-row-resize select-none bg-gray-50 border-b border-gray-200 dark:bg-white/[0.03] dark:border-gray-800" style={{ height: 8 }} title="Drag to resize">
+          <div className="bg-gray-400 dark:bg-gray-500" style={{ width: 40, height: 4, borderRadius: 2, opacity: 0.3 }}></div>
         </div>
 
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
@@ -777,43 +754,34 @@ function AddVariableModal({
     onSave(name.trim(), parsed, type);
   };
 
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-elevated)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    color: 'var(--text-primary)',
-    padding: '0.5rem 0.75rem',
-    width: '100%',
-    outline: 'none',
-    fontSize: '0.875rem',
-  };
+  const inputCls = 'w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
   return (
     <Modal open onClose={onClose} title="Add Variable" width={448}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Name</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="variableName" style={inputStyle} autoFocus />
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Name</label>
+            <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="variableName" className={inputCls} autoFocus />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Type</label>
-            <select value={type} onChange={(e) => setType(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Type</label>
+            <select value={type} onChange={(e) => setType(e.target.value)} className={`${inputCls} cursor-pointer`}>
               {VARIABLE_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Value</label>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Value</label>
             {type === 'Boolean' ? (
-              <select value={rawValue || 'false'} onChange={(e) => setRawValue(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+              <select value={rawValue || 'false'} onChange={(e) => setRawValue(e.target.value)} className={`${inputCls} cursor-pointer`}>
                 <option value="true">true</option>
                 <option value="false">false</option>
               </select>
             ) : type === 'Json' ? (
-              <textarea value={rawValue} onChange={(e) => setRawValue(e.target.value)} rows={4} placeholder='{"key": "value"}' className="font-mono-id" style={{ ...inputStyle, resize: 'vertical' }} />
+              <textarea value={rawValue} onChange={(e) => setRawValue(e.target.value)} rows={4} placeholder='{"key": "value"}' className={`font-mono-id resize-y ${inputCls}`} />
             ) : (
-              <input type={type === 'Integer' || type === 'Long' || type === 'Double' ? 'number' : 'text'} value={rawValue} onChange={(e) => setRawValue(e.target.value)} placeholder="Enter value" style={inputStyle} />
+              <input type={type === 'Integer' || type === 'Long' || type === 'Double' ? 'number' : 'text'} value={rawValue} onChange={(e) => setRawValue(e.target.value)} placeholder="Enter value" className={inputCls} />
             )}
           </div>
 
@@ -838,7 +806,7 @@ function AuditLogPanel({ activities, isLoading, search, setSearch, page, setPage
   const PAGE_SIZE = 10;
 
   if (isLoading) return <div className="space-y-3">{Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} height="2.5rem" />)}</div>;
-  if (!activities || activities.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No activity history available.</p>;
+  if (!activities || activities.length === 0) return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No activity history available.</p>;
 
   const filtered = activities.filter(a => matchesSearch(a, search, ['activityId', 'activityName', 'activityType', 'startTime', 'endTime']));
   const total = filtered.length;
@@ -853,19 +821,14 @@ function AuditLogPanel({ activities, isLoading, search, setSearch, page, setPage
           placeholder="Search..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="w-full text-sm px-3 py-1.5 rounded-md outline-none"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
         />
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             {['Activity ID', 'Activity Name', 'Type', 'Start Time', 'End Time', 'Duration'].map(h => (
-              <th key={h} className="text-left text-xs font-bold py-2 px-3 whitespace-nowrap" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+              <th key={h} className="text-left text-xs font-bold py-2 px-3 whitespace-nowrap text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
             ))}
           </tr>
         </thead>
@@ -873,28 +836,28 @@ function AuditLogPanel({ activities, isLoading, search, setSearch, page, setPage
           {paginated.map((a) => {
             const isRunning = !a.endTime;
             const isCanceled = a.canceled;
-            const rowColor = isRunning
-              ? 'var(--accent-orange)'
+            const rowClass = isRunning
+              ? 'text-orange-500 dark:text-orange-400'
               : isCanceled
-                ? 'var(--accent-red)'
-                : undefined;
+                ? 'text-error-500 dark:text-error-400'
+                : '';
 
             return (
-              <tr key={a.id} className="hover:bg-elevated transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
-                <td className="py-2 px-3 font-mono-id text-xs" style={{ color: 'var(--text-secondary)' }}>{a.activityId}</td>
+              <tr key={a.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors border-b border-gray-200 dark:border-gray-800">
+                <td className="py-2 px-3 font-mono-id text-xs text-gray-600 dark:text-gray-300">{a.activityId}</td>
                 <td className="py-2 px-3">
-                  <span style={{ color: rowColor ?? 'var(--text-primary)' }}>{a.activityName || '—'}</span>
+                  <span className={rowClass || 'text-gray-800 dark:text-white/90'}>{a.activityName || '—'}</span>
                 </td>
                 <td className="py-2 px-3">
                   <Badge variant={isRunning ? 'warning' : isCanceled ? 'danger' : 'muted'}>
                     {a.activityType.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase()).trim()}
                   </Badge>
                 </td>
-                <td className="py-2 px-3 whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{absoluteTime(a.startTime)}</td>
-                <td className="py-2 px-3 whitespace-nowrap" style={{ color: isRunning ? 'var(--accent-orange)' : 'var(--text-secondary)' }}>
+                <td className="py-2 px-3 whitespace-nowrap text-gray-600 dark:text-gray-300">{absoluteTime(a.startTime)}</td>
+                <td className={`py-2 px-3 whitespace-nowrap ${isRunning ? 'text-orange-500 dark:text-orange-400' : 'text-gray-600 dark:text-gray-300'}`}>
                   {a.endTime ? absoluteTime(a.endTime) : <span className="italic">Running</span>}
                 </td>
-                <td className="py-2 px-3 whitespace-nowrap" style={{ color: 'var(--text-muted)' }}>
+                <td className="py-2 px-3 whitespace-nowrap text-gray-400 dark:text-gray-500">
                   {a.durationInMillis != null ? formatDuration(a.durationInMillis) : '—'}
                 </td>
               </tr>
@@ -903,16 +866,14 @@ function AuditLogPanel({ activities, isLoading, search, setSearch, page, setPage
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{total} results</span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <span className="text-xs text-gray-400 dark:text-gray-500">{total} results</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0} onClick={() => setPage((p: number) => p - 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Prev</button>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Page {page + 1} of {totalPages}</span>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Prev</button>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Page {page + 1} of {totalPages}</span>
             <button disabled={page >= totalPages - 1} onClick={() => setPage((p: number) => p + 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Next</button>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Next</button>
           </div>
         </div>
       )}
@@ -935,7 +896,7 @@ function VariablesPanel({
 
   if (isLoading) return <div className="space-y-3">{Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} height="2.5rem" />)}</div>;
   const allEntries = variables ? Object.entries(variables) : [];
-  if (allEntries.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No variables on this instance.</p>;
+  if (allEntries.length === 0) return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No variables on this instance.</p>;
 
   const filtered = allEntries.filter(([name, variable]) =>
     matchesSearch({ name, type: variable.type, value: String(variable.value ?? '') }, search, ['name', 'type', 'value'])
@@ -952,21 +913,16 @@ function VariablesPanel({
           placeholder="Search..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="w-full text-sm px-3 py-1.5 rounded-md outline-none"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
         />
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             {['Name', 'Type', 'Value'].map(h => (
-              <th key={h} className="text-left text-xs font-bold py-2 px-3" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+              <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
             ))}
-            <th className="py-2 px-3" style={{ borderBottom: '2px solid var(--border)', width: 40 }} />
+            <th className="py-2 px-3 border-b-2 border-gray-200 dark:border-gray-800" style={{ width: 40 }} />
           </tr>
         </thead>
         <tbody>
@@ -976,16 +932,14 @@ function VariablesPanel({
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{total} results</span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <span className="text-xs text-gray-400 dark:text-gray-500">{total} results</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0} onClick={() => setPage((p: number) => p - 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Prev</button>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Page {page + 1} of {totalPages}</span>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Prev</button>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Page {page + 1} of {totalPages}</span>
             <button disabled={page >= totalPages - 1} onClick={() => setPage((p: number) => p + 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Next</button>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Next</button>
           </div>
         </div>
       )}
@@ -1009,19 +963,12 @@ function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: s
   };
   const handleSave = () => { onSave(parseValue(editValue, editType), editType); setShowEditModal(false); };
 
-  const inputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-elevated)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    color: 'var(--text-primary)',
-    width: '100%',
-    outline: 'none',
-  };
+  const inputCls = 'w-full rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
   return (
     <>
-      <tr className="group hover:bg-elevated transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
-        <td className="py-2.5 px-3"><span className="font-mono-id text-[13px]" style={{ color: 'var(--text-primary)' }}>{name}</span></td>
+      <tr className="group hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors border-b border-gray-200 dark:border-gray-800">
+        <td className="py-2.5 px-3"><span className="font-mono-id text-[13px] text-gray-800 dark:text-white/90">{name}</span></td>
         <td className="py-2.5 px-3"><Badge variant="muted">{variable.type || 'Unknown'}</Badge></td>
         <td className="py-2.5 px-3">
           <div className="min-h-[1.25rem]">
@@ -1032,18 +979,12 @@ function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: s
           {/* Variable edit/delete are hidden for read-only operators (#34). */}
           {canOperate && (
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
-                style={{ color: 'var(--text-muted)' }} title="Edit variable" aria-label={`Edit variable ${name}`}
-                onClick={handleOpenEdit}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-blue)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors text-gray-400 hover:text-brand-500 dark:text-gray-500 dark:hover:text-brand-400" title="Edit variable" aria-label={`Edit variable ${name}`}
+                onClick={handleOpenEdit}>
                 <Pencil size={13} />
               </button>
-              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors"
-                style={{ color: 'var(--text-muted)' }} title="Delete variable" aria-label={`Delete variable ${name}`}
-                onClick={() => setShowDeleteModal(true)}
-                onMouseEnter={e => e.currentTarget.style.color = 'var(--accent-red)'}
-                onMouseLeave={e => e.currentTarget.style.color = 'var(--text-muted)'}>
+              <button className="p-1 rounded cursor-pointer bg-transparent border-none transition-colors text-gray-400 hover:text-error-500 dark:text-gray-500 dark:hover:text-error-400" title="Delete variable" aria-label={`Delete variable ${name}`}
+                onClick={() => setShowDeleteModal(true)}>
                 <Trash2 size={13} />
               </button>
             </div>
@@ -1057,57 +998,53 @@ function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: s
               {/* Body */}
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--text-secondary)' }}>Type</label>
+                  <label className="block text-xs font-semibold mb-1.5 text-gray-700 dark:text-gray-300">Type</label>
                   <select value={editType} onChange={e => setEditType(e.target.value)}
-                    className="text-sm px-3 py-2 rounded-md outline-none cursor-pointer" style={inputStyle}>
+                    className={`text-sm px-3 py-2 rounded-md outline-none cursor-pointer ${inputCls}`}>
                     {VARIABLE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Value</label>
+                    <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Value</label>
                     {isComplexType && (
-                      <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid var(--border)' }}>
+                      <div className="flex rounded-md overflow-hidden border border-gray-200 dark:border-gray-800">
                         <button type="button" onClick={() => setViewTab('deserialized')}
-                          className="px-2.5 py-1 text-[10px] font-medium cursor-pointer border-none"
-                          style={{
-                            backgroundColor: viewTab === 'deserialized' ? 'var(--accent-blue)' : 'var(--bg-elevated)',
-                            color: viewTab === 'deserialized' ? '#fff' : 'var(--text-secondary)',
-                          }}>Deserialized</button>
+                          className={`px-2.5 py-1 text-[10px] font-medium cursor-pointer border-none transition-colors ${
+                            viewTab === 'deserialized' ? 'bg-brand-500 text-white' : 'bg-gray-50 text-gray-600 dark:bg-white/[0.03] dark:text-gray-300'
+                          }`}>Deserialized</button>
                         <button type="button" onClick={() => setViewTab('serialized')}
-                          className="px-2.5 py-1 text-[10px] font-medium cursor-pointer border-none"
-                          style={{
-                            backgroundColor: viewTab === 'serialized' ? 'var(--accent-blue)' : 'var(--bg-elevated)',
-                            color: viewTab === 'serialized' ? '#fff' : 'var(--text-secondary)',
-                          }}>Serialized</button>
+                          className={`px-2.5 py-1 text-[10px] font-medium cursor-pointer border-none transition-colors ${
+                            viewTab === 'serialized' ? 'bg-brand-500 text-white' : 'bg-gray-50 text-gray-600 dark:bg-white/[0.03] dark:text-gray-300'
+                          }`}>Serialized</button>
                       </div>
                     )}
                   </div>
                   {editType === 'Boolean' ? (
                     <select value={editValue} onChange={e => setEditValue(e.target.value)}
-                      className="text-sm px-3 py-2 rounded-md outline-none cursor-pointer" style={inputStyle}>
+                      className={`text-sm px-3 py-2 rounded-md outline-none cursor-pointer ${inputCls}`}>
                       <option value="true">true</option>
                       <option value="false">false</option>
                     </select>
                   ) : editType === 'Null' ? (
-                    <div className="text-sm px-3 py-2 rounded-md" style={{ ...inputStyle, color: 'var(--text-muted)' }}>null</div>
+                    <div className="text-sm px-3 py-2 rounded-md border border-gray-200 bg-transparent text-gray-400 dark:border-gray-800 dark:bg-white/[0.03] dark:text-gray-500">null</div>
                   ) : isComplexType ? (
                     <>
                       {viewTab === 'deserialized' ? (
                         <textarea value={(() => { const d = deserializeForDisplay(editValue, editType); return d ?? editValue; })()}
                           onChange={e => setEditValue(e.target.value)}
-                          rows={8} className="w-full text-xs font-mono-id px-3 py-2 rounded-md outline-none resize-y" style={inputStyle}
+                          rows={8} className={`w-full text-xs font-mono-id px-3 py-2 rounded-md outline-none resize-y ${inputCls}`}
                           onKeyDown={e => { if (e.key === 'Escape') setShowEditModal(false); }} />
                       ) : (
                         <textarea value={editValue}
                           onChange={e => setEditValue(e.target.value)}
-                          rows={8} className="w-full text-xs font-mono-id px-3 py-2 rounded-md outline-none resize-y" style={inputStyle}
+                          rows={8} className={`w-full text-xs font-mono-id px-3 py-2 rounded-md outline-none resize-y ${inputCls}`}
                           onKeyDown={e => { if (e.key === 'Escape') setShowEditModal(false); }} />
                       )}
                       {variable.valueInfo && Object.keys(variable.valueInfo).length > 0 && (
-                        <div className="mt-2 px-3 py-2 rounded-md text-[11px]" style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)' }}>
-                          <span className="font-semibold" style={{ color: 'var(--text-muted)' }}>Value Info:</span>
-                          <pre className="mt-1 font-mono-id whitespace-pre-wrap" style={{ color: 'var(--text-secondary)', margin: 0 }}>
+                        <div className="mt-2 px-3 py-2 rounded-md text-[11px] bg-gray-50 border border-gray-200 dark:bg-white/[0.03] dark:border-gray-800">
+                          <span className="font-semibold text-gray-400 dark:text-gray-500">Value Info:</span>
+                          <pre className="mt-1 font-mono-id whitespace-pre-wrap text-gray-600 dark:text-gray-300" style={{ margin: 0 }}>
                             {JSON.stringify(variable.valueInfo, null, 2)}
                           </pre>
                         </div>
@@ -1116,7 +1053,7 @@ function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: s
                   ) : (
                     <input type={['Integer', 'Long', 'Short', 'Double'].includes(editType) ? 'number' : 'text'}
                       value={editValue} onChange={e => setEditValue(e.target.value)}
-                      className="w-full text-sm px-3 py-2 rounded-md outline-none" style={inputStyle} autoFocus
+                      className={`w-full text-sm px-3 py-2 rounded-md outline-none ${inputCls}`} autoFocus
                       onKeyDown={e => { if (e.key === 'Enter') handleSave(); if (e.key === 'Escape') setShowEditModal(false); }} />
                   )}
                 </div>
@@ -1133,13 +1070,13 @@ function VariableRow({ name, variable, canOperate, onSave, onDelete }: { name: s
       {showDeleteModal && (
         <Modal open onClose={() => setShowDeleteModal(false)} title="Delete Variable" width={400}>
           <div className="flex items-center gap-3 mb-3">
-            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 36, height: 36, borderRadius: '50%', backgroundColor: 'rgba(239,68,68,0.1)' }}>
-              <AlertTriangle size={18} style={{ color: 'var(--accent-red)' }} />
+            <span className="flex items-center justify-center rounded-full bg-error-500/10" style={{ width: 36, height: 36 }}>
+              <AlertTriangle size={18} className="text-error-500 dark:text-error-400" />
             </span>
-            <p className="text-xs" style={{ color: 'var(--text-muted)' }}>This action cannot be undone</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">This action cannot be undone</p>
           </div>
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Are you sure you want to delete <strong className="font-mono-id" style={{ color: 'var(--text-primary)' }}>{name}</strong>?
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            Are you sure you want to delete <strong className="font-mono-id text-gray-800 dark:text-white/90">{name}</strong>?
           </p>
           <div className="mt-5 flex items-center justify-end gap-2">
             <Button variant="secondary" size="sm" onClick={() => setShowDeleteModal(false)}>Cancel</Button>
@@ -1203,7 +1140,7 @@ function IncidentsPanel({ incidents, isLoading, canOperate, onRetry, onResolve, 
   const PAGE_SIZE = 10;
 
   if (isLoading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height="4rem" />)}</div>;
-  if (!incidents || incidents.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No incidents on this instance.</p>;
+  if (!incidents || incidents.length === 0) return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No incidents on this instance.</p>;
 
   const filtered = incidents.filter(inc => matchesSearch(inc, search, ['incidentType', 'incidentMessage', 'activityId']));
   const total = filtered.length;
@@ -1218,25 +1155,20 @@ function IncidentsPanel({ incidents, isLoading, canOperate, onRetry, onResolve, 
           placeholder="Search..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="w-full text-sm px-3 py-1.5 rounded-md outline-none"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
         />
       </div>
       <div className="space-y-3">
         {paginated.map((incident) => (
-          <div key={incident.id} className="p-3 rounded-md" style={{ backgroundColor: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.15)' }}>
+          <div key={incident.id} className="p-3 rounded-lg bg-error-500/5 border border-error-500/15">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1">
                   <Badge variant="danger">{incident.incidentType}</Badge>
-                  <span className="text-xs" style={{ color: 'var(--text-secondary)' }} title={absoluteTime(incident.incidentTimestamp)}>{relativeTime(incident.incidentTimestamp)}</span>
+                  <span className="text-xs text-gray-600 dark:text-gray-300" title={absoluteTime(incident.incidentTimestamp)}>{relativeTime(incident.incidentTimestamp)}</span>
                 </div>
-                {incident.incidentMessage && <p className="text-sm mt-1 break-words" style={{ color: 'var(--text-primary)' }}>{incident.incidentMessage}</p>}
-                <p className="text-xs mt-1 font-mono-id" style={{ color: 'var(--text-muted)' }}>Activity: {incident.activityId}</p>
+                {incident.incidentMessage && <p className="text-sm mt-1 break-words text-gray-800 dark:text-white/90">{incident.incidentMessage}</p>}
+                <p className="text-xs mt-1 font-mono-id text-gray-400 dark:text-gray-500">Activity: {incident.activityId}</p>
               </div>
               <div className="flex items-center gap-1 flex-shrink-0">
                 {incident.configuration && (
@@ -1266,16 +1198,14 @@ function IncidentsPanel({ incidents, isLoading, canOperate, onRetry, onResolve, 
         ))}
       </div>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{total} results</span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <span className="text-xs text-gray-400 dark:text-gray-500">{total} results</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0} onClick={() => setPage((p: number) => p - 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Prev</button>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Page {page + 1} of {totalPages}</span>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Prev</button>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Page {page + 1} of {totalPages}</span>
             <button disabled={page >= totalPages - 1} onClick={() => setPage((p: number) => p + 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Next</button>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Next</button>
           </div>
         </div>
       )}
@@ -1294,7 +1224,7 @@ function UserTasksPanel({ tasks, isLoading, onTaskClick, search, setSearch, page
   const PAGE_SIZE = 10;
 
   if (isLoading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height="3rem" />)}</div>;
-  if (!tasks || tasks.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No active user tasks.</p>;
+  if (!tasks || tasks.length === 0) return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No active user tasks.</p>;
 
   const filtered = tasks.filter(t => matchesSearch(t, search, ['name', 'assignee', 'created', 'due']));
   const total = filtered.length;
@@ -1309,44 +1239,39 @@ function UserTasksPanel({ tasks, isLoading, onTaskClick, search, setSearch, page
           placeholder="Search..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="w-full text-sm px-3 py-1.5 rounded-md outline-none"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
         />
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             {['Task Name', 'Assignee', 'Created', 'Due'].map(h => (
-              <th key={h} className="text-left text-xs font-bold py-2 px-3" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+              <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {paginated.map((task) => (
-            <tr key={task.id} className="hover:bg-elevated transition-colors cursor-pointer" style={{ borderBottom: '1px solid var(--border)' }} onClick={() => onTaskClick(task.id)}>
+            <tr key={task.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors cursor-pointer border-b border-gray-200 dark:border-gray-800" onClick={() => onTaskClick(task.id)}>
               <td className="py-2 px-3">
                 <div>
-                  <span className="font-medium" style={{ color: 'var(--accent-blue)' }}>{task.name}</span>
+                  <span className="font-medium text-brand-500 dark:text-brand-400">{task.name}</span>
                   <div className="mt-0.5"><CopyId id={task.id} /></div>
                 </div>
               </td>
               <td className="py-2 px-3">
-                <span style={{ color: task.assignee ? 'var(--text-primary)' : 'var(--text-muted)', fontStyle: task.assignee ? 'normal' : 'italic' }}>
+                <span className={task.assignee ? 'text-gray-800 dark:text-white/90' : 'text-gray-400 italic dark:text-gray-500'}>
                   {task.assignee ?? 'Unassigned'}
                 </span>
               </td>
               <td className="py-2 px-3">
-                <span style={{ color: 'var(--text-secondary)' }} title={absoluteTime(task.created)}>{absoluteTime(task.created)}</span>
+                <span className="text-gray-600 dark:text-gray-300" title={absoluteTime(task.created)}>{absoluteTime(task.created)}</span>
               </td>
               <td className="py-2 px-3">
                 {task.due ? (
-                  <span style={{ color: new Date(task.due) < new Date() ? 'var(--accent-red)' : 'var(--text-secondary)' }} title={absoluteTime(task.due)}>{absoluteTime(task.due)}</span>
+                  <span className={new Date(task.due) < new Date() ? 'text-error-500 dark:text-error-400' : 'text-gray-600 dark:text-gray-300'} title={absoluteTime(task.due)}>{absoluteTime(task.due)}</span>
                 ) : (
-                  <span style={{ color: 'var(--text-muted)' }}>—</span>
+                  <span className="text-gray-400 dark:text-gray-500">—</span>
                 )}
               </td>
             </tr>
@@ -1354,16 +1279,14 @@ function UserTasksPanel({ tasks, isLoading, onTaskClick, search, setSearch, page
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{total} results</span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <span className="text-xs text-gray-400 dark:text-gray-500">{total} results</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0} onClick={() => setPage((p: number) => p - 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Prev</button>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Page {page + 1} of {totalPages}</span>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Prev</button>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Page {page + 1} of {totalPages}</span>
             <button disabled={page >= totalPages - 1} onClick={() => setPage((p: number) => p + 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Next</button>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Next</button>
           </div>
         </div>
       )}
@@ -1387,7 +1310,7 @@ function JobsPanel({ jobs, isLoading, canOperate, onRetry, onUpdateDueDate, sear
   const [editingJob, setEditingJob] = useState<Job | null>(null);
 
   if (isLoading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height="2.5rem" />)}</div>;
-  if (!jobs || jobs.length === 0) return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>No jobs for this instance.</p>;
+  if (!jobs || jobs.length === 0) return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">No jobs for this instance.</p>;
 
   const filtered = jobs.filter(j => matchesSearch(j, search, ['activityId', 'jobDefinitionId', 'exceptionMessage', 'dueDate']));
   const total = filtered.length;
@@ -1402,36 +1325,30 @@ function JobsPanel({ jobs, isLoading, canOperate, onRetry, onUpdateDueDate, sear
           placeholder="Search..."
           value={search}
           onChange={(e) => { setSearch(e.target.value); setPage(0); }}
-          className="w-full text-sm px-3 py-1.5 rounded-md outline-none"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--text-primary)',
-          }}
+          className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
         />
       </div>
       <table className="w-full border-collapse text-sm">
         <thead>
           <tr>
             {['Job ID', 'Activity', 'Due Date', 'Retries', 'State', ''].map(h => (
-              <th key={h} className="text-left text-xs font-bold py-2 px-3 whitespace-nowrap" style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+              <th key={h} className="text-left text-xs font-bold py-2 px-3 whitespace-nowrap text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {paginated.map((job) => (
-            <tr key={job.id} className="hover:bg-elevated transition-colors" style={{ borderBottom: '1px solid var(--border)' }}>
+            <tr key={job.id} className="hover:bg-gray-50 dark:hover:bg-white/[0.03] transition-colors border-b border-gray-200 dark:border-gray-800">
               <td className="py-2 px-3"><CopyId id={job.id} /></td>
-              <td className="py-2 px-3 font-mono-id text-xs" style={{ color: 'var(--text-secondary)' }}>{job.failedActivityId ?? '—'}</td>
+              <td className="py-2 px-3 font-mono-id text-xs text-gray-600 dark:text-gray-300">{job.failedActivityId ?? '—'}</td>
               <td className="py-2 px-3 whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
-                  <span style={{ color: 'var(--text-secondary)' }}>{job.dueDate ? absoluteTime(job.dueDate) : '—'}</span>
+                  <span className="text-gray-600 dark:text-gray-300">{job.dueDate ? absoluteTime(job.dueDate) : '—'}</span>
                   {canOperate && (
                     <button
                       type="button"
                       onClick={(e) => { e.stopPropagation(); setEditingJob(job); }}
-                      className="p-0.5 rounded cursor-pointer bg-transparent border-none transition-colors hover:bg-elevated"
-                      style={{ color: 'var(--text-muted)' }}
+                      className="p-0.5 rounded cursor-pointer bg-transparent border-none transition-colors text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/[0.03]"
                       title="Edit due date"
                       aria-label="Edit job due date"
                     >
@@ -1441,7 +1358,7 @@ function JobsPanel({ jobs, isLoading, canOperate, onRetry, onUpdateDueDate, sear
                 </div>
               </td>
               <td className="py-2 px-3">
-                <span style={{ color: job.retries === 0 ? 'var(--accent-red)' : 'var(--text-primary)' }}>{job.retries}</span>
+                <span className={job.retries === 0 ? 'text-error-500 dark:text-error-400' : 'text-gray-800 dark:text-white/90'}>{job.retries}</span>
               </td>
               <td className="py-2 px-3">
                 {job.suspended ? (
@@ -1466,16 +1383,14 @@ function JobsPanel({ jobs, isLoading, canOperate, onRetry, onUpdateDueDate, sear
         </tbody>
       </table>
       {totalPages > 1 && (
-        <div className="flex items-center justify-between mt-3 pt-2" style={{ borderTop: '1px solid var(--border)' }}>
-          <span className="text-xs" style={{ color: 'var(--text-muted)' }}>{total} results</span>
+        <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+          <span className="text-xs text-gray-400 dark:text-gray-500">{total} results</span>
           <div className="flex items-center gap-2">
             <button disabled={page === 0} onClick={() => setPage((p: number) => p - 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Prev</button>
-            <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>Page {page + 1} of {totalPages}</span>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Prev</button>
+            <span className="text-xs text-gray-600 dark:text-gray-300">Page {page + 1} of {totalPages}</span>
             <button disabled={page >= totalPages - 1} onClick={() => setPage((p: number) => p + 1)}
-              className="px-2 py-1 text-xs rounded border cursor-pointer disabled:opacity-40"
-              style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border)', color: 'var(--text-secondary)' }}>Next</button>
+              className="px-2 py-1 text-xs rounded-md border border-gray-200 bg-transparent text-gray-600 cursor-pointer hover:bg-gray-50 disabled:opacity-40 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">Next</button>
           </div>
         </div>
       )}
@@ -1524,28 +1439,19 @@ function EditDueDateModal({ job, onSave, onClose }: {
     }
   };
 
-  const modalInputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-elevated)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    color: 'var(--text-primary)',
-    padding: '0.5rem 0.75rem',
-    width: '100%',
-    outline: 'none',
-    fontSize: '0.875rem',
-  };
+  const modalInputCls = 'w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
   return (
     <Modal open onClose={onClose} title="Update Due Date" width={400}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Job ID</label>
-            <div className="text-sm font-mono-id" style={{ color: 'var(--text-muted)' }}><CopyId id={job.id} /></div>
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Job ID</label>
+            <div className="text-sm font-mono-id text-gray-400 dark:text-gray-500"><CopyId id={job.id} /></div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>Due Date</label>
-            <input type="datetime-local" value={value} onChange={(e) => setValue(e.target.value)} style={modalInputStyle} />
+            <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">Due Date</label>
+            <input type="datetime-local" value={value} onChange={(e) => setValue(e.target.value)} className={modalInputCls} />
           </div>
 
           <div className="flex items-center gap-2 pt-2">
@@ -1580,16 +1486,7 @@ function ModifyPanel({
   const [moveTo, setMoveTo] = useState('');
   const [annotation, setAnnotation] = useState('');
 
-  const modInputStyle: React.CSSProperties = {
-    backgroundColor: 'var(--bg-elevated)',
-    border: '1px solid var(--border)',
-    borderRadius: 'var(--radius-md)',
-    color: 'var(--text-primary)',
-    padding: '0.5rem 0.75rem',
-    width: '100%',
-    outline: 'none',
-    fontSize: '0.875rem',
-  };
+  const modInputCls = 'w-full rounded-lg border border-gray-200 bg-transparent px-3 py-2 text-sm text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1605,15 +1502,15 @@ function ModifyPanel({
   };
 
   if (isEnded) {
-    return <p className="text-sm py-8 text-center" style={{ color: 'var(--text-muted)' }}>Cannot modify a completed process instance.</p>;
+    return <p className="text-sm py-8 text-center text-gray-400 dark:text-gray-500">Cannot modify a completed process instance.</p>;
   }
 
   return (
     <div>
       {/* Warning */}
-      <div className="flex items-start gap-2 p-3 rounded-md mb-4" style={{ backgroundColor: 'rgba(234, 179, 8, 0.1)', border: '1px solid rgba(234, 179, 8, 0.3)' }}>
-        <AlertTriangle size={16} className="shrink-0 mt-0.5" style={{ color: 'var(--accent-orange)' }} />
-        <p className="text-xs" style={{ color: 'var(--text-primary)' }}>
+      <div className="flex items-start gap-2 p-3 rounded-lg mb-4 bg-warning-500/10 border border-warning-500/30">
+        <AlertTriangle size={16} className="shrink-0 mt-0.5 text-orange-500 dark:text-orange-400" />
+        <p className="text-xs text-gray-800 dark:text-white/90">
           <strong>Use with extreme care.</strong> This form could be used to terminate a process inadvertently.
           Moving a token cancels the current activity and starts the target activity.
         </p>
@@ -1621,27 +1518,27 @@ function ModifyPanel({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+          <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
             Cancel Activity (move from)
           </label>
           <input type="text" value={moveFrom} onChange={(e) => setMoveFrom(e.target.value)}
-            placeholder="Activity ID to cancel (e.g. UserTask_1)" style={modInputStyle} />
+            placeholder="Activity ID to cancel (e.g. UserTask_1)" className={modInputCls} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+          <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
             Start Before Activity (move to)
           </label>
           <input type="text" value={moveTo} onChange={(e) => setMoveTo(e.target.value)}
-            placeholder="Activity ID to start (e.g. ServiceTask_2)" style={modInputStyle} />
+            placeholder="Activity ID to start (e.g. ServiceTask_2)" className={modInputCls} />
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--text-secondary)' }}>
+          <label className="block text-sm font-medium mb-1.5 text-gray-700 dark:text-gray-300">
             Annotation (optional)
           </label>
           <input type="text" value={annotation} onChange={(e) => setAnnotation(e.target.value)}
-            placeholder="Reason for modification" style={modInputStyle} />
+            placeholder="Reason for modification" className={modInputCls} />
         </div>
 
         <Button type="submit" variant="danger" disabled={isPending || !moveFrom.trim() || !moveTo.trim()}>
