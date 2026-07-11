@@ -65,25 +65,15 @@ function getFriday(d: Date): string {
 
 /* ── Shared input style ────────────────────────────────────── */
 
-const inputStyle: React.CSSProperties = {
-  backgroundColor: 'var(--bg-elevated)',
-  border: '1px solid var(--border)',
-  color: 'var(--text-primary)',
-};
+const inputClass =
+  'border border-gray-200 bg-transparent text-gray-800 focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
-const labelStyle: React.CSSProperties = {
-  color: 'var(--text-secondary)',
-};
+const labelClass = 'text-gray-600 dark:text-gray-300';
 
 /* ── Table header style ────────────────────────────────────── */
 
-const thStyle: React.CSSProperties = {
-  color: 'var(--text-primary)',
-  borderBottom: '2px solid var(--border)',
-  position: 'sticky' as const,
-  top: 0,
-  backgroundColor: 'var(--bg-surface)',
-};
+const thClass =
+  'text-gray-800 border-b-2 border-gray-200 sticky top-0 bg-white dark:text-white/90 dark:border-gray-800 dark:bg-gray-900';
 
 /* ================================================================== */
 /*  Component                                                          */
@@ -355,8 +345,8 @@ export default function CalendarDetailPage() {
       <div className="p-6">
         <Card>
           <div className="flex flex-col items-center gap-3 py-8">
-            <XCircle size={32} style={{ color: 'var(--accent-red)' }} />
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            <XCircle size={32} className="text-error-500 dark:text-error-400" />
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               Failed to load calendar. It may not exist.
             </p>
             <Button variant="secondary" size="sm" onClick={() => navigate('/calendars')}>
@@ -375,27 +365,22 @@ export default function CalendarDetailPage() {
   return (
     <div className="flex flex-col p-6" style={{ minHeight: 0 }}>
       {/* Breadcrumb */}
-      <div
-        className="flex items-center gap-1.5 mb-4 text-sm shrink-0"
-        style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8 }}
-      >
+      <div className="flex items-center gap-1.5 mb-4 text-sm shrink-0 pb-2 border-b border-gray-200 dark:border-gray-800">
         <button
-          className="bg-transparent border-none cursor-pointer p-0"
-          style={{ color: 'var(--accent-blue)' }}
+          className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400"
           onClick={() => navigate('/dashboard')}
         >
           Dashboard
         </button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
         <button
-          className="bg-transparent border-none cursor-pointer p-0"
-          style={{ color: 'var(--accent-blue)' }}
+          className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400"
           onClick={() => navigate('/calendars')}
         >
           Calendars
         </button>
-        <span style={{ color: 'var(--text-muted)' }}>&raquo;</span>
-        <span style={{ color: 'var(--text-primary)' }}>{calendarCode}</span>
+        <span className="text-gray-400 dark:text-gray-500">&raquo;</span>
+        <span className="text-gray-800 dark:text-white/90">{calendarCode}</span>
       </div>
 
       {/* Detail Panel */}
@@ -419,49 +404,34 @@ export default function CalendarDetailPage() {
       />
 
       {/* Status bar */}
-      <div
-        className="flex items-center gap-3 px-4 py-2.5 mb-3"
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-        }}
-      >
+      <div className="flex items-center gap-3 px-4 py-2.5 mb-3 rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         {openQuery.isLoading ? (
           <Skeleton width="200px" height="1rem" />
         ) : openQuery.data ? (
           <>
             {openQuery.data.open ? (
-              <CheckCircle2 size={16} style={{ color: 'var(--accent-green)' }} />
+              <CheckCircle2 size={16} className="text-success-500 dark:text-success-400" />
             ) : (
-              <XCircle size={16} style={{ color: 'var(--accent-red)' }} />
+              <XCircle size={16} className="text-error-500 dark:text-error-400" />
             )}
             <span
-              className="text-sm font-medium"
-              style={{ color: openQuery.data.open ? 'var(--accent-green)' : 'var(--accent-red)' }}
+              className={`text-sm font-medium ${openQuery.data.open ? 'text-success-500 dark:text-success-400' : 'text-error-500 dark:text-error-400'}`}
             >
               {openQuery.data.open ? 'Currently Open' : 'Currently Closed'}
             </span>
             {openQuery.data.open && openQuery.data.openLocations.length > 0 && (
-              <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-sm text-gray-600 dark:text-gray-300">
                 -- {openQuery.data.openLocations.join(', ')}
               </span>
             )}
           </>
         ) : (
-          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>Unable to determine status</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500">Unable to determine status</span>
         )}
       </div>
 
       {/* Tabs */}
-      <div
-        style={{
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          overflow: 'hidden',
-        }}
-      >
+      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
         <Tabs tabs={tabs} activeTab={activeTab} onChange={handleTabChange}>
           <div className="p-4">
 
@@ -524,7 +494,7 @@ export default function CalendarDetailPage() {
             {activeTab === 'processes' && (
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                  <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
                     Associated Processes ({processQuery.data?.length ?? 0})
                   </h3>
                   <Button size="sm" variant="primary" onClick={() => setShowAddProcess(v => !v)}>
@@ -536,19 +506,17 @@ export default function CalendarDetailPage() {
                   <Card className="mb-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
                       <div>
-                        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Process Definition Key</label>
+                        <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">Process Definition Key</label>
                         <input type="text" value={processForm.processDefinitionKey}
                           onChange={(e) => setProcessForm(f => ({ ...f, processDefinitionKey: e.target.value }))}
                           placeholder="e.g. orderProcess"
-                          className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                          className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Priority</label>
+                        <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">Priority</label>
                         <select value={processForm.priority}
                           onChange={(e) => setProcessForm(f => ({ ...f, priority: e.target.value }))}
-                          className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer"
-                          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }}>
+                          className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}>
                           <option value="">Select Priority...</option>
                           <option value="LOW">Low</option>
                           <option value="MEDIUM">Medium</option>
@@ -557,18 +525,16 @@ export default function CalendarDetailPage() {
                         </select>
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>SLA Business Days</label>
+                        <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">SLA Business Days</label>
                         <input type="number" min={0} value={processForm.slaBusinessDays}
                           onChange={(e) => setProcessForm(f => ({ ...f, slaBusinessDays: parseInt(e.target.value) || 0 }))}
-                          className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                          className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`} />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>SLA Business Minutes</label>
+                        <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-gray-300">SLA Business Minutes</label>
                         <input type="number" min={0} value={processForm.slaBusinessMinutes}
                           onChange={(e) => setProcessForm(f => ({ ...f, slaBusinessMinutes: parseInt(e.target.value) || 0 }))}
-                          className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                          style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', color: 'var(--text-primary)' }} />
+                          className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`} />
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -585,35 +551,33 @@ export default function CalendarDetailPage() {
                   <div className="space-y-2">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} height="2.5rem" />)}</div>
                 ) : !processQuery.data || processQuery.data.length === 0 ? (
                   <div className="py-12 text-center">
-                    <Info size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-                    <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No processes associated with this calendar.</p>
+                    <Info size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+                    <p className="text-sm text-gray-400 dark:text-gray-500">No processes associated with this calendar.</p>
                   </div>
                 ) : (
                   <table className="w-full border-collapse text-sm">
                     <thead>
                       <tr>
                         {['Process Key', 'SLA Days', 'SLA Minutes', 'Priority', 'Active', 'Actions'].map(h => (
-                          <th key={h} className="text-left text-xs font-bold py-2 px-3"
-                            style={{ color: 'var(--text-primary)', borderBottom: '2px solid var(--border)' }}>{h}</th>
+                          <th key={h} className="text-left text-xs font-bold py-2 px-3 text-gray-800 border-b-2 border-gray-200 dark:text-white/90 dark:border-gray-800">{h}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody>
                       {processQuery.data.map((assoc: ProcessCalendarAssociation) => (
-                        <tr key={assoc.id} style={{ borderBottom: '1px solid var(--border)' }}
-                          className="hover:bg-elevated transition-colors">
-                          <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--accent-blue)' }}>{assoc.processDefinitionKey}</td>
-                          <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{assoc.slaBusinessDays ?? '--'}</td>
-                          <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{assoc.slaBusinessMinutes ?? '--'}</td>
+                        <tr key={assoc.id} className="border-b border-gray-200 hover:bg-gray-50 transition-colors dark:border-gray-800 dark:hover:bg-white/[0.03]">
+                          <td className="py-2 px-3 font-mono text-xs text-brand-500 dark:text-brand-400">{assoc.processDefinitionKey}</td>
+                          <td className="py-2 px-3 text-gray-800 dark:text-white/90">{assoc.slaBusinessDays ?? '--'}</td>
+                          <td className="py-2 px-3 text-gray-800 dark:text-white/90">{assoc.slaBusinessMinutes ?? '--'}</td>
                           <td className="py-2 px-3">
-                            {assoc.priority ? <Badge variant={assoc.priority === 'CRITICAL' ? 'danger' : assoc.priority === 'HIGH' ? 'warning' : 'info'}>{assoc.priority}</Badge> : <span style={{ color: 'var(--text-muted)' }}>--</span>}
+                            {assoc.priority ? <Badge variant={assoc.priority === 'CRITICAL' ? 'danger' : assoc.priority === 'HIGH' ? 'warning' : 'info'}>{assoc.priority}</Badge> : <span className="text-gray-400 dark:text-gray-500">--</span>}
                           </td>
                           <td className="py-2 px-3">
                             <Badge variant={assoc.active ? 'success' : 'muted'}>{assoc.active ? 'Active' : 'Inactive'}</Badge>
                           </td>
                           <td className="py-2 px-3">
                             <Button size="sm" variant="ghost" onClick={() => deleteProcessMut.mutate(assoc.processDefinitionKey)}>
-                              <Trash2 size={14} style={{ color: 'var(--accent-red)' }} />
+                              <Trash2 size={14} className="text-error-500 dark:text-error-400" />
                             </Button>
                           </td>
                         </tr>
@@ -679,7 +643,7 @@ function LocationsTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+        <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
           Locations ({locations.length})
         </h3>
         <Button size="sm" variant="primary" onClick={onToggleAddForm}>
@@ -693,54 +657,54 @@ function LocationsTab({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             {/* Location Code */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Location Code</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Location Code</label>
               <input type="text" value={form.locationCode}
                 onChange={(e) => onFormChange({ ...form, locationCode: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') })}
-                placeholder="e.g. US_CENTRAL" className="w-full h-8 px-2 text-sm rounded-md outline-none" style={inputStyle} />
+                placeholder="e.g. US_CENTRAL" className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`} />
             </div>
             {/* Name */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Name</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Name</label>
               <input type="text" value={form.name}
                 onChange={(e) => onFormChange({ ...form, name: e.target.value })}
-                placeholder="e.g. US Central Office" className="w-full h-8 px-2 text-sm rounded-md outline-none" style={inputStyle} />
+                placeholder="e.g. US Central Office" className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`} />
             </div>
             {/* Country */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Country</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Country</label>
               <select value={form.country}
                 onChange={(e) => onFormChange({ ...form, country: e.target.value, city: '' })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer" style={inputStyle}>
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}>
                 <option value="">Select Country...</option>
                 {COUNTRIES.map(c => <option key={c.code} value={c.code}>{c.name} ({c.code})</option>)}
               </select>
             </div>
             {/* Timezone */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Timezone</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Timezone</label>
               <select value={form.timezone}
                 onChange={(e) => onFormChange({ ...form, timezone: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer" style={inputStyle}>
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}>
                 <option value="">Select Timezone...</option>
                 {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
               </select>
             </div>
             {/* Region */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Region</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Region</label>
               <select value={form.region}
                 onChange={(e) => onFormChange({ ...form, region: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer" style={inputStyle}>
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}>
                 <option value="">Select Region...</option>
                 {REGIONS.map(r => <option key={r} value={r}>{r}</option>)}
               </select>
             </div>
             {/* City */}
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>City</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>City</label>
               <select value={form.city}
                 onChange={(e) => onFormChange({ ...form, city: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer" style={inputStyle}>
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}>
                 <option value="">Select City...</option>
                 {(CITIES[form.country] ?? []).map(c => <option key={c} value={c}>{c}</option>)}
               </select>
@@ -762,8 +726,8 @@ function LocationsTab({
         </div>
       ) : locations.length === 0 ? (
         <div className="py-12 text-center">
-          <MapPin size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No locations configured yet.</p>
+          <MapPin size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+          <p className="text-sm text-gray-400 dark:text-gray-500">No locations configured yet.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -771,7 +735,7 @@ function LocationsTab({
             <thead>
               <tr>
                 {['Location Code', 'Name', 'Timezone', 'Country', 'City', 'Enabled', 'Actions'].map((h) => (
-                  <th key={h} className="text-left text-xs font-bold py-2 px-3" style={thStyle}>{h}</th>
+                  <th key={h} className={`text-left text-xs font-bold py-2 px-3 ${thClass}`}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -781,28 +745,23 @@ function LocationsTab({
                 return (
                   <tr
                     key={loc.id}
-                    className="cursor-pointer transition-colors"
-                    style={{
-                      borderBottom: '1px solid var(--border)',
-                      backgroundColor: isSelected ? 'var(--bg-elevated)' : 'transparent',
-                    }}
-                    onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'var(--bg-elevated)'; }}
-                    onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.backgroundColor = 'transparent'; }}
+                    className={`cursor-pointer transition-colors border-b border-gray-200 dark:border-gray-800 ${
+                      isSelected ? 'bg-gray-50 dark:bg-white/[0.03]' : 'hover:bg-gray-50 dark:hover:bg-white/[0.03]'
+                    }`}
                     onClick={() => onSelectLocation(loc.locationCode)}
                   >
-                    <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--accent-blue)' }}>{loc.locationCode}</td>
-                    <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{loc.name}</td>
-                    <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{loc.timezone}</td>
-                    <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{loc.country ?? '--'}</td>
-                    <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{loc.city ?? '--'}</td>
+                    <td className="py-2 px-3 font-mono text-xs text-brand-500 dark:text-brand-400">{loc.locationCode}</td>
+                    <td className="py-2 px-3 text-gray-800 dark:text-white/90">{loc.name}</td>
+                    <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{loc.timezone}</td>
+                    <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{loc.country ?? '--'}</td>
+                    <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{loc.city ?? '--'}</td>
                     <td className="py-2 px-3">
                       <Badge variant={loc.enabled ? 'success' : 'danger'}>{loc.enabled ? 'Yes' : 'No'}</Badge>
                     </td>
                     <td className="py-2 px-3">
                       <button
                         type="button"
-                        className="p-1.5 rounded-md cursor-pointer bg-transparent border-none hover:bg-elevated"
-                        style={{ color: 'var(--text-muted)' }}
+                        className="p-1.5 rounded-md cursor-pointer bg-transparent border-none text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/[0.03]"
                         title="Delete location"
                         onClick={(e) => { e.stopPropagation(); onDeleteLocation(loc.locationCode); }}
                       >
@@ -844,8 +803,8 @@ function BusinessHoursTab({
   if (!selectedLocationCode) {
     return (
       <div className="py-12 text-center">
-        <Info size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        <Info size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           Select a location from the Locations tab first.
         </p>
       </div>
@@ -855,8 +814,8 @@ function BusinessHoursTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Business Hours for <span style={{ color: 'var(--accent-blue)' }}>{selectedLocationCode}</span>
+        <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
+          Business Hours for <span className="text-brand-500 dark:text-brand-400">{selectedLocationCode}</span>
         </h3>
         <Button size="sm" variant="primary" onClick={onToggleAddForm}>
           <Plus size={14} className="mr-1" /> Add Hours
@@ -868,12 +827,11 @@ function BusinessHoursTab({
         <Card className="mb-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Day of Week</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Day of Week</label>
               <select
                 value={form.dayOfWeek}
                 onChange={(e) => onFormChange({ ...form, dayOfWeek: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               >
                 {[1, 2, 3, 4, 5, 6, 7].map((d) => (
                   <option key={d} value={d}>{DAY_NAMES[d]}</option>
@@ -881,50 +839,46 @@ function BusinessHoursTab({
               </select>
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Start Time</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Start Time</label>
               <input
                 type="time"
                 value={form.startTime}
                 onChange={(e) => onFormChange({ ...form, startTime: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>End Time</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>End Time</label>
               <input
                 type="time"
                 value={form.endTime}
                 onChange={(e) => onFormChange({ ...form, endTime: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Label</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Label</label>
               <input
                 type="text"
                 value={form.label}
                 onChange={(e) => onFormChange({ ...form, label: e.target.value })}
                 placeholder="e.g. Morning shift"
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Capacity %</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Capacity %</label>
               <input
                 type="number"
                 min={0}
                 max={100}
                 value={form.capacityPercent}
                 onChange={(e) => onFormChange({ ...form, capacityPercent: Number(e.target.value) })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div className="flex items-end pb-1">
-              <label className="flex items-center gap-2 cursor-pointer text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={form.partial}
@@ -950,8 +904,8 @@ function BusinessHoursTab({
         </div>
       ) : hours.length === 0 ? (
         <div className="py-12 text-center">
-          <Clock size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No business hours configured for this location.</p>
+          <Clock size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+          <p className="text-sm text-gray-400 dark:text-gray-500">No business hours configured for this location.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -959,29 +913,28 @@ function BusinessHoursTab({
             <thead>
               <tr>
                 {['Day', 'Start Time', 'End Time', 'Label', 'Partial', 'Capacity %', 'Active', 'Actions'].map((h) => (
-                  <th key={h} className="text-left text-xs font-bold py-2 px-3" style={thStyle}>{h}</th>
+                  <th key={h} className={`text-left text-xs font-bold py-2 px-3 ${thClass}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {hours.map((h) => (
-                <tr key={h.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{DAY_NAMES[h.dayOfWeek] ?? h.dayOfWeek}</td>
-                  <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{h.startTime}</td>
-                  <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--text-secondary)' }}>{h.endTime}</td>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{h.label ?? '--'}</td>
+                <tr key={h.id} className="border-b border-gray-200 dark:border-gray-800">
+                  <td className="py-2 px-3 text-gray-800 dark:text-white/90">{DAY_NAMES[h.dayOfWeek] ?? h.dayOfWeek}</td>
+                  <td className="py-2 px-3 font-mono text-xs text-gray-600 dark:text-gray-300">{h.startTime}</td>
+                  <td className="py-2 px-3 font-mono text-xs text-gray-600 dark:text-gray-300">{h.endTime}</td>
+                  <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{h.label ?? '--'}</td>
                   <td className="py-2 px-3">
                     <Badge variant={h.partial ? 'warning' : 'muted'}>{h.partial ? 'Yes' : 'No'}</Badge>
                   </td>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{h.capacityPercent}%</td>
+                  <td className="py-2 px-3 text-gray-800 dark:text-white/90">{h.capacityPercent}%</td>
                   <td className="py-2 px-3">
                     <Badge variant={h.active ? 'success' : 'danger'}>{h.active ? 'Yes' : 'No'}</Badge>
                   </td>
                   <td className="py-2 px-3">
                     <button
                       type="button"
-                      className="p-1.5 rounded-md cursor-pointer bg-transparent border-none hover:bg-elevated"
-                      style={{ color: 'var(--text-muted)' }}
+                      className="p-1.5 rounded-md cursor-pointer bg-transparent border-none text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/[0.03]"
                       title="Delete"
                       onClick={() => onDeleteHours(h.id)}
                     >
@@ -1030,8 +983,8 @@ function HolidaysTab({
   if (!selectedLocationCode) {
     return (
       <div className="py-12 text-center">
-        <Info size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+        <Info size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+        <p className="text-sm text-gray-400 dark:text-gray-500">
           Select a location from the Locations tab first.
         </p>
       </div>
@@ -1041,8 +994,8 @@ function HolidaysTab({
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-          Holidays for <span style={{ color: 'var(--accent-blue)' }}>{selectedLocationCode}</span>
+        <h3 className="text-sm font-semibold text-gray-800 dark:text-white/90">
+          Holidays for <span className="text-brand-500 dark:text-brand-400">{selectedLocationCode}</span>
         </h3>
         <div className="flex gap-2">
           <Button size="sm" variant="secondary" onClick={onToggleImport}>
@@ -1059,13 +1012,12 @@ function HolidaysTab({
         <Card className="mb-4">
           <div className="flex items-end gap-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Year</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Year</label>
               <input
                 type="number"
                 value={importYear}
                 onChange={(e) => onImportYearChange(Number(e.target.value))}
-                className="w-28 h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-28 h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <Button size="sm" variant="primary" onClick={onAutoImport} disabled={isImporting}>
@@ -1081,50 +1033,46 @@ function HolidaysTab({
         <Card className="mb-4">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Date</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Date</label>
               <input
                 type="date"
                 value={form.date}
                 onChange={(e) => onFormChange({ ...form, date: e.target.value })}
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Name</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Name</label>
               <input
                 type="text"
                 value={form.name}
                 onChange={(e) => onFormChange({ ...form, name: e.target.value })}
                 placeholder="e.g. New Year's Day"
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Type</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Type</label>
               <input
                 type="text"
                 value={form.type}
                 onChange={(e) => onFormChange({ ...form, type: e.target.value })}
                 placeholder="e.g. PUBLIC_HOLIDAY"
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div>
-              <label className="block text-xs font-medium mb-1" style={labelStyle}>Description</label>
+              <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Description</label>
               <input
                 type="text"
                 value={form.description}
                 onChange={(e) => onFormChange({ ...form, description: e.target.value })}
                 placeholder="Optional"
-                className="w-full h-8 px-2 text-sm rounded-md outline-none"
-                style={inputStyle}
+                className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
               />
             </div>
             <div className="flex items-end pb-1">
-              <label className="flex items-center gap-2 cursor-pointer text-sm" style={{ color: 'var(--text-secondary)' }}>
+              <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-600 dark:text-gray-300">
                 <input
                   type="checkbox"
                   checked={form.closed}
@@ -1153,8 +1101,8 @@ function HolidaysTab({
         </div>
       ) : holidays.length === 0 ? (
         <div className="py-12 text-center">
-          <Sun size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No holidays found.</p>
+          <Sun size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+          <p className="text-sm text-gray-400 dark:text-gray-500">No holidays found.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -1162,25 +1110,24 @@ function HolidaysTab({
             <thead>
               <tr>
                 {['Date', 'Name', 'Type', 'Closed', 'Description', 'Actions'].map((h) => (
-                  <th key={h} className="text-left text-xs font-bold py-2 px-3" style={thStyle}>{h}</th>
+                  <th key={h} className={`text-left text-xs font-bold py-2 px-3 ${thClass}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {holidays.map((h) => (
-                <tr key={h.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{h.date}</td>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-primary)' }}>{h.name}</td>
+                <tr key={h.id} className="border-b border-gray-200 dark:border-gray-800">
+                  <td className="py-2 px-3 font-mono text-xs text-gray-800 dark:text-white/90">{h.date}</td>
+                  <td className="py-2 px-3 text-gray-800 dark:text-white/90">{h.name}</td>
                   <td className="py-2 px-3"><Badge variant="info">{h.type}</Badge></td>
                   <td className="py-2 px-3">
                     <Badge variant={h.closed ? 'danger' : 'success'}>{h.closed ? 'Yes' : 'No'}</Badge>
                   </td>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{h.description ?? '--'}</td>
+                  <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{h.description ?? '--'}</td>
                   <td className="py-2 px-3">
                     <button
                       type="button"
-                      className="p-1.5 rounded-md cursor-pointer bg-transparent border-none hover:bg-elevated"
-                      style={{ color: 'var(--text-muted)' }}
+                      className="p-1.5 rounded-md cursor-pointer bg-transparent border-none text-gray-400 hover:bg-gray-50 hover:text-gray-600 dark:text-gray-500 dark:hover:bg-white/[0.03]"
                       title="Delete"
                       onClick={() => onDeleteHoliday(h.id)}
                     >
@@ -1212,54 +1159,50 @@ interface SlaTabProps {
 function SlaTab({ form, onFormChange, onCalculate, isCalculating, result }: SlaTabProps) {
   return (
     <div>
-      <h3 className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>
+      <h3 className="text-sm font-semibold mb-3 text-gray-800 dark:text-white/90">
         SLA Calculator
       </h3>
 
       <Card className="mb-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
           <div>
-            <label className="block text-xs font-medium mb-1" style={labelStyle}>Received Date/Time</label>
+            <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Received Date/Time</label>
             <input
               type="datetime-local"
               value={form.receivedDateTime}
               onChange={(e) => onFormChange({ ...form, receivedDateTime: e.target.value })}
-              className="w-full h-8 px-2 text-sm rounded-md outline-none"
-              style={inputStyle}
+              className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1" style={labelStyle}>Received Timezone</label>
+            <label className={`block text-xs font-medium mb-1 ${labelClass}`}>Received Timezone</label>
             <select
               value={form.receivedTimezone}
               onChange={(e) => onFormChange({ ...form, receivedTimezone: e.target.value })}
-              className="w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer"
-              style={inputStyle}
+              className={`w-full h-8 px-2 text-sm rounded-md outline-none cursor-pointer ${inputClass}`}
             >
               <option value="">Select Timezone...</option>
               {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1" style={labelStyle}>SLA Business Days</label>
+            <label className={`block text-xs font-medium mb-1 ${labelClass}`}>SLA Business Days</label>
             <input
               type="number"
               min={0}
               value={form.slaBusinessDays}
               onChange={(e) => onFormChange({ ...form, slaBusinessDays: Number(e.target.value) })}
-              className="w-full h-8 px-2 text-sm rounded-md outline-none"
-              style={inputStyle}
+              className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
             />
           </div>
           <div>
-            <label className="block text-xs font-medium mb-1" style={labelStyle}>SLA Business Minutes</label>
+            <label className={`block text-xs font-medium mb-1 ${labelClass}`}>SLA Business Minutes</label>
             <input
               type="number"
               min={0}
               value={form.slaBusinessMinutes}
               onChange={(e) => onFormChange({ ...form, slaBusinessMinutes: Number(e.target.value) })}
-              className="w-full h-8 px-2 text-sm rounded-md outline-none"
-              style={inputStyle}
+              className={`w-full h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
             />
           </div>
         </div>
@@ -1286,8 +1229,8 @@ function SlaTab({ form, onFormChange, onCalculate, isCalculating, result }: SlaT
               { label: 'Locations Used', value: result.locationsUsed.join(', ') || '--' },
             ].map((item) => (
               <div key={item.label}>
-                <span className="block text-xs font-medium mb-0.5" style={labelStyle}>{item.label}</span>
-                <span className="block text-sm font-mono" style={{ color: 'var(--text-primary)' }}>{item.value}</span>
+                <span className={`block text-xs font-medium mb-0.5 ${labelClass}`}>{item.label}</span>
+                <span className="block text-sm font-mono text-gray-800 dark:text-white/90">{item.value}</span>
               </div>
             ))}
           </div>
@@ -1316,23 +1259,21 @@ function AvailabilityTab({ from, to, onFromChange, onToChange, windows, isLoadin
     <div>
       <div className="flex items-end gap-3 mb-4">
         <div>
-          <label className="block text-xs font-medium mb-1" style={labelStyle}>From</label>
+          <label className={`block text-xs font-medium mb-1 ${labelClass}`}>From</label>
           <input
             type="date"
             value={from}
             onChange={(e) => onFromChange(e.target.value)}
-            className="h-8 px-2 text-sm rounded-md outline-none"
-            style={inputStyle}
+            className={`h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
           />
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1" style={labelStyle}>To</label>
+          <label className={`block text-xs font-medium mb-1 ${labelClass}`}>To</label>
           <input
             type="date"
             value={to}
             onChange={(e) => onToChange(e.target.value)}
-            className="h-8 px-2 text-sm rounded-md outline-none"
-            style={inputStyle}
+            className={`h-8 px-2 text-sm rounded-md outline-none ${inputClass}`}
           />
         </div>
         <Button size="sm" variant="secondary" onClick={onRefetch}>
@@ -1346,8 +1287,8 @@ function AvailabilityTab({ from, to, onFromChange, onToChange, windows, isLoadin
         </div>
       ) : windows.length === 0 ? (
         <div className="py-12 text-center">
-          <BarChart3 size={32} style={{ color: 'var(--text-muted)', margin: '0 auto 8px' }} />
-          <p className="text-sm" style={{ color: 'var(--text-muted)' }}>No availability windows found for this range.</p>
+          <BarChart3 size={32} className="text-gray-400 dark:text-gray-500" style={{ margin: '0 auto 8px' }} />
+          <p className="text-sm text-gray-400 dark:text-gray-500">No availability windows found for this range.</p>
         </div>
       ) : (
         <div style={{ overflowX: 'auto' }}>
@@ -1355,16 +1296,16 @@ function AvailabilityTab({ from, to, onFromChange, onToChange, windows, isLoadin
             <thead>
               <tr>
                 {['Start (UTC)', 'End (UTC)', 'Duration (min)', 'Active Locations'].map((h) => (
-                  <th key={h} className="text-left text-xs font-bold py-2 px-3" style={thStyle}>{h}</th>
+                  <th key={h} className={`text-left text-xs font-bold py-2 px-3 ${thClass}`}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {windows.map((w, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{w.start}</td>
-                  <td className="py-2 px-3 font-mono text-xs" style={{ color: 'var(--text-primary)' }}>{w.end}</td>
-                  <td className="py-2 px-3" style={{ color: 'var(--text-secondary)' }}>{w.durationMinutes}</td>
+                <tr key={idx} className="border-b border-gray-200 dark:border-gray-800">
+                  <td className="py-2 px-3 font-mono text-xs text-gray-800 dark:text-white/90">{w.start}</td>
+                  <td className="py-2 px-3 font-mono text-xs text-gray-800 dark:text-white/90">{w.end}</td>
+                  <td className="py-2 px-3 text-gray-600 dark:text-gray-300">{w.durationMinutes}</td>
                   <td className="py-2 px-3">
                     <div className="flex gap-1 flex-wrap">
                       {w.activeLocations.map((loc) => (
