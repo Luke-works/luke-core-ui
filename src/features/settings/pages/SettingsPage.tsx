@@ -277,7 +277,7 @@ export default function SettingsPage() {
                       <div className="space-y-2 text-sm">
                         {[
                           { name: 'luke-core-ui', desc: 'React dashboard (Vite + TypeScript + Tailwind)', version: '1.0.0' },
-                          { name: 'luke-core-engine', desc: 'CIBSeven / Camunda 7 BPMN engine (Spring Boot)', version: '1.0.0' },
+                          { name: 'luke-core-engine', desc: 'FluxNova / Camunda 7 BPMN engine (Spring Boot)', version: '1.0.0' },
                           { name: 'luke-task-engine', desc: 'Distributed task orchestration engine', version: '1.0.0' },
                         ].map((c) => (
                           <div key={c.name} className="flex items-center justify-between py-1.5" style={{ borderBottom: '1px solid var(--border)' }}>
