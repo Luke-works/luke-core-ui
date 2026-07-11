@@ -46,15 +46,8 @@ import { absoluteTime, formatDuration, toCamundaDate } from '@/shared/utils/date
 
 /* ── Input style ─────────────────────────────────────────────── */
 
-const inputStyle: React.CSSProperties = {
-  backgroundColor: 'var(--bg-elevated)',
-  border: '1px solid var(--border)',
-  borderRadius: 'var(--radius-md)',
-  color: 'var(--text-primary)',
-  padding: '0.375rem 0.5rem',
-  outline: 'none',
-  fontSize: '0.8125rem',
-};
+const inputClass =
+  'rounded-lg border border-gray-200 bg-transparent px-2 py-1.5 text-[0.8125rem] text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90';
 
 /* ================================================================== */
 /*  Component                                                          */
@@ -316,7 +309,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'id',
         header: 'ID',
         cell: ({ row }) => (
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }}
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400"
             onClick={(e) => { e.stopPropagation(); navigate(`/processes/instance/${row.original.id}`); }}>
             <span className="text-sm font-mono-id">{row.original.id}</span>
           </button>
@@ -326,7 +319,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'startTime',
         header: 'Start Time',
         cell: ({ row }) => (
-          <span className="text-sm whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{absoluteTime(row.original.startTime)}</span>
+          <span className="text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">{absoluteTime(row.original.startTime)}</span>
         ),
         size: 160,
       },
@@ -335,8 +328,8 @@ export default function ProcessDetailPage() {
         header: 'Business Key',
         cell: ({ row }) =>
           row.original.businessKey
-            ? <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{row.original.businessKey}</span>
-            : <span className="text-sm" style={{ color: 'var(--text-muted)' }}>—</span>,
+            ? <span className="text-sm text-gray-800 dark:text-white/90">{row.original.businessKey}</span>
+            : <span className="text-sm text-gray-400 dark:text-gray-500">—</span>,
       },
     ],
     [navigate],
@@ -356,7 +349,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'id',
         header: 'ID',
         cell: ({ row }) => (
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }}
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400"
             onClick={(e) => { e.stopPropagation(); navigate(`/processes/instance/${row.original.id}`); }}>
             <span className="text-sm font-mono-id">{row.original.id}</span>
           </button>
@@ -366,7 +359,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'startTime',
         header: 'Start Time',
         cell: ({ row }) => (
-          <span className="text-sm whitespace-nowrap" style={{ color: 'var(--text-secondary)' }}>{absoluteTime(row.original.startTime)}</span>
+          <span className="text-sm whitespace-nowrap text-gray-600 dark:text-gray-300">{absoluteTime(row.original.startTime)}</span>
         ),
         size: 160,
       },
@@ -374,7 +367,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'endTime',
         header: 'End Time',
         cell: ({ row }) => (
-          <span className="text-sm whitespace-nowrap" style={{ color: row.original.endTime ? 'var(--text-secondary)' : 'var(--accent-orange)' }}>
+          <span className={`text-sm whitespace-nowrap ${row.original.endTime ? 'text-gray-600 dark:text-gray-300' : 'text-orange-500 dark:text-orange-400'}`}>
             {row.original.endTime ? absoluteTime(row.original.endTime) : 'Running'}
           </span>
         ),
@@ -384,7 +377,7 @@ export default function ProcessDetailPage() {
         accessorKey: 'durationInMillis',
         header: 'Duration',
         cell: ({ row }) => (
-          <span className="text-sm" style={{ color: 'var(--text-muted)' }}>{formatDuration(row.original.durationInMillis)}</span>
+          <span className="text-sm text-gray-400 dark:text-gray-500">{formatDuration(row.original.durationInMillis)}</span>
         ),
         size: 100,
       },
@@ -393,8 +386,8 @@ export default function ProcessDetailPage() {
         header: 'Business Key',
         cell: ({ row }) =>
           row.original.businessKey
-            ? <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{row.original.businessKey}</span>
-            : <span className="text-sm" style={{ color: 'var(--text-muted)' }}>—</span>,
+            ? <span className="text-sm text-gray-800 dark:text-white/90">{row.original.businessKey}</span>
+            : <span className="text-sm text-gray-400 dark:text-gray-500">—</span>,
       },
     ],
     [navigate],
@@ -405,17 +398,17 @@ export default function ProcessDetailPage() {
       { accessorKey: 'incidentType', header: 'Type', cell: ({ row }) => <Badge variant="danger">{row.original.incidentType}</Badge>, size: 140 },
       { accessorKey: 'incidentMessage', header: 'Message', cell: ({ row }) => {
         const msg = row.original.incidentMessage;
-        if (!msg) return <span style={{ color: 'var(--text-muted)' }}>—</span>;
-        return <span className="text-sm" style={{ color: 'var(--text-primary)' }} title={msg}>{msg.length > 100 ? msg.slice(0, 100) + '...' : msg}</span>;
+        if (!msg) return <span className="text-gray-400 dark:text-gray-500">—</span>;
+        return <span className="text-sm text-gray-800 dark:text-white/90" title={msg}>{msg.length > 100 ? msg.slice(0, 100) + '...' : msg}</span>;
       }},
       { accessorKey: 'processInstanceId', header: 'Process Instance', cell: ({ row }) => (
-        <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }}
+        <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400"
           onClick={(e) => { e.stopPropagation(); navigate(`/processes/instance/${row.original.processInstanceId}`); }}>
           <CopyId id={row.original.processInstanceId} />
         </button>
       )},
-      { accessorKey: 'activityId', header: 'Activity', cell: ({ row }) => <span className="font-mono-id text-xs" style={{ color: 'var(--text-secondary)' }}>{row.original.activityId}</span> },
-      { accessorKey: 'incidentTimestamp', header: 'Timestamp', cell: ({ row }) => <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>{absoluteTime(row.original.incidentTimestamp)}</span>, size: 160 },
+      { accessorKey: 'activityId', header: 'Activity', cell: ({ row }) => <span className="font-mono-id text-xs text-gray-600 dark:text-gray-300">{row.original.activityId}</span> },
+      { accessorKey: 'incidentTimestamp', header: 'Timestamp', cell: ({ row }) => <span className="text-sm text-gray-600 dark:text-gray-300">{absoluteTime(row.original.incidentTimestamp)}</span>, size: 160 },
     ],
     [navigate],
   );
@@ -423,9 +416,9 @@ export default function ProcessDetailPage() {
   const jobDefColumns: ColumnDef<JobDefinition, any>[] = useMemo(
     () => [
       { id: 'state', header: 'State', cell: ({ row }) => <StatusBadge status={row.original.suspended ? 'suspended' : 'active'} />, size: 100 },
-      { accessorKey: 'activityId', header: 'Activity ID', cell: ({ row }) => <span className="font-mono-id text-sm" style={{ color: 'var(--text-primary)' }}>{row.original.activityId}</span> },
+      { accessorKey: 'activityId', header: 'Activity ID', cell: ({ row }) => <span className="font-mono-id text-sm text-gray-800 dark:text-white/90">{row.original.activityId}</span> },
       { accessorKey: 'jobType', header: 'Type', cell: ({ row }) => <Badge>{row.original.jobType}</Badge> },
-      { accessorKey: 'jobConfiguration', header: 'Configuration', cell: ({ row }) => <span className="text-sm font-mono-id" style={{ color: 'var(--text-secondary)' }}>{row.original.jobConfiguration}</span> },
+      { accessorKey: 'jobConfiguration', header: 'Configuration', cell: ({ row }) => <span className="text-sm font-mono-id text-gray-600 dark:text-gray-300">{row.original.jobConfiguration}</span> },
       { id: 'actions', header: '', enableSorting: false, size: 120, cell: ({ row }) => (
         <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); suspendJobDefMutation.mutate({ defId: row.original.id, suspended: !row.original.suspended }); }} disabled={suspendJobDefMutation.isPending}>
           {row.original.suspended
@@ -457,8 +450,8 @@ export default function ProcessDetailPage() {
   // all). Refuse to display it under the wrong active tenant.
   if (isForeignTenant(definition.tenantId, activeTenantId)) {
     return (
-      <div className="p-10 text-center" style={{ color: 'var(--text-secondary)' }}>
-        <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+      <div className="p-10 text-center text-gray-600 dark:text-gray-300">
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-white/90">
           Not in this tenant
         </h2>
         <p className="mt-2 text-sm">
@@ -473,11 +466,11 @@ export default function ProcessDetailPage() {
 
   /* ── Detail items (same data as old DetailPanel) ───────────── */
 
-  const accentColors: Record<string, string> = {
-    blue: 'var(--accent-blue)',
-    green: 'var(--accent-green)',
-    red: 'var(--accent-red)',
-    amber: 'var(--accent-amber, #f59e0b)',
+  const accentClasses: Record<string, string> = {
+    blue: 'text-brand-500 dark:text-brand-400',
+    green: 'text-success-600 dark:text-success-400',
+    red: 'text-error-500 dark:text-error-400',
+    amber: 'text-warning-600 dark:text-warning-400',
   };
 
   const detailItems: DetailItem[] = [
@@ -488,13 +481,7 @@ export default function ProcessDetailPage() {
         <select
           value={id}
           onChange={(e) => handleVersionChange(e.target.value)}
-          className="text-[13px] rounded px-1 py-0.5 outline-none cursor-pointer"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            border: '1px solid var(--border)',
-            color: 'var(--accent-blue)',
-            fontWeight: 600,
-          }}
+          className="text-[13px] rounded-md px-1 py-0.5 outline-none cursor-pointer font-semibold border border-gray-200 bg-transparent text-brand-500 dark:border-gray-800 dark:bg-white/[0.03] dark:text-brand-400"
         >
           {allVersions!.map((v) => (
             <option key={v.id} value={v.id}>{v.version}</option>
@@ -556,17 +543,14 @@ export default function ProcessDetailPage() {
     <div className="flex flex-col" style={{ height: 'calc(100vh - 68px)', overflow: 'hidden' }}>
 
       {/* ── Toolbar: breadcrumb left + actions right ────────────── */}
-      <div
-        className="flex items-center justify-between shrink-0 px-2 py-2"
-        style={{ borderBottom: '1px solid var(--border)' }}
-      >
+      <div className="flex items-center justify-between shrink-0 px-2 py-2 border-b border-gray-200 dark:border-gray-800">
         {/* Left: breadcrumb */}
         <div className="flex items-center gap-1.5 text-[13px]">
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/dashboard')}>Dashboard</button>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <button className="bg-transparent border-none cursor-pointer p-0" style={{ color: 'var(--accent-blue)' }} onClick={() => navigate('/processes')}>Processes</button>
-          <span style={{ color: 'var(--text-muted)' }}>/</span>
-          <span style={{ color: 'var(--text-primary)' }}>{displayName} : Runtime</span>
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/dashboard')}>Dashboard</button>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <button className="bg-transparent border-none cursor-pointer p-0 text-brand-500 hover:underline dark:text-brand-400" onClick={() => navigate('/processes')}>Processes</button>
+          <span className="text-gray-400 dark:text-gray-500">/</span>
+          <span className="text-gray-800 dark:text-white/90">{displayName} : Runtime</span>
         </div>
         {/* Right: actions */}
         <div className="flex items-center gap-2">
@@ -574,12 +558,11 @@ export default function ProcessDetailPage() {
             <Play size={13} className="mr-1.5" />Start Instance
           </Button>
           <button type="button" onClick={() => setHeatmapEnabled((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer transition-colors"
-            style={{
-              backgroundColor: heatmapEnabled ? 'rgba(239, 68, 68, 0.15)' : 'var(--bg-elevated)',
-              color: heatmapEnabled ? 'var(--accent-red)' : 'var(--text-secondary)',
-              border: `1px solid ${heatmapEnabled ? 'rgba(239, 68, 68, 0.3)' : 'var(--border)'}`,
-            }}>
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium cursor-pointer transition-colors border ${
+              heatmapEnabled
+                ? 'bg-error-500/15 text-error-500 border-error-500/30 dark:text-error-400'
+                : 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-white/[0.03] dark:text-gray-300 dark:border-gray-800'
+            }`}>
             <Flame size={13} />Heatmap {heatmapEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
@@ -609,47 +592,35 @@ export default function ProcessDetailPage() {
         ) : <Skeleton height="100%" />}
 
         {/* ── Floating metadata widget — top-left ─────────────────── */}
-        <div style={{
-          position: 'absolute',
-          top: 12,
-          left: 12,
-          width: detailsOpen ? 300 : 'auto',
-          zIndex: 20,
-          backgroundColor: 'var(--bg-surface)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
-          backdropFilter: 'blur(8px)',
-          transition: 'width 200ms ease',
-          maxHeight: 'calc(100% - 24px)',
-          overflow: 'auto',
-        }}>
+        <div
+          className="absolute rounded-xl border border-gray-200 bg-white/95 shadow-theme-lg dark:border-gray-800 dark:bg-gray-900/95"
+          style={{
+            top: 12,
+            left: 12,
+            width: detailsOpen ? 300 : 'auto',
+            zIndex: 20,
+            backdropFilter: 'blur(8px)',
+            transition: 'width 200ms ease',
+            maxHeight: 'calc(100% - 24px)',
+            overflow: 'auto',
+          }}
+        >
           {/* Toggle header */}
           <button
             type="button"
             onClick={() => setDetailsOpen((v) => !v)}
-            className="flex items-center w-full px-3 py-2.5 cursor-pointer border-none"
-            style={{ backgroundColor: 'transparent' }}
+            className="flex items-center w-full px-3 py-2.5 cursor-pointer border-none bg-transparent"
           >
-            <span style={{ color: 'var(--text-muted)', marginRight: 8, display: 'flex' }}>
+            <span className="flex text-gray-400 dark:text-gray-500" style={{ marginRight: 8 }}>
               {detailsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
             <span
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: 22,
-                height: 22,
-                borderRadius: 'var(--radius-md)',
-                backgroundColor: 'rgba(59, 130, 246, 0.08)',
-                marginRight: 8,
-                flexShrink: 0,
-              }}
+              className="inline-flex items-center justify-center rounded-lg bg-brand-500/10 shrink-0"
+              style={{ width: 22, height: 22, marginRight: 8 }}
             >
-              <FileText size={12} style={{ color: 'var(--accent-blue)' }} />
+              <FileText size={12} className="text-brand-500 dark:text-brand-400" />
             </span>
-            <span className="text-[13px] font-semibold" style={{ color: 'var(--text-primary)', whiteSpace: 'nowrap' }}>
+            <span className="text-[13px] font-semibold text-gray-800 dark:text-white/90 whitespace-nowrap">
               Definition Details
             </span>
             {!detailsOpen && (
@@ -657,7 +628,7 @@ export default function ProcessDetailPage() {
                 <span className="ml-2">
                   <Badge variant="info">v{definition.version}</Badge>
                 </span>
-                <span className="ml-2 text-[12px] font-mono-id" style={{ color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                <span className="ml-2 text-[12px] font-mono-id text-gray-600 dark:text-gray-300 whitespace-nowrap">
                   {definition.key}
                 </span>
               </>
@@ -666,10 +637,10 @@ export default function ProcessDetailPage() {
 
           {/* Expanded content */}
           {detailsOpen && (
-            <div className="px-3 pb-3 space-y-2.5" style={{ borderTop: '1px solid var(--border)' }}>
+            <div className="px-3 pb-3 space-y-2.5 border-t border-gray-200 dark:border-gray-800">
               {detailItems.map((item, idx) => {
                 const Icon = item.icon;
-                const color = item.accent ? accentColors[item.accent] : item.muted ? 'var(--text-muted)' : 'var(--text-primary)';
+                const colorClass = item.accent ? accentClasses[item.accent] : item.muted ? 'text-gray-400 dark:text-gray-500' : 'text-gray-800 dark:text-white/90';
                 const isClickable = !!item.onClick;
 
                 return (
@@ -678,23 +649,15 @@ export default function ProcessDetailPage() {
                     <div className="flex items-center gap-1.5">
                       {Icon && (
                         <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            width: 16,
-                            height: 16,
-                            borderRadius: 3,
-                            backgroundColor: 'var(--bg-elevated)',
-                            flexShrink: 0,
-                          }}
+                          className="flex items-center justify-center rounded bg-gray-100 shrink-0 dark:bg-white/[0.06]"
+                          style={{ width: 16, height: 16 }}
                         >
-                          <Icon size={11} style={{ color: 'var(--text-muted)' }} />
+                          <Icon size={11} className="text-gray-400 dark:text-gray-500" />
                         </span>
                       )}
                       <span
-                        className="text-[10px] font-semibold uppercase tracking-wider"
-                        style={{ color: 'var(--text-muted)', lineHeight: 1 }}
+                        className="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500"
+                        style={{ lineHeight: 1 }}
                       >
                         {item.label}
                       </span>
@@ -704,8 +667,8 @@ export default function ProcessDetailPage() {
                       isClickable ? (
                         <button
                           type="button"
-                          className="block text-[13px] bg-transparent border-none cursor-pointer p-0 max-w-full text-left break-all hover:underline mt-0.5"
-                          style={{ color: 'var(--accent-blue)', lineHeight: 1.4 }}
+                          className="block text-[13px] bg-transparent border-none cursor-pointer p-0 max-w-full text-left break-all hover:underline mt-0.5 text-brand-500 dark:text-brand-400"
+                          style={{ lineHeight: 1.4 }}
                           title={item.value}
                           onClick={item.onClick}
                         >
@@ -713,15 +676,15 @@ export default function ProcessDetailPage() {
                         </button>
                       ) : (
                         <span
-                          className="block text-[13px] break-all mt-0.5"
-                          style={{ color, fontWeight: item.accent ? 600 : 400, lineHeight: 1.4 }}
+                          className={`block text-[13px] break-all mt-0.5 ${colorClass}`}
+                          style={{ fontWeight: item.accent ? 600 : 400, lineHeight: 1.4 }}
                           title={item.value}
                         >
                           {item.value}
                         </span>
                       )
                     ) : (
-                      <div className="text-[13px] mt-0.5" style={{ color, lineHeight: 1.4 }}>{item.value}</div>
+                      <div className={`text-[13px] mt-0.5 ${colorClass}`} style={{ lineHeight: 1.4 }}>{item.value}</div>
                     )}
                   </div>
                 );
@@ -732,23 +695,15 @@ export default function ProcessDetailPage() {
       </div>
 
       {/* ── Resizable Tab Panel ─────────────────────────────────── */}
-      <div className="shrink-0" style={{ height: panelHeight, backgroundColor: 'var(--bg-surface)', border: '1px solid var(--border)', borderTop: 'none', overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRadius: '0 0 var(--radius-lg) var(--radius-lg)', boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+      <div className="shrink-0 flex flex-col overflow-hidden border border-t-0 border-gray-200 rounded-b-xl bg-white shadow-theme-xs dark:border-gray-800 dark:bg-white/[0.03]" style={{ height: panelHeight }}>
         {/* Drag handle */}
         <div
           onMouseDown={startDrag}
-          style={{
-            height: 8,
-            backgroundColor: 'var(--bg-elevated)',
-            borderBottom: '1px solid var(--border)',
-            cursor: 'row-resize',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            userSelect: 'none',
-          }}
+          className="flex items-center justify-center cursor-row-resize select-none bg-gray-50 border-b border-gray-200 dark:bg-white/[0.03] dark:border-gray-800"
+          style={{ height: 8 }}
           title="Drag to resize"
         >
-          <div style={{width:40,height:4,borderRadius:2,backgroundColor:'var(--text-muted)',opacity:0.3}}></div>
+          <div className="bg-gray-400 dark:bg-gray-500" style={{ width: 40, height: 4, borderRadius: 2, opacity: 0.3 }}></div>
         </div>
 
         <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab}>
@@ -760,19 +715,13 @@ export default function ProcessDetailPage() {
               const paginated = filtered.slice(instancePage * 10, (instancePage + 1) * 10);
               return (
                 <>
-                  <div className="px-3 py-2 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div className="px-3 py-2 shrink-0 border-b border-gray-200 dark:border-gray-800">
                     <input
                       type="text"
                       placeholder="Search..."
                       value={instanceSearch}
                       onChange={(e) => { setInstanceSearch(e.target.value); setInstancePage(0); }}
-                      className="w-full text-sm px-3 py-1.5 outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)',
-                      }}
+                      className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto">
@@ -780,22 +729,20 @@ export default function ProcessDetailPage() {
                       onRowClick={(row) => navigate(`/processes/instance/${row.id}`)}
                       emptyMessage="No running instances for this process definition." />
                   </div>
-                  <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <div className="flex items-center justify-between px-3 py-2 shrink-0 border-t border-gray-200 dark:border-gray-800">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       {totalFiltered} results
                     </span>
                     <div className="flex items-center gap-2">
                       <button disabled={instancePage === 0} onClick={() => setInstancePage(p => p - 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Prev
                       </button>
-                      <span className="text-xs text-center" style={{ color: 'var(--text-secondary)', minWidth: 32 }}>
+                      <span className="text-xs text-center text-gray-600 dark:text-gray-300" style={{ minWidth: 32 }}>
                         Page {instancePage + 1} of {totalPages}
                       </span>
                       <button disabled={instancePage >= totalPages - 1} onClick={() => setInstancePage(p => p + 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Next
                       </button>
                     </div>
@@ -810,41 +757,33 @@ export default function ProcessDetailPage() {
               const paginated = filtered.slice(incidentPage * 10, (incidentPage + 1) * 10);
               return (
                 <>
-                  <div className="px-3 py-2 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div className="px-3 py-2 shrink-0 border-b border-gray-200 dark:border-gray-800">
                     <input
                       type="text"
                       placeholder="Search..."
                       value={incidentSearch}
                       onChange={(e) => { setIncidentSearch(e.target.value); setIncidentPage(0); }}
-                      className="w-full text-sm px-3 py-1.5 outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)',
-                      }}
+                      className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <DataTable data={paginated} columns={incidentColumns} isLoading={incidentsLoading}
                       emptyMessage="No incidents for this process definition." />
                   </div>
-                  <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <div className="flex items-center justify-between px-3 py-2 shrink-0 border-t border-gray-200 dark:border-gray-800">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       {totalFiltered} results
                     </span>
                     <div className="flex items-center gap-2">
                       <button disabled={incidentPage === 0} onClick={() => setIncidentPage(p => p - 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Prev
                       </button>
-                      <span className="text-xs text-center" style={{ color: 'var(--text-secondary)', minWidth: 32 }}>
+                      <span className="text-xs text-center text-gray-600 dark:text-gray-300" style={{ minWidth: 32 }}>
                         Page {incidentPage + 1} of {totalPages}
                       </span>
                       <button disabled={incidentPage >= totalPages - 1} onClick={() => setIncidentPage(p => p + 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Next
                       </button>
                     </div>
@@ -859,41 +798,33 @@ export default function ProcessDetailPage() {
               const paginated = filtered.slice(jobDefPage * 10, (jobDefPage + 1) * 10);
               return (
                 <>
-                  <div className="px-3 py-2 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div className="px-3 py-2 shrink-0 border-b border-gray-200 dark:border-gray-800">
                     <input
                       type="text"
                       placeholder="Search..."
                       value={jobDefSearch}
                       onChange={(e) => { setJobDefSearch(e.target.value); setJobDefPage(0); }}
-                      className="w-full text-sm px-3 py-1.5 outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)',
-                      }}
+                      className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     <DataTable data={paginated} columns={jobDefColumns} isLoading={jobDefsLoading}
                       emptyMessage="No job definitions for this process definition." />
                   </div>
-                  <div className="flex items-center justify-between px-3 py-2 shrink-0" style={{ borderTop: '1px solid var(--border)' }}>
-                    <span className="text-xs" style={{ color: 'var(--text-muted)' }}>
+                  <div className="flex items-center justify-between px-3 py-2 shrink-0 border-t border-gray-200 dark:border-gray-800">
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       {totalFiltered} results
                     </span>
                     <div className="flex items-center gap-2">
                       <button disabled={jobDefPage === 0} onClick={() => setJobDefPage(p => p - 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Prev
                       </button>
-                      <span className="text-xs text-center" style={{ color: 'var(--text-secondary)', minWidth: 32 }}>
+                      <span className="text-xs text-center text-gray-600 dark:text-gray-300" style={{ minWidth: 32 }}>
                         Page {jobDefPage + 1} of {totalPages}
                       </span>
                       <button disabled={jobDefPage >= totalPages - 1} onClick={() => setJobDefPage(p => p + 1)}
-                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40"
-                        style={{ backgroundColor: 'var(--bg-elevated)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: 'var(--text-secondary)' }}>
+                        className="px-2 py-1 text-xs cursor-pointer disabled:opacity-40 rounded-md border border-gray-200 bg-transparent text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white/[0.03]">
                         Next
                       </button>
                     </div>
@@ -906,24 +837,24 @@ export default function ProcessDetailPage() {
               return (
                 <div className="flex flex-col flex-1">
                   {/* History filter bar */}
-                  <div className="px-4 py-3 flex flex-wrap items-end gap-3 shrink-0" style={{ borderBottom: '1px solid var(--border)', backgroundColor: 'var(--bg-elevated)' }}>
+                  <div className="px-4 py-3 flex flex-wrap items-end gap-3 shrink-0 border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03]">
                     <FilterField label="Started After">
-                      <input type="datetime-local" value={historyFilters.startedAfter} onChange={(e) => { setHistoryFilters(f => ({ ...f, startedAfter: e.target.value })); setHistoryPage(0); }} style={inputStyle} />
+                      <input type="datetime-local" value={historyFilters.startedAfter} onChange={(e) => { setHistoryFilters(f => ({ ...f, startedAfter: e.target.value })); setHistoryPage(0); }} className={inputClass} />
                     </FilterField>
                     <FilterField label="Started Before">
-                      <input type="datetime-local" value={historyFilters.startedBefore} onChange={(e) => { setHistoryFilters(f => ({ ...f, startedBefore: e.target.value })); setHistoryPage(0); }} style={inputStyle} />
+                      <input type="datetime-local" value={historyFilters.startedBefore} onChange={(e) => { setHistoryFilters(f => ({ ...f, startedBefore: e.target.value })); setHistoryPage(0); }} className={inputClass} />
                     </FilterField>
                     <FilterField label="Finished After">
-                      <input type="datetime-local" value={historyFilters.finishedAfter} onChange={(e) => { setHistoryFilters(f => ({ ...f, finishedAfter: e.target.value })); setHistoryPage(0); }} style={inputStyle} />
+                      <input type="datetime-local" value={historyFilters.finishedAfter} onChange={(e) => { setHistoryFilters(f => ({ ...f, finishedAfter: e.target.value })); setHistoryPage(0); }} className={inputClass} />
                     </FilterField>
                     <FilterField label="Finished Before">
-                      <input type="datetime-local" value={historyFilters.finishedBefore} onChange={(e) => { setHistoryFilters(f => ({ ...f, finishedBefore: e.target.value })); setHistoryPage(0); }} style={inputStyle} />
+                      <input type="datetime-local" value={historyFilters.finishedBefore} onChange={(e) => { setHistoryFilters(f => ({ ...f, finishedBefore: e.target.value })); setHistoryPage(0); }} className={inputClass} />
                     </FilterField>
                     <FilterField label="Business Key">
-                      <input type="text" placeholder="key" value={historyFilters.businessKey} onChange={(e) => { setHistoryFilters(f => ({ ...f, businessKey: e.target.value })); setHistoryPage(0); }} style={{ ...inputStyle, width: 120 }} />
+                      <input type="text" placeholder="key" value={historyFilters.businessKey} onChange={(e) => { setHistoryFilters(f => ({ ...f, businessKey: e.target.value })); setHistoryPage(0); }} className={inputClass} style={{ width: 120 }} />
                     </FilterField>
                     <FilterField label="State">
-                      <select value={historyFilters.state} onChange={(e) => { setHistoryFilters(f => ({ ...f, state: e.target.value as any })); setHistoryPage(0); }} style={{ ...inputStyle, cursor: 'pointer' }}>
+                      <select value={historyFilters.state} onChange={(e) => { setHistoryFilters(f => ({ ...f, state: e.target.value as any })); setHistoryPage(0); }} className={`${inputClass} cursor-pointer`}>
                         <option value="">All</option>
                         <option value="completed">Completed</option>
                         <option value="active">Active</option>
@@ -933,24 +864,18 @@ export default function ProcessDetailPage() {
                     <Button variant="ghost" size="sm" onClick={() => { setHistoryFilters({ startedAfter: '', startedBefore: '', finishedAfter: '', finishedBefore: '', businessKey: '', state: '' }); setHistoryPage(0); }}>
                       Clear
                     </Button>
-                    <span className="text-xs ml-auto" style={{ color: 'var(--text-muted)' }}>
+                    <span className="text-xs ml-auto text-gray-400 dark:text-gray-500">
                       {historyCount?.count ?? '—'} results
                     </span>
                   </div>
 
-                  <div className="px-3 py-2 shrink-0" style={{ borderBottom: '1px solid var(--border)' }}>
+                  <div className="px-3 py-2 shrink-0 border-b border-gray-200 dark:border-gray-800">
                     <input
                       type="text"
                       placeholder="Search..."
                       value={historySearch}
                       onChange={(e) => { setHistorySearch(e.target.value); }}
-                      className="w-full text-sm px-3 py-1.5 outline-none"
-                      style={{
-                        backgroundColor: 'var(--bg-elevated)',
-                        border: '1px solid var(--border)',
-                        borderRadius: 'var(--radius-md)',
-                        color: 'var(--text-primary)',
-                      }}
+                      className="w-full text-sm px-3 py-1.5 rounded-lg border border-gray-200 bg-transparent text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 dark:border-gray-800 dark:bg-white/[0.03] dark:text-white/90"
                     />
                   </div>
 
@@ -992,7 +917,7 @@ export default function ProcessDetailPage() {
 function FilterField({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-[10px] font-medium uppercase tracking-wider mb-1" style={{ color: 'var(--text-muted)' }}>{label}</label>
+      <label className="block text-[10px] font-medium uppercase tracking-wider mb-1 text-gray-400 dark:text-gray-500">{label}</label>
       {children}
     </div>
   );
