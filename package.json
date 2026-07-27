@@ -25,7 +25,7 @@
     "date-fns": "^4.1.0",
     "dmn-js": "^17.8.1",
     "flatpickr": "^4.6.13",
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^5.2.2",
     "lucide-react": "^1.7.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
